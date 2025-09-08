@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -49,57 +48,6 @@ export default function SettingsPage() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.infoContainer}>
-        <Text style={styles.infoText}>
-          <Text style={styles.bold}>Tune Space</Text> — Crafted with <Text style={styles.heart}>♥</Text> by Tech Titans!{"\n"}
-          <Text style={styles.meta}>© 2025 Tech Titans. All rights reserved.</Text>
-        </Text>
-      </View>
-
-      {/* Modern Footer Bar with Home and Settings */}
-      <View style={styles.footerBar}>
-        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-          <TouchableOpacity
-            style={styles.fabNormal}
-            onPress={() => router.replace('/')}
-          >
-            <Ionicons name="time-outline" size={30} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.fabLabel}>Recent</Text>
-        </View>
-
-        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-          <TouchableOpacity
-            style={styles.fabNormal}
-            onPress={() => router.replace('/')}
-          >
-            <Ionicons name="heart-outline" size={30} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.fabLabel}>Liked</Text>
-        </View>
-
-        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-          <TouchableOpacity
-            style={styles.fabNormal}
-            onPress={() => router.replace('/')}
-          >
-            <Ionicons name="home-outline" size={30} color="#fff" />
-
-          </TouchableOpacity>
-          <Text style={styles.fabLabel}>Home</Text>
-        </View>
-
-        <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-          <TouchableOpacity
-            style={styles.fabSelected}
-            activeOpacity={1}
-          >
-            <Ionicons name="settings-outline" size={36} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.fabLabelSelected}>Settings</Text>
-        </View>
-
-      </View>
     </View >
   );
 }

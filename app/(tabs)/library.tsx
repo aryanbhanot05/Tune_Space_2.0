@@ -34,7 +34,7 @@ const DATA: Item[] = [
   {
     id: "3",
     title: "Deep Focus",
-    subtitle: "by Spotify",
+    subtitle: "by Tunespace",
     type: "playlist",
     cover: "https://picsum.photos/seed/focus/200",
   },
@@ -107,7 +107,7 @@ export default function LibrarySimple() {
           <Pressable
             style={s.row}
             onPress={() => {
-              /* navigate to detail later */
+
             }}
           >
             <View style={[s.cover, item.type === "artist" && s.coverCircle]}>
@@ -158,7 +158,10 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 8,
   },
-  searchRow: { paddingHorizontal: 16, marginBottom: 8 },
+  searchRow: { 
+    paddingHorizontal: 16, 
+    marginBottom: 8 
+  },
   input: {
     height: 40,
     borderRadius: 10,
@@ -181,9 +184,17 @@ const s = StyleSheet.create({
     backgroundColor: CARD,
     justifyContent: "center",
   },
-  chipActive: { backgroundColor: "#fff" },
-  chipText: { color: FG, fontWeight: "600", fontSize: 12 },
-  chipTextActive: { color: "#111" },
+  chipActive: { 
+    backgroundColor: "#fff" 
+  },
+  chipText: { 
+    color: FG, 
+    fontWeight: "600", 
+    fontSize: 12 
+  },
+  chipTextActive: { 
+    color: "#111" 
+  },
   row: {
     flexDirection: "row",
     alignItems: "center",
@@ -201,9 +212,24 @@ const s = StyleSheet.create({
     overflow: "hidden",
     marginRight: 12,
   },
-  coverCircle: { borderRadius: 28 },
-  coverImg: { width: "100%", height: "100%" },
-  coverImgCircle: { borderRadius: 28 },
-  rowTitle: { color: FG, fontSize: 16, fontWeight: "700" },
-  rowSub: { color: "#9aa0a6", fontSize: 12, marginTop: 2 },
+  coverCircle: { 
+    borderRadius: 28 
+  },
+  coverImg: { 
+    width: "100%", 
+    height: "100%" 
+  },
+  coverImgCircle: { 
+  borderRadius: 28 
+},
+  rowTitle: { 
+    color: FG, 
+    fontSize: 16, 
+    fontWeight: "700" 
+  },
+  rowSub: { 
+    color: "#9aa0a6", 
+    fontSize: 12, 
+    marginTop: 2 
+  },
 });

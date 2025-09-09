@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     borderColor: "#232f24"
   },
   updateBtn: {
-    backgroundColor: "#1DB954",
+    backgroundColor: "#white",
     borderRadius: 10,
     paddingVertical: 13,
     paddingHorizontal: 28,

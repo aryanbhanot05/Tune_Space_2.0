@@ -48,9 +48,9 @@ camera: {
    flex: 1
   },
   fliplogocontainer:{
-    width: '18%',
+    width: '15%',
     aspectRatio: 1,
-    margin: '10%'
+    margin: '7%'
   },
   filplogo:{
     width: '100%',

@@ -27,13 +27,6 @@ export default function HomePage() {
                     <TouchableOpacity
                         style={styles.songCard1}
                     >
-                        <Image
-                            source={{ uri: item.thumb || 'https://via.placeholder.com/60' }}
-                            style={styles.songArt}
-                        />
-                        <Text style={styles.resultItem}>
-                            {item.title} - {item.artist} {item.album ? `(${item.album})` : ''}
-                        </Text>
                     </TouchableOpacity>
                 )}
                 style={styles.resultsList}

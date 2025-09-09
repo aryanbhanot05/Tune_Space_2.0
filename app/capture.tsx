@@ -19,7 +19,7 @@ export default function CaptureScreen(){
 
     if(!permission.granted){
         return(
-        <View>
+        <View style={styles.grantpermission}>
             <Text>We need Permission</Text>
             <Button onPress={requestPermission} title="Grant permission"/>
         </View>
@@ -56,5 +56,10 @@ camera: {
     width: '100%',
     height: '100%',
     resizeMode: 'contain'
+  },
+  grantpermission:{
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 });

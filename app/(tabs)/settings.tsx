@@ -1,12 +1,69 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { getUserById, updateUser, deleteUser } from '../../lib/supabase_crud';
+import { supabase } from '../../lib/supabase';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function SettingsPage() {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user?.id) {
+        router.replace('/');
+        return;
+      }
+      setUserId(session.user.id);
+      getUserById(session.user.id).then(user => {
+        if (user) {
+          setFirstName(user.first_name);
+          setLastName(user.last_name);
+          setEmail(user.email);
+        }
+      });
+    });
+  }, []);
+
+  const handleUpdate = async () => {
+    setMsg('');
+    try {
+      if (!userId) return;
+      await updateUser(userId, { first_name: firstName, last_name: lastName, email });
+      setMsg('Account info updated!');
+    } catch {
+      setMsg('Update failed.');
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace('/');
+  };
+
+  const handleDelete = async () => {
+    setMsg('');
+    if (!userId) return;
+    Alert.alert('Are you sure?', 'This will delete your account forever!', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteUser(userId);
+          await supabase.auth.signOut();
+          router.replace('/');
+        }
+      }
+    ]);
+  };
 
   return (
     <View style={styles.container}>
-
       <View style={styles.top}>
         <Text style={styles.title}>Account Settings</Text>
       </View>
@@ -17,6 +74,8 @@ export default function SettingsPage() {
           <Text style={styles.label}>First Name</Text>
           <TextInput
             style={styles.input}
+            value={firstName}
+            onChangeText={setFirstName}
             placeholder="First Name"
             placeholderTextColor="#888"
             autoCapitalize="words"
@@ -27,6 +86,8 @@ export default function SettingsPage() {
           <Text style={styles.label}>Last Name</Text>
           <TextInput
             style={styles.input}
+            value={lastName}
+            onChangeText={setLastName}
             placeholder="Last Name"
             placeholderTextColor="#888"
             autoCapitalize="words"
@@ -34,20 +95,27 @@ export default function SettingsPage() {
         </View>
 
 
-        <TouchableOpacity style={styles.updateBtn}>
+        <TouchableOpacity style={styles.updateBtn} onPress={handleUpdate}>
           <Ionicons name="save-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.updateBtnTxt}>Update Info</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteBtn}>
+        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
           <Ionicons name="trash-outline" size={18} color="#fff" style={{ marginRight: 7 }} />
           <Text style={styles.deleteBtnTxt}>Delete Account</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.logoutBtn}>
+        {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Ionicons name="exit-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.logoutBtnTxt}>Logout</Text>
         </TouchableOpacity>
       </View>
 
+      <View style={styles.infoContainer}>
+        <Text style={styles.infoText}>
+          <Text style={styles.bold}>Tune Space</Text> — Crafted with <Text style={styles.heart}>♥</Text> by Tune Space Ltd.{"\n"}
+          <Text style={styles.meta}>© 2025 Arydew. All rights reserved.</Text>
+        </Text>
+      </View>
     </View >
   );
 }
@@ -111,7 +179,7 @@ const styles = StyleSheet.create({
     borderColor: "#232f24"
   },
   updateBtn: {
-    backgroundColor: "#white",
+    backgroundColor: "#1DB954",
     borderRadius: 10,
     paddingVertical: 13,
     paddingHorizontal: 28,
@@ -143,78 +211,6 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     fontSize: 15,
     fontWeight: "500"
-  },
-  footerBar: {
-    position: "absolute",
-    bottom: 0,
-    paddingBottom: 22,
-    right: 25,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 30,
-    backgroundColor: "#191c24",
-    borderTopWidth: 2,
-    borderTopColor: "#23272f",
-    paddingTop: 12,
-    paddingHorizontal: 24,
-    shadowColor: "#000",
-    shadowOpacity: 0.14,
-    shadowOffset: { width: 0, height: -3 },
-    shadowRadius: 14,
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    left: 0,
-    width: "100%",
-    justifyContent: "center"
-  },
-  fabNormal: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#232c45",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 6,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 1, height: 2 },
-    shadowRadius: 8,
-
-  },
-  fabLabel: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "500",
-    marginTop: 2,
-    marginBottom: 5,
-    textAlign: "center",
-  },
-  fabSelected: {
-    width: 66,
-    height: 66,
-    borderRadius: 33,
-    backgroundColor: "#1DB954",
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 9,
-    shadowColor: "#59f79b",
-    shadowOpacity: 0.55,
-    shadowOffset: { width: 1, height: 3 },
-    shadowRadius: 12,
-    transform: [{ scale: 1.1 }],
-    borderWidth: 2,
-    borderColor: "#ffd309",
-  },
-  fabLabelSelected: {
-    color: "#ffd309",
-    fontSize: 15,
-    fontWeight: "700",
-    marginTop: 4,
-    textShadowColor: "#0005",
-    textShadowRadius: 3,
-    letterSpacing: 0.8,
-    marginBottom: 4,
-    textAlign: "center",
   },
   infoContainer: {
     paddingVertical: 18,

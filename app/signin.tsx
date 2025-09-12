@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-export default function Signin(){
+export default function Signin() {
 
     const router = useRouter();
 
@@ -19,27 +19,27 @@ export default function Signin(){
     const handleGuest = () => {
         router.replace('../(tabs)/main');
     }
-    return(
+    return (
         <View style={styles.container}>
             <Text style={styles.text}>
                 Emotify
             </Text>
-            <View style={styles.textinputcontainer}> 
+            <View style={styles.textinputcontainer}>
                 <View style={styles.firstcontainer}>
-                <FontAwesome size={20} name="user" />
-            <TextInput 
-            style={styles.textinput}
-            onChangeText={onChangeText}
-            value={username}
-            placeholder='Username'/>
+                    <FontAwesome size={20} name="user" />
+                    <TextInput
+                        style={styles.textinput}
+                        onChangeText={onChangeText}
+                        value={username}
+                        placeholder='Username' />
                 </View>
                 <View style={styles.secondcontainer}>
-                    <FontAwesome size={22} name="lock"/>
+                    <FontAwesome size={22} name="lock" />
                     <TextInput
-                style={styles.textinput}
-                onChangeText={onChangePassword}
-                value={pass}
-                placeholder='Password'/>
+                        style={styles.textinput}
+                        onChangeText={onChangePassword}
+                        value={pass}
+                        placeholder='Password' />
                 </View>
             </View>
             <TouchableOpacity style={styles.signbutton}>
@@ -63,11 +63,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    textinputcontainer:{
+    textinputcontainer: {
         gap: 10,
         alignItems: 'center'
     },
-    firstcontainer:{
+    firstcontainer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 2,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         backgroundColor: 'white'
     },
-    secondcontainer:{
+    secondcontainer: {
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 2,
@@ -88,13 +88,13 @@ const styles = StyleSheet.create({
         fontSize: 100,
         fontFamily: 'Retro',
     },
-    textinput:{
+    textinput: {
         backgroundColor: 'white',
         borderRadius: 7,
         width: '70%',
-        
+
     },
-    signbutton:{
+    signbutton: {
         borderRadius: 10,
         backgroundColor: 'lightgray',
         marginTop: 30,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    signintext:{
+    signintext: {
         fontSize: 30,
         fontFamily: "Retro"
     },

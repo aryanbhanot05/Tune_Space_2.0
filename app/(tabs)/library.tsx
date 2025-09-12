@@ -158,9 +158,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 8,
   },
-  searchRow: { 
-    paddingHorizontal: 16, 
-    marginBottom: 8 
+  searchRow: {
+    paddingHorizontal: 16,
+    marginBottom: 8
   },
   input: {
     height: 40,
@@ -184,16 +184,16 @@ const s = StyleSheet.create({
     backgroundColor: CARD,
     justifyContent: "center",
   },
-  chipActive: { 
-    backgroundColor: "#fff" 
+  chipActive: {
+    backgroundColor: "#fff"
   },
-  chipText: { 
-    color: FG, 
-    fontWeight: "600", 
-    fontSize: 12 
+  chipText: {
+    color: FG,
+    fontWeight: "600",
+    fontSize: 12
   },
-  chipTextActive: { 
-    color: "#111" 
+  chipTextActive: {
+    color: "#111"
   },
   row: {
     flexDirection: "row",
@@ -212,24 +212,24 @@ const s = StyleSheet.create({
     overflow: "hidden",
     marginRight: 12,
   },
-  coverCircle: { 
-    borderRadius: 28 
+  coverCircle: {
+    borderRadius: 28
   },
-  coverImg: { 
-    width: "100%", 
-    height: "100%" 
+  coverImg: {
+    width: "100%",
+    height: "100%"
   },
-  coverImgCircle: { 
-  borderRadius: 28 
-},
-  rowTitle: { 
-    color: FG, 
-    fontSize: 16, 
-    fontWeight: "700" 
+  coverImgCircle: {
+    borderRadius: 28
   },
-  rowSub: { 
-    color: "#9aa0a6", 
-    fontSize: 12, 
-    marginTop: 2 
+  rowTitle: {
+    color: FG,
+    fontSize: 16,
+    fontWeight: "700"
+  },
+  rowSub: {
+    color: "#9aa0a6",
+    fontSize: 12,
+    marginTop: 2
   },
 });

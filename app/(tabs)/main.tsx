@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold'
   },
   logocontainer:{
-    width: '60%',
+    width: '50%',
     aspectRatio: 1,
   },
 

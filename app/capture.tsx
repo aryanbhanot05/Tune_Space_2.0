@@ -1,6 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useState } from 'react';
-import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
 export default function CaptureScreen(){
@@ -20,8 +20,10 @@ export default function CaptureScreen(){
     if(!permission.granted){
         return(
         <View style={styles.grantpermission}>
-            <Text>We need Permission</Text>
-            <Button onPress={requestPermission} title="Grant permission"/>
+            <Text style={styles.grant}>We need Permission</Text>
+            <TouchableOpacity style={styles.grantpermisson} onPress={requestPermission} >
+                <Text style={{fontSize: 20}}>Grant Permission</Text>
+            </TouchableOpacity>
         </View>
         )
     }
@@ -33,6 +35,9 @@ export default function CaptureScreen(){
                     <TouchableOpacity style={styles.fliplogocontainer} onPress={toggleCameraFacing}>
                         <Image style={styles.filplogo} source={require('../assets/images/CameraFlip.png')}/>
                     </TouchableOpacity>
+                    <TouchableOpacity style={styles.capture}>
+                        <Image style={styles.filplogo} source={require('../assets/images/capture.png')}/>
+                    </TouchableOpacity>
                 </View>
             </CameraView>
         </View>
@@ -42,10 +47,9 @@ export default function CaptureScreen(){
 const styles = StyleSheet.create({
     container: {
     flex: 1,
-    backgroundColor: '#211e1e',
+
 },
 camera: {
-   flex: 1
   },
   fliplogocontainer:{
     width: '15%',
@@ -61,5 +65,21 @@ camera: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center'
+  },
+  grant:{
+    fontSize: 25,
+    fontWeight: 'bold',
+  },
+  grantpermisson:{
+    backgroundColor: 'skyblue',
+    width: '40%',
+    height: '4%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 15
+  },
+  capture:{
+    width: '25%',
   }
+
 });

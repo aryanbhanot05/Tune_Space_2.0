@@ -7,6 +7,7 @@ export default function RootLayout() {
       <Stack.Screen name="signin" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="capture" options={{ headerShown: false }} />
+      <Stack.Screen name="signin_followup" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -1,12 +1,9 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
-import { Image } from 'expo-image';
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getSession, signIn, signUp } from "../lib/supabase_auth";
-import { createUser } from "../lib/supabase_crud";
+import { getSession } from "../lib/supabase_auth";
 
 export default function SignIn_Page() {
     const router = useRouter();
@@ -17,86 +14,38 @@ export default function SignIn_Page() {
         'Luckiest Guy': require('../assets/fonts/LuckiestGuy-Regular.ttf'),
     });
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [firstName, setFirstName] = useState("");
-    const [lastName, setLastName] = useState("");
-    const [isSignIn, setIsSignIn] = useState(true);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [session, setSession] = useState<any>(null);
-
-    // Check for an existing session on app load
+    const [loading, setLoading] = useState(true);
     useEffect(() => {
         const checkSession = async () => {
             try {
                 const currentSession = await getSession();
                 if (currentSession) {
-                    setSession(currentSession);
-                    // Navigate to the main app if a session is found
                     router.replace("/(tabs)/main");
                 }
             } catch (err) {
                 console.error("Error checking session:", err);
+            } finally {
+                setLoading(false);
             }
         };
-        if (!session) {
-            checkSession();
-        }
-    }, [session]);
-
-    const handleAuth = async () => {
-        if (
-            !email ||
-            !password ||
-            (!isSignIn && (!firstName.trim() || !lastName.trim()))
-        ) {
-            setError("Please fill in all required fields.");
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
-
-        try {
-            if (isSignIn) {
-                await signIn(email, password);
-            } else {
-                const data = await signUp(email, password);
-
-                // Get the user object from the sign-up response
-                const user = data.user || (data.session && data.session.user) || null;
-
-                if (!user || !user.id) throw new Error("Sign up did not return a user object.");
-
-                // Create a user record in the 'user_details' table
-                await createUser({
-                    uuid: user.id,
-                    first_name: firstName.trim(),
-                    last_name: lastName.trim(),
-                    email: email,
-                });
-
-                // Clear fields for a cleaner UX
-                setFirstName("");
-                setLastName("");
-                setEmail("");
-                setPassword("");
-            }
-
-            // Navigate to the main app on successful sign-in/sign-up
-            router.replace("/(tabs)/main");
-
-        } catch (err: any) {
-            setError(err.message || "Authentication failed");
-        } finally {
-            setLoading(false);
-        }
-    };
+        checkSession();
+    }, []);
 
     const handleGuest = () => {
         router.replace('../(tabs)/main');
     };
+
+    if (!fontsLoaded || loading) {
+        return (
+            <View style={styles.loadingContainer}>
+                <Image
+                    style={styles.loadingLogo}
+                    source={require('../assets/images/Emotify.png')}
+                    resizeMode="contain"
+                />
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -104,94 +53,32 @@ export default function SignIn_Page() {
             <Text style={styles.quotesText}>Millions of Songs</Text>
             <Text style={styles.quotesText}>Free On <Text style={styles.text}>Emotify !</Text></Text>
             <Text style={styles.quotesText}>Melodies to Match Moods</Text>
-            <View style={styles.textinputcontainer}>
-                {!isSignIn && (
-                    <>
-                        <View style={styles.inputWrapper}>
-                            <FontAwesome size={20} name="user" color="#000" />
-                            <TextInput
-                                style={styles.textinput}
-                                placeholder="First Name"
-                                placeholderTextColor="#6a6a6a"
-                                value={firstName}
-                                onChangeText={setFirstName}
-                                autoCapitalize="words"
-                            />
-                        </View>
-                        <View style={styles.inputWrapper}>
-                            <FontAwesome size={20} name="user" color="#000" />
-                            <TextInput
-                                style={styles.textinput}
-                                placeholder="Last Name"
-                                placeholderTextColor="#6a6a6a"
-                                value={lastName}
-                                onChangeText={setLastName}
-                                autoCapitalize="words"
-                            />
-                        </View>
-                    </>
-                )}
 
-                <View style={styles.inputWrapper}>
-                    <FontAwesome size={20} name="envelope" color="#000" />
-                    <TextInput
-                        style={styles.textinput}
-                        placeholder="Email"
-                        placeholderTextColor="#6a6a6a"
-                        value={email}
-                        onChangeText={setEmail}
-                        keyboardType="email-address"
-                        autoCapitalize="none"
-                    />
+            <View style={styles.buttonContainer}>
+                <View style={styles.signbuttonContainer}>
+
+                    <TouchableOpacity
+                        style={styles.authButton}
+                        onPress={() => router.push({ pathname: '/signin_followup', params: { isSignIn: 'true' } })}
+                    >
+                        <Text style={styles.authButtonText}>Sign In</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.authButton}
+                        onPress={() => router.push({ pathname: '/signin_followup', params: { isSignIn: 'false' } })}
+                    >
+                        <Text style={styles.authButtonText}>Sign Up</Text>
+                    </TouchableOpacity>
                 </View>
-                <View style={styles.inputWrapper}>
-                    <FontAwesome size={22} name="lock" color="#000" />
-                    <TextInput
-                        style={styles.textinput}
-                        placeholder="Password"
-                        placeholderTextColor="#6a6a6a"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
-                </View>
+
+                <TouchableOpacity
+                    onPress={handleGuest}
+                    style={styles.guestButton}
+                >
+                    <Text style={styles.guestText}>Continue as a guest</Text>
+                </TouchableOpacity>
             </View>
-
-            {error && <Text style={styles.errorText}>{error}</Text>}
-
-            <TouchableOpacity
-                style={styles.signbutton}
-                onPress={handleAuth}
-                disabled={loading}
-            >
-                {loading ? (
-                    <ActivityIndicator color="#ffffff" />
-                ) : (
-                    <Text style={styles.signintext}>
-                        {isSignIn ? "Sign In" : "Sign Up"}
-                    </Text>
-                )}
-            </TouchableOpacity>
-
-            <TouchableOpacity
-                onPress={() => {
-                    setIsSignIn(!isSignIn);
-                    setError(null);
-                    setEmail('');
-                    setPassword('');
-                    setFirstName('');
-                    setLastName('');
-                }}
-                style={styles.signbutton}
-            >
-                <Text style={styles.signintext}>
-                    Sign Up for Free
-                </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleGuest} style={styles.guestButton}>
-                <Text style={styles.guestText}>Continue as a guest</Text>
-            </TouchableOpacity>
         </SafeAreaView>
     );
 }
@@ -204,79 +91,28 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
     },
+    loadingContainer: {
+        flex: 1,
+        backgroundColor: '#11161a',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingLogo: {
+        width: 250,
+        height: 250,
+        opacity: 0.5,
+    },
     text: {
         color: 'white',
         fontSize: 70,
         fontFamily: 'Retro',
         marginBottom: 40,
-        width: '100%',
-        textAlign: 'center',
     },
-    textinputcontainer: {
-        width: '100%',
-        alignItems: 'center',
-        gap: 20,
-    },
-    inputWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'white',
-        borderRadius: 5,
-        borderWidth: 2,
-        borderColor: 'white',
-        width: '85%',
-        paddingHorizontal: 15,
-        paddingVertical: 10,
-    },
-    textinput: {
-        flex: 1,
-        marginLeft: 10,
-        fontSize: 16,
-    },
-    signbutton: {
-        borderRadius: 10,
-        backgroundColor: '#fff',
-        marginTop: 30,
-        width: '50%',
-        height: 50,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    signintext: {
-        fontSize: 20,
-        fontFamily: "Retro",
-        color: '#211e1e',
-    },
-    errorText: {
-        color: 'red',
-        marginTop: 10,
-        textAlign: 'center',
-    },
-    guestButton: {
-        borderRadius: 10,
-        backgroundColor: '#696969ff',
-        marginTop: 20,
-        width: '70%',
-        height: 50,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        elevation: 5,
-    },
-    guestText: {
-        fontSize: 30,
-        fontFamily: "Retro",
-        color: 'white',
-        textAlign: 'center',
-        width: '100%',
+    subtitle: {
+        color: '#ccc',
+        fontSize: 24,
+        fontFamily: 'PlayfairDisplay',
+        marginBottom: 20,
     },
     quotesText: {
         fontSize: 29,
@@ -290,5 +126,58 @@ const styles = StyleSheet.create({
         height: 270,
         resizeMode: 'contain',
         marginBottom: 40,
+    },
+    buttonContainer: {
+        width: '100%',
+        alignItems: 'center',
+        gap: 20,
+        marginTop: 30,
+    },
+    signbuttonContainer: {
+        alignItems: 'center',
+        gap: 20,
+        marginTop: 30,
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '80%',
+    },
+    authButton: {
+        borderRadius: 10,
+        backgroundColor: '#fff',
+        width: '46.5%',
+        height: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    authButtonText: {
+        fontSize: 26,
+        fontFamily: "Retro",
+        color: '#211e1e',
+    },
+    guestButton: {
+        borderRadius: 10,
+        backgroundColor: '#888',
+        width: '80%',
+        height: 50,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    guestText: {
+        fontSize: 30,
+        fontFamily: "Retro",
+        color: 'white',
+        width: '100%',
+        textAlign: 'center',
     },
 });

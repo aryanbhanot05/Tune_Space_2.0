@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "tune_space_2.0",
-    "slug": "tune_space_2.0",
-    "version": "1.0.0",
+    "name": "tune_space_2_0",
+    "slug": "tune_space_2_0",
+    "version": "1_0_0",
     "orientation": "portrait",
-    "icon": "./assets/images/Emotify.png",
+    "icon": "./assets/images/splash-icon.png",
     "scheme": "tunespace20",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/Emotify.png",
+        "foregroundImage": "./assets/images/splash-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true
@@ -28,12 +28,14 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/Emotify.png",
+          "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

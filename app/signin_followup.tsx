@@ -1,3 +1,4 @@
+// Imports necessary components and hooks from React Native and Expo
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -11,12 +12,14 @@ export default function SupabaseAuth() {
     const router = useRouter();
     const { isSignIn: isSignInParam } = useLocalSearchParams();
 
+    // Loads custom fonts for the app. The component will render a loading state until the fonts are ready.
     const [fontsLoaded] = useFonts({
         'Valestine': require('../assets/fonts/Valestine.ttf'),
         'Retro': require('../assets/fonts/Retro Vintage.ttf'),
         'Luckiest Guy': require('../assets/fonts/LuckiestGuy-Regular.ttf'),
     });
 
+    // Initiating state variables for form inputs, loading state, and error handling.
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [firstName, setFirstName] = useState("");
@@ -25,7 +28,9 @@ export default function SupabaseAuth() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Asynchronous function to handle the authentication process (sign-in or sign-up).
     const handleAuth = async () => {
+        // Basic input validation to ensure all required fields are filled.
         if (
             !email ||
             !password ||
@@ -35,18 +40,22 @@ export default function SupabaseAuth() {
             return;
         }
 
+        // Sets the loading state to true and clears any previous errors.
         setLoading(true);
         setError(null);
 
         try {
+            // If in sign-in mode, calls the signIn function.
             if (isSignIn) {
                 await signIn(email, password);
             } else {
+                // If in sign-up mode, calls the signUp function.
                 const data = await signUp(email, password);
                 const user = data.user || (data.session && data.session.user) || null;
 
                 if (!user || !user.id) throw new Error("Sign up did not return a user object.");
 
+                // Creates a user profile in the database with the provided details.
                 await createUser({
                     uuid: user.id,
                     first_name: firstName.trim(),
@@ -64,10 +73,12 @@ export default function SupabaseAuth() {
         }
     };
 
+    // Function to handle navigating to the main app as a guest.
     const handleGuest = () => {
         router.replace('../(tabs)/main');
     };
 
+    // Renders a loading indicator while fonts are loading.
     if (!fontsLoaded) {
         return (
             <View style={styles.loadingContainer}>
@@ -77,12 +88,17 @@ export default function SupabaseAuth() {
     }
 
     return (
+        // Ensures content is within the safe area of the device screen.
         <SafeAreaView style={styles.container}>
+
+            {/* Displays the main app logo, specific text*/}
             <Image style={styles.logo} source={require('../assets/images/Emotify.png')} />
-            <Text style={[styles.guestText , { position: 'absolute', top: 180 }]}>
+            <Text style={[styles.guestText, { position: 'absolute', top: 180 }]}>
                 {isSignIn ? <>Sign In to <Text style={styles.text}>Emotify</Text></> : "Listen for Free"}
             </Text>
             <View style={styles.textinputcontainer}>
+
+                {/* Conditionally renders first and last name inputs only for sign-up. */}
                 {!isSignIn && (
                     <>
                         <View style={styles.inputWrapper}>
@@ -110,6 +126,7 @@ export default function SupabaseAuth() {
                     </>
                 )}
 
+                {/* Input field for email. */}
                 <View style={styles.inputWrapper}>
                     <FontAwesome size={20} name="envelope" color="#000" />
                     <TextInput
@@ -122,6 +139,8 @@ export default function SupabaseAuth() {
                         autoCapitalize="none"
                     />
                 </View>
+
+                {/* Input field for password. */}
                 <View style={styles.inputWrapper}>
                     <FontAwesome size={22} name="lock" color="#000" />
                     <TextInput
@@ -137,6 +156,7 @@ export default function SupabaseAuth() {
 
             {error && <Text style={styles.errorText}>{error}</Text>}
 
+            {/* The main button for sign-in or sign-up. */}
             <TouchableOpacity
                 style={styles.signbutton}
                 onPress={handleAuth}
@@ -151,6 +171,7 @@ export default function SupabaseAuth() {
                 )}
             </TouchableOpacity>
 
+            {/* Button to switch between sign-in and sign-up forms. */}
             <TouchableOpacity
                 onPress={() => {
                     setIsSignIn(!isSignIn);
@@ -167,6 +188,7 @@ export default function SupabaseAuth() {
                 </Text>
             </TouchableOpacity>
 
+            {/* Button to proceed as a guest. */}
             <TouchableOpacity onPress={handleGuest} style={styles.guestButton}>
                 <Text style={styles.guestText}>Continue as a guest</Text>
             </TouchableOpacity>
@@ -174,6 +196,7 @@ export default function SupabaseAuth() {
     );
 }
 
+// Stylesheet for the component's UI.
 const styles = StyleSheet.create({
     container: {
         flex: 1,

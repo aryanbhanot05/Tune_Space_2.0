@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 
+// Defines the structure for user details.
 export interface UserDetails {
     uuid: string;
     first_name: string;
@@ -7,6 +8,7 @@ export interface UserDetails {
     email: string;
 };
 
+// Fetches all user details from the 'user_details' table.
 export async function getUsers() {
     const { data, error } = await supabase
         .from('user_details')
@@ -19,6 +21,7 @@ export async function getUsers() {
     return data;
 }
 
+// Fetches a single user's details by their UUID.
 export async function getUserById(uuid: string) {
     const { data, error } = await supabase
         .from('user_details')
@@ -33,6 +36,7 @@ export async function getUserById(uuid: string) {
     return data;
 }
 
+// Creates a new user entry in the 'user_details' table.
 export async function createUser(user: UserDetails) {
     const { data, error } = await supabase
         .from('user_details')
@@ -45,6 +49,7 @@ export async function createUser(user: UserDetails) {
     return data;
 }
 
+// Updates an existing user's details by their UUID.
 export async function updateUser(uuid: string, updates: { first_name: string; last_name: string; email: string }) {
     const { data, error } = await supabase
         .from('user_details')
@@ -58,6 +63,7 @@ export async function updateUser(uuid: string, updates: { first_name: string; la
     return data;
 }
 
+// Deletes a user entry from the 'user_details' table by their UUID.
 export async function deleteUser(uuid: string) {
     const { data, error } = await supabase
         .from('user_details')

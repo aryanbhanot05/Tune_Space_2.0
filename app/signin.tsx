@@ -1,10 +1,19 @@
 // Imports necessary components and hooks from React Native and Expo
 import { useFonts } from 'expo-font';
+<<<<<<< Updated upstream
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getSession } from "../lib/supabase_auth";
+=======
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+
+export default function Signin() {
+>>>>>>> Stashed changes
 
 export default function SignIn_Page() {
     const router = useRouter();

@@ -24,7 +24,7 @@
     "expo-haptics": "~15.0.7",
     "expo-image": "~3.0.8",
     "expo-linking": "~8.0.8",
-    "expo-router": "~6.0.1",
+    "expo-router": "~6.0.3",
     "expo-splash-screen": "~31.0.9",
     "expo-status-bar": "~3.0.8",
     "expo-symbols": "~1.0.7",
@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
-    "@types/react": "~19.0.10",
+    "@types/react": "^19.1.13",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "typescript": "~5.8.3"

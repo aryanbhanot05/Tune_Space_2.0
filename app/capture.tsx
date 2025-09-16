@@ -1,28 +1,29 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import React from 'react';
 import { useState } from 'react';
 import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
-export default function CaptureScreen(){
+export default function CaptureScreen() {
 
     const [permission, requestPermission] = useCameraPermissions();
 
     const [facing, setFacing] = useState<'front' | 'back'>('front');
 
     function toggleCameraFacing() {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
-  }
-
-    if(!permission){
-        return <View/>;
+        setFacing(current => (current === 'back' ? 'front' : 'back'));
     }
 
-    if(!permission.granted){
-        return(
-        <View style={styles.grantpermission}>
-            <Text>We need Permission</Text>
-            <Button onPress={requestPermission} title="Grant permission"/>
-        </View>
+    if (!permission) {
+        return <View />;
+    }
+
+    if (!permission.granted) {
+        return (
+            <View style={styles.grantpermission}>
+                <Text>We need Permission</Text>
+                <Button onPress={requestPermission} title="Grant permission" />
+            </View>
         )
     }
 
@@ -31,7 +32,7 @@ export default function CaptureScreen(){
             <CameraView style={styles.camera} facing={facing}>
                 <View>
                     <TouchableOpacity style={styles.fliplogocontainer} onPress={toggleCameraFacing}>
-                        <Image style={styles.filplogo} source={require('../assets/images/CameraFlip.png')}/>
+                        <Image style={styles.filplogo} source={require('../assets/images/CameraFlip.png')} />
                     </TouchableOpacity>
                 </View>
             </CameraView>
@@ -41,25 +42,25 @@ export default function CaptureScreen(){
 
 const styles = StyleSheet.create({
     container: {
-    flex: 1,
-    backgroundColor: '#211e1e',
-},
-camera: {
-   flex: 1
-  },
-  fliplogocontainer:{
-    width: '15%',
-    aspectRatio: 1,
-    margin: '7%'
-  },
-  filplogo:{
-    width: '100%',
-    height: '100%',
-    resizeMode: 'contain'
-  },
-  grantpermission:{
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
+        flex: 1,
+        backgroundColor: '#211e1e',
+    },
+    camera: {
+        flex: 1
+    },
+    fliplogocontainer: {
+        width: '15%',
+        aspectRatio: 1,
+        margin: '7%'
+    },
+    filplogo: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'contain'
+    },
+    grantpermission: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center'
+    }
 });

@@ -1,17 +1,18 @@
 import { useRouter } from "expo-router";
+import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function WelcomeScreen() {
 
   const router = useRouter();
 
-  const HandleAnalyzeMood = () =>{
+  const HandleAnalyzeMood = () => {
     router.push('/capture');
   };
   return (
     <View style={styles.container}>
-      <Text  style={styles.text}>Welcome Back (User)</Text>
-      
+      <Text style={styles.text}>Welcome Back (User)</Text>
+
       <TouchableOpacity style={styles.logocontainer} onPress={HandleAnalyzeMood} >
         <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
       </TouchableOpacity>
@@ -26,7 +27,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#10151b',
     gap: 100,
-    
+
   },
   text: {
     color: 'white',
@@ -41,7 +42,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold'
   },
-  logocontainer:{
+  logocontainer: {
     width: '60%',
     aspectRatio: 1,
   },

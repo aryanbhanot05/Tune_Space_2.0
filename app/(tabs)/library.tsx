@@ -1,4 +1,3 @@
-// app/(tabs)/library.tsx
 import React, { useMemo, useState } from "react";
 import {
   View,
@@ -124,7 +123,7 @@ export default function LibraryScreen() {
     clone.forEach((s) => {
       s.data.sort((a, b) => {
         if (sort === "alpha") return a.title.localeCompare(b.title);
-        return b.id.localeCompare(a.id); // cheap “recent” mock
+        return b.id.localeCompare(a.id);
       });
     });
 

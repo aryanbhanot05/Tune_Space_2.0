@@ -1,4 +1,5 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import React from 'react';
 import { useState } from 'react';
 import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 

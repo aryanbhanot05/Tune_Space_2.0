@@ -18,6 +18,7 @@ export default function SignIn_Page() {
     const [loading, setLoading] = useState(true);
 
     // useEffect hook to run a session check once when the component mounts.
+    // this particular useEffect checks if a user is already logged in - I was unable to understand fully how to do this.
     useEffect(() => {
         const checkSession = async () => {
             try {
@@ -195,3 +196,11 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 });
+
+
+// for notifying, The whole design is inspired by Aryan Bhanot's earlier work on the Tune Space music app.
+// Here is the link to the original repository:
+
+// https://github.com/aryanbhanot05/Tune_Space
+
+// Thank You for reviewing my code!

@@ -20,7 +20,7 @@ export default function CaptureScreen(){
     if(!permission.granted){
         return(
         <View style={styles.grantpermission}>
-            <Text style={styles.grant}>We need Permission</Text>
+            <Text style={styles.grant}>We need Permission NOW!</Text>
             <TouchableOpacity style={styles.grantpermisson} onPress={requestPermission} >
                 <Text style={{fontSize: 20}}>Grant Permission</Text>
             </TouchableOpacity>

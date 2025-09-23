@@ -319,3 +319,12 @@ const styles = StyleSheet.create({
         top: 70,
     },
 });
+
+
+
+// for notifying, The whole design is inspired by Aryan Bhanot's earlier work on the Tune Space music app.
+// Here is the link to the original repository:
+
+// https://github.com/aryanbhanot05/Tune_Space
+
+// Thank You for reviewing my code!

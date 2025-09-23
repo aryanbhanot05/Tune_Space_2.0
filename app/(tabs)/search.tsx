@@ -7,28 +7,28 @@ const SONGS = [
     title: "Shape of You",
     artist: "Ed Sheeran",
     album: "Divide",
-    art: "https://via.placeholder.com/68",
+    art: require("../../assets/images/search_images/shape.png"),
   },
   {
     id: "2",
     title: "Blinding Lights",
     artist: "The Weeknd",
     album: "After Hours",
-    art: "https://via.placeholder.com/68",
+    art: require("../../assets/images/search_images/blinding.png"),
   },
   {
     id: "3",
     title: "Someone Like You",
     artist: "Adele",
     album: "21",
-    art: "https://via.placeholder.com/68",
+    art: require("../../assets/images/search_images/someone.png"),
   },
   {
     id: "4",
     title: "Levitating",
     artist: "Dua Lipa",
     album: "Future Nostalgia",
-    art: "https://via.placeholder.com/68",
+    art: require("../../assets/images/search_images/levitating.png"),
   },
 ];
 
@@ -73,7 +73,7 @@ export default function HomePage() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.songCard1}>
-            <Image source={{ uri: item.art }} style={styles.songArt} />
+            <Image source={ item.art } style={styles.songArt} />
             <View style={{ marginLeft: 10 }}>
               <Text style={{ color: "white", fontSize: 16 }}>{item.title}</Text>
               <Text style={{ color: "#aaa", fontSize: 14 }}>

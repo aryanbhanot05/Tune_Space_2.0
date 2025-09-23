@@ -249,14 +249,12 @@ function FilterChips({
 
 function AddPlaylistTile() {
   return (
-    <Link href="/(tabs)/main" asChild>
       <Pressable style={styles.addTile}>
         <View style={styles.addIcon}>
           <Ionicons name="add" size={20} color="#111" />
         </View>
         <Text style={styles.addText}>Add playlist</Text>
       </Pressable>
-    </Link>
   );
 }
 

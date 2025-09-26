@@ -1,147 +1,143 @@
+// app/search.tsx
 import React, { useState } from "react";
-import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  FlatList,
+  Image,
+  StyleSheet,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
-const SONGS = [
-  {
-    id: "1",
-    title: "Shape of You",
-    artist: "Ed Sheeran",
-    album: "Divide",
-    art: "https://via.placeholder.com/68",
-  },
-  {
-    id: "2",
-    title: "Blinding Lights",
-    artist: "The Weeknd",
-    album: "After Hours",
-    art: "https://via.placeholder.com/68",
-  },
-  {
-    id: "3",
-    title: "Someone Like You",
-    artist: "Adele",
-    album: "21",
-    art: "https://via.placeholder.com/68",
-  },
-  {
-    id: "4",
-    title: "Levitating",
-    artist: "Dua Lipa",
-    album: "Future Nostalgia",
-    art: "https://via.placeholder.com/68",
-  },
-];
+import {
+  ensureSpotifySignedIn,
+  searchTracks,
+  SimpleTrack,
+  signInWithSpotify,
+} from "@/lib/spotify";
 
-export default function HomePage() {
-  const [searchText, setSearchText] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+export default function SearchScreen() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SimpleTrack[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = (text: string) => {
-    setSearchText(text);
-    if (text.trim() === "") {
-      setSearchResults([]);
-    } else {
-      const results = SONGS.filter(
-        (song) =>
-          song.title.toLowerCase().includes(text.toLowerCase()) ||
-          song.artist.toLowerCase().includes(text.toLowerCase()) ||
-          song.album.toLowerCase().includes(text.toLowerCase())
-      );
-      setSearchResults(results);
+  async function handleSearch() {
+    if (!query.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await ensureSpotifySignedIn();
+      const tracks = await searchTracks(query);
+      setResults(tracks);
+    } catch (e: any) {
+      console.warn(e);
+      setError(e?.message ?? "Search failed");
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.top}>
-        <Text style={styles.title}>Hi, User</Text>
-        <Text style={styles.title}>Search</Text>
+    <SafeAreaView style={styles.container}>
+      {/* search bar */}
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.input}
+          placeholder="Search for songs"
+          placeholderTextColor="#999"
+          value={query}
+          onChangeText={setQuery}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
+        />
+        <Pressable style={styles.button} onPress={handleSearch}>
+          <Ionicons name="search" size={20} color="#fff" />
+        </Pressable>
       </View>
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search by song, artist, or album…"
-        placeholderTextColor="#888"
-        value={searchText}
-        onChangeText={handleSearch}
-        autoCorrect={false}
-        autoCapitalize="none"
-      />
+      {/* error + manual sign-in retry */}
+      {error && (
+        <View>
+          <Text style={styles.error}>{error}</Text>
+          <Pressable
+            onPress={signInWithSpotify}
+            style={[styles.button, { alignSelf: "flex-start", marginTop: 8 }]}
+          >
+            <Text style={{ color: "#fff" }}>Sign in with Spotify</Text>
+          </Pressable>
+        </View>
+      )}
 
+      {/* results */}
       <FlatList
-        data={searchResults}
+        data={results}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.songCard1}>
-            <Image source={{ uri: item.art }} style={styles.songArt} />
-            <View style={{ marginLeft: 10 }}>
-              <Text style={{ color: "white", fontSize: 16 }}>{item.title}</Text>
-              <Text style={{ color: "#aaa", fontSize: 14 }}>
-                {item.artist} • {item.album}
+          <View style={styles.row}>
+            {item.image ? (
+              <Image source={{ uri: item.image }} style={styles.cover} />
+            ) : (
+              <View style={[styles.cover, styles.coverPlaceholder]}>
+                <Ionicons name="musical-notes" size={20} color="#999" />
+              </View>
+            )}
+            <View style={{ flex: 1 }}>
+              <Text style={styles.title}>{item.name}</Text>
+              <Text style={styles.subtitle}>
+                {item.artists} • {item.album}
               </Text>
             </View>
-          </TouchableOpacity>
+          </View>
         )}
-        style={styles.resultsList}
-        nestedScrollEnabled
-        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          !loading && query ? (
+            <Text style={styles.empty}>No tracks found.</Text>
+          ) : null
+        }
       />
-    </View>
+
+      {loading && <Text style={styles.loading}>Loading…</Text>}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1, backgroundColor: "#121212", padding: 16 },
+  searchRow: { flexDirection: "row", marginBottom: 12 },
+  input: {
     flex: 1,
-    backgroundColor: "#121212",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    position: "relative",
-    paddingTop: 70,
-  },
-  searchInput: {
-    backgroundColor: "#191c24",
+    backgroundColor: "#1f1f1f",
     color: "#fff",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  button: {
+    marginLeft: 8,
+    backgroundColor: "#1DB954",
+    borderRadius: 8,
     padding: 10,
-    borderRadius: 10,
-    marginHorizontal: 16,
-    marginBottom: 10,
-    marginTop: 20,
-    borderColor: "#444",
-    borderWidth: 1,
-    width: "90%",
-  },
-  resultsList: {
-    maxHeight: 300,
-    backgroundColor: "#23272f",
-    marginHorizontal: 16,
-    borderRadius: 10,
-    width: "90%",
-  },
-  top: {
-    width: "100%",
-    paddingTop: 30,
-    height: 140,
     alignItems: "center",
+    justifyContent: "center",
   },
-  title: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 32,
-    textAlign: "center",
-    width: "90%",
-  },
-  songArt: {
-    width: 68,
-    height: 68,
-    borderRadius: 10,
-    backgroundColor: "#101010",
-  },
-  songCard1: {
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#2a2f3a",
+    marginBottom: 12,
   },
+  cover: { width: 48, height: 48, borderRadius: 4, marginRight: 12 },
+  coverPlaceholder: {
+    backgroundColor: "#333",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  title: { color: "#fff", fontWeight: "600" },
+  subtitle: { color: "#aaa", fontSize: 12 },
+  error: { color: "red", marginTop: 8 },
+  empty: { color: "#aaa", textAlign: "center", marginTop: 20 },
+  loading: { color: "#aaa", textAlign: "center", marginTop: 10 },
 });

@@ -51,7 +51,7 @@ export default function AnimatedTabButton({ title, iconName, onPress }: Animated
             >
                 <Ionicons name={iconName} size={24} color="#1DB954" style={styles.tabIcon} />
                 <Text style={styles.tabTitle}>{title}</Text>
-                <Ionicons name="chevron-forward" size={24} color="#888" />
+                <Ionicons name="chevron-forward" size={24} color="#a2a2a2ff" />
             </TouchableOpacity>
         </Animated.View>
     );
@@ -60,23 +60,20 @@ export default function AnimatedTabButton({ title, iconName, onPress }: Animated
 const styles = StyleSheet.create({
     tabBtnWrapper: {
         width: '100%',
-        marginBottom: 10,
+        marginBottom: 12,
     },
     tabBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#212121', // Dark grey background for the card/tab
+        // Increased opacity from 0.1 to 0.3 for better visibility of the translucent effect
+        backgroundColor: 'rgba(255, 255, 255, 0.2)', 
         paddingVertical: 15,
-        paddingHorizontal: 20,
+        paddingHorizontal: 10,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#333',
-        shadowColor: "#000",
-        shadowOpacity: 0.15,
-        shadowOffset: { width: 0, height: 4 },
-        shadowRadius: 6,
-        elevation: 5,
+        borderColor: '#ffffff3b',
+        width: '100%',
     },
     tabIcon: {
         marginRight: 15,

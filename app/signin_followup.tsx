@@ -354,20 +354,9 @@ const styles = StyleSheet.create({
 });
 
 
-
 // for notifying, The whole design is inspired by Aryan Bhanot's earlier work on the Tune Space music app.
 // Here is the link to the original repository:
 
 // https://github.com/aryanbhanot05/Tune_Space
 
 // Thank You for reviewing my code!
-
-// I have to give the presentation for this app after 1 hr.
-
-
-
-// we are not supposed to show code. all I need to do is to showcase the working app and show the audience, how it works in an interesting way.
-
-
-
-// i am going to speak up for the main page, login, signup and settings page

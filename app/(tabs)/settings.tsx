@@ -1,12 +1,69 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { supabase } from '../../lib/supabase';
+import { deleteUser, updateUser } from '../../lib/supabase_crud';
 
 export default function SettingsPage() {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [msg, setMsg] = useState('');
+
+  // useEffect(() => {
+  //   supabase.auth.getSession().then(({ data: { session } }) => {
+  //     if (!session?.user?.id) {
+  //       router.replace('/');
+  //       return;
+  //     }
+  //     setUserId(session.user.id);
+  //     getUserById(session.user.id).then(user => {
+  //       if (user) {
+  //         setFirstName(user.first_name);
+  //         setLastName(user.last_name);
+  //         setEmail(user.email);
+  //       }
+  //     });
+  //   });
+  // }, []);
+
+  const handleUpdate = async () => {
+    setMsg('');
+    try {
+      if (!userId) return;
+      await updateUser(userId, { first_name: firstName, last_name: lastName, email });
+      setMsg('Account info updated!');
+    } catch {
+      setMsg('Update failed.');
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace('/');
+  };
+
+  const handleDelete = async () => {
+    setMsg('');
+    if (!userId) return;
+    Alert.alert('Are you sure?', 'This will delete your account forever!', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteUser(userId);
+          await supabase.auth.signOut();
+          router.replace('/');
+        },
+      },
+    ]);
+  };
 
   return (
     <View style={styles.container}>
-
       <View style={styles.top}>
         <Text style={styles.title}>Account Settings</Text>
       </View>
@@ -17,6 +74,8 @@ export default function SettingsPage() {
           <Text style={styles.label}>First Name</Text>
           <TextInput
             style={styles.input}
+            value={firstName}
+            onChangeText={setFirstName}
             placeholder="First Name"
             placeholderTextColor="#888"
             autoCapitalize="words"
@@ -27,28 +86,29 @@ export default function SettingsPage() {
           <Text style={styles.label}>Last Name</Text>
           <TextInput
             style={styles.input}
+            value={lastName}
+            onChangeText={setLastName}
             placeholder="Last Name"
             placeholderTextColor="#888"
             autoCapitalize="words"
           />
         </View>
 
-
-        <TouchableOpacity style={styles.updateBtn}>
+        <TouchableOpacity style={styles.updateBtn} onPress={handleUpdate}>
           <Ionicons name="save-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.updateBtnTxt}>Update Info</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteBtn}>
+        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
           <Ionicons name="trash-outline" size={18} color="#fff" style={{ marginRight: 7 }} />
           <Text style={styles.deleteBtnTxt}>Delete Account</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.logoutBtn}>
+        {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Ionicons name="exit-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.logoutBtnTxt}>Logout</Text>
         </TouchableOpacity>
       </View>
-
-    </View >
+    </View>
   );
 }
 

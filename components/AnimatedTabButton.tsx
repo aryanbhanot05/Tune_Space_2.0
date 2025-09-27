@@ -49,7 +49,7 @@ export default function AnimatedTabButton({ title, iconName, onPress }: Animated
                 onPressOut={handlePressOut}
                 activeOpacity={1} // Disable default opacity change to use our scale animation
             >
-                <Ionicons name={iconName} size={24} color="#1DB954" style={styles.tabIcon} />
+                <Ionicons name={iconName} size={24} color="#a1cdffff" style={styles.tabIcon} />
                 <Text style={styles.tabTitle}>{title}</Text>
                 <Ionicons name="chevron-forward" size={24} color="#a2a2a2ff" />
             </TouchableOpacity>
@@ -66,7 +66,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        // Increased opacity from 0.1 to 0.3 for better visibility of the translucent effect
         backgroundColor: 'rgba(255, 255, 255, 0.2)', 
         paddingVertical: 15,
         paddingHorizontal: 10,

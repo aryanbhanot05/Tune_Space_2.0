@@ -1,64 +1,365 @@
+import AnimatedTabButton from '@/components/AnimatedTabButton';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Easing, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { VideoBackground } from '../../components/VideoBackground';
+import { supabase } from '../../lib/supabase';
+import { deleteUser, getUserById, updateUser } from '../../lib/supabase_crud';
+
+
+const SectionContent = ({ activeSection, state, handlers }: {
+  activeSection: string;
+  state: any;
+  handlers: any;
+}) => {
+  const { firstName, lastName, email, msg, notificationsEnabled, darkModeEnabled, feedbackText } = state;
+  const { setFirstName, setLastName, setEmail, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback } = handlers;
+  switch (activeSection) {
+    case 'account':
+      return (
+        <View style={styles.sectionContent}>
+          <View style={styles.field}>
+            <Text style={styles.label}>First Name</Text>
+            <TextInput
+              style={styles.input}
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="First Name"
+              placeholderTextColor="#888"
+              autoCapitalize="words"
+            />
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>Last Name</Text>
+            <TextInput
+              style={styles.input}
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Last Name"
+              placeholderTextColor="#888"
+              autoCapitalize="words"
+            />
+          </View>
+          <TouchableOpacity style={styles.updateBtn} onPress={handleUpdate}>
+            <Ionicons name="save-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.updateBtnTxt}>Update Info</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+            <Ionicons name="trash-outline" size={18} color="#fff" style={{ marginRight: 7 }} />
+            <Text style={styles.deleteBtnTxt}>Delete Account</Text>
+          </TouchableOpacity>
+          {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Ionicons name="exit-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.logoutBtnTxt}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    case 'general':
+      return (
+        <View style={styles.sectionContent}>
+          <View style={[styles.field, { marginTop: 15 }]}>
+            <View style={styles.row}>
+              <Text style={styles.label}>Notifications</Text>
+              <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={{ false: '#888', true: '#1DB954' }} />
+            </View>
+          </View>
+          <View style={styles.field}>
+            <View style={styles.row}>
+              <Text style={styles.label}>Dark Mode</Text>
+              <Switch value={darkModeEnabled} onValueChange={setDarkModeEnabled} trackColor={{ false: '#888', true: '#1DB954' }} />
+            </View>
+          </View>
+        </View>
+      );
+    case 'about':
+      return (
+        <View style={styles.sectionContent}>
+          <View style={styles.infoContainer}>
+            <Text style={styles.infoText}>
+              <Text style={styles.bold}>Tune Space</Text> — Crafted with <Text style={styles.heart}>♥</Text> by Aryan Bhanot{"\n"}
+              Version 1.0.0{"\n"}
+              <Text style={styles.meta}>© 2025 Arydew. All rights reserved.</Text>
+            </Text>
+          </View>
+        </View>
+      );
+    case 'feedback':
+      return (
+        <View style={styles.sectionContent}>
+          <View style={styles.field}>
+            <Text style={styles.label}>Your Feedback</Text>
+            <TextInput
+              style={[styles.input, styles.feedbackInput]}
+              value={feedbackText}
+              onChangeText={setFeedbackText}
+              placeholder="Tell us what you think..."
+              placeholderTextColor="#888"
+              multiline
+              numberOfLines={4}
+            />
+          </View>
+          <TouchableOpacity style={styles.updateBtn} onPress={handleSendFeedback}>
+            <Ionicons name="send-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.updateBtnTxt}>Send Feedback</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    default:
+      return null;
+  }
+};
 
 export default function SettingsPage() {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [msg, setMsg] = useState('');
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
+
+  const expandAnim = useRef(new Animated.Value(0)).current;
+  const contentOpacityAnim = useRef(new Animated.Value(0)).current;
+  const backButtonSlideAnim = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    if (activeSection === 'account') {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session?.user?.id) {
+          router.replace('/');
+          return;
+        }
+        setUserId(session.user.id);
+        getUserById(session.user.id).then(user => {
+          if (user) {
+            setFirstName(user.first_name || '');
+            setLastName(user.last_name || '');
+            setEmail(user.email || '');
+          }
+        });
+      });
+    }
+  }, [activeSection]);
+
+  const handleSectionOpen = (section: string) => {
+    setActiveSection(section);
+    backButtonSlideAnim.setValue(-100);
+    Animated.sequence([
+      Animated.timing(expandAnim, {
+        toValue: 1,
+        duration: 700,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.parallel([
+        Animated.timing(contentOpacityAnim, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backButtonSlideAnim, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  };
+
+  const handleSectionClose = () => {
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(contentOpacityAnim, {
+          toValue: 0,
+          duration: 300,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+        Animated.timing(backButtonSlideAnim, {
+          toValue: -100,
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(expandAnim, {
+        toValue: 0,
+        duration: 500,
+        easing: Easing.inOut(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setActiveSection(null);
+      contentOpacityAnim.setValue(0);
+      backButtonSlideAnim.setValue(-100);
+    });
+  };
+
+  const handleUpdate = async () => {
+    setMsg('');
+    try {
+      if (!userId) return;
+      await updateUser(userId, { first_name: firstName, last_name: lastName, email });
+      setMsg('Account info updated!');
+    } catch {
+      setMsg('Update failed.');
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace('/');
+  };
+
+  const handleDelete = async () => {
+    setMsg('');
+    if (!userId) return;
+    Alert.alert('Are you sure?', 'This will delete your account forever!', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await deleteUser(userId);
+          await supabase.auth.signOut();
+          router.replace('/');
+        },
+      },
+    ]);
+  };
+
+  const handleSendFeedback = () => {
+    Alert.alert('Feedback', 'Feedback submitted! (Placeholder)');
+    setFeedbackText('');
+  };
+
+  const stateProps = { firstName, lastName, email, msg, notificationsEnabled, darkModeEnabled, feedbackText };
+  const handlerProps = { setFirstName, setLastName, setEmail, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback };
 
   return (
     <View style={styles.container}>
-
-      <View style={styles.top}>
-        <Text style={styles.title}>Account Settings</Text>
-      </View>
-
-      {/* Settings Card */}
-      <View style={styles.card}>
-        <View style={styles.field}>
-          <Text style={styles.label}>First Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="First Name"
-            placeholderTextColor="#888"
-            autoCapitalize="words"
+      <VideoBackground />
+      <Animated.View style={[
+        styles.mainContent,
+        {
+          opacity: expandAnim.interpolate({
+            inputRange: [0, 0.5, 1],
+            outputRange: [1, 0.3, 0],
+          }),
+          transform: [
+            {
+              scale: expandAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [1, 0.9],
+              }),
+            },
+          ],
+        },
+      ]}>
+        <View style={styles.top}>
+          <Text style={styles.title}>Settings</Text>
+        </View>
+        <View style={styles.card}>
+          <AnimatedTabButton
+            title="Account"
+            iconName="person-outline"
+            onPress={() => handleSectionOpen('account')}
+          />
+          <AnimatedTabButton
+            title="General"
+            iconName="settings-outline"
+            onPress={() => handleSectionOpen('general')}
+          />
+          <AnimatedTabButton
+            title="About"
+            iconName="information-circle-outline"
+            onPress={() => handleSectionOpen('about')}
+          />
+          <AnimatedTabButton
+            title="Feedback"
+            iconName="chatbubble-outline"
+            onPress={() => handleSectionOpen('feedback')}
           />
         </View>
+      </Animated.View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Last Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Last Name"
-            placeholderTextColor="#888"
-            autoCapitalize="words"
-          />
-        </View>
-
-
-        <TouchableOpacity style={styles.updateBtn}>
-          <Ionicons name="save-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.updateBtnTxt}>Update Info</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteBtn}>
-          <Ionicons name="trash-outline" size={18} color="#fff" style={{ marginRight: 7 }} />
-          <Text style={styles.deleteBtnTxt}>Delete Account</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.logoutBtn}>
-          <Ionicons name="exit-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.logoutBtnTxt}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
-    </View >
+      <Animated.View
+        pointerEvents={activeSection ? 'auto' : 'none'}
+        style={[
+          styles.expandingOverlay,
+          {
+            transform: [{ scale: expandAnim }],
+            opacity: expandAnim.interpolate({
+              inputRange: [0, 0.1, 1],
+              outputRange: [0, 1, 1],
+              extrapolate: 'clamp',
+            }),
+          },
+        ]}
+      >
+        <VideoBackground />
+        <Animated.View style={[styles.expandedContentWrapper, { opacity: contentOpacityAnim }]}>
+          <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'center' }}>
+            <Animated.View style={[styles.backBtnContainer, { transform: [{ translateY: backButtonSlideAnim }] }]}>
+              <TouchableOpacity style={styles.backBtn} onPress={handleSectionClose}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
+            </Animated.View>
+            <Text style={styles.sectionTitle}>{activeSection?.charAt(0).toUpperCase()}{activeSection?.slice(1)}</Text>
+          </View>
+          {activeSection && (
+            <View style={styles.sectionCard}>
+              <SectionContent activeSection={activeSection} state={stateProps} handlers={handlerProps} />
+            </View>
+          )}
+        </Animated.View>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#121212",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    position: "relative"
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    position: 'relative',
+  },
+  backgroundVideo: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: -2,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(17, 22, 26, 0.6)',
+    zIndex: -1,
+  },
+  mainContent: {
+    width: '100%',
+    flex: 1,
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  top: {
+    width: '100%',
+    paddingTop: 30,
+    marginLeft: 30,
+    marginBottom: 20,
+  },
+  title: {
+    color: '#fff',
+    fontSize: 32,
+    fontWeight: 'bold',
+  },
+  card: {
+    width: '93%',
   },
   field: {
     width: "100%",
@@ -72,113 +373,191 @@ const styles = StyleSheet.create({
     marginLeft: 2,
     letterSpacing: 0.3,
   },
-  top: {
-    width: "100%",
-    paddingTop: 30,
-    height: 140,
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  welcome: {
-    fontSize: 38,
-    marginTop: 32,
-    color: "#1DB954",
-    fontWeight: "bold",
-    marginBottom: 14,
-    letterSpacing: 1,
-    textAlign: "center"
-  },
-  card: {
-    backgroundColor: "#23272f",
-    borderRadius: 22,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOpacity: 0.14,
+  tabBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(35,39,47,0.5)',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 15,
+    width: '80%',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
     shadowRadius: 24,
-    alignItems: "center"
+  },
+  tabIcon: {
+    marginRight: 12,
+  },
+  tabTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#b4b4b4',
+    flex: 1,
+  },
+  expandingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#121212',
+    zIndex: 10,
+    paddingHorizontal: 20,
+    paddingTop: 50,
+  },
+  expandedContentWrapper: {
+    flex: 1,
+    width: '100%',
+    gap: 20,
+  },
+  sectionCard: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: '#ffffff3b',
+    padding: 15,
+  },
+  sectionContent: {
+    width: '100%',
+  },
+  sectionTitle: {
+    color: '#fff',
+    fontSize: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: '#ffffff3b',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginHorizontal: 'auto',
+  },
+  backBtnContainer: {
+    zIndex: 20,
+    left: 0,
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: '#ffffff3b',
+    padding: 10,
+    borderRadius: 10,
+    width: 90,
+  },
+  backText: {
+    color: '#fff',
+    fontSize: 16,
+    marginLeft: 5,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   input: {
-    width: "100%",
-    backgroundColor: "#191c24",
-    color: "#e3ffdd",
+    width: '100%',
+    backgroundColor: 'rgba(25,28,36,0.8)',
+    color: '#e3ffdd',
     marginBottom: 15,
     paddingVertical: 13,
     paddingHorizontal: 18,
     borderRadius: 12,
     fontSize: 18,
     borderWidth: 1,
-    borderColor: "#232f24"
+    borderColor: '#232f24',
+  },
+  feedbackInput: {
+    height: 100,
+    textAlignVertical: 'top',
   },
   updateBtn: {
-    backgroundColor: "#1DB954",
+    backgroundColor: '#1DB954',
     borderRadius: 10,
     paddingVertical: 13,
     paddingHorizontal: 28,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "center",
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
     marginTop: 10,
     marginBottom: 8,
-    width: 275
+    width: 275,
   },
-  updateBtnTxt: { color: "#fff", fontWeight: "700", fontSize: 17 },
+  updateBtnTxt: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 17,
+  },
   deleteBtn: {
-    backgroundColor: "#D32F2F",
-    borderRadius: 10, paddingVertical: 12, paddingHorizontal: 26,
-    alignItems: "center", marginBottom: 10, width: 275,
-    flexDirection: "row", justifyContent: "center"
+    backgroundColor: '#D32F2F',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 26,
+    alignItems: 'center',
+    marginBottom: 10,
+    width: 275,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
-  deleteBtnTxt: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  deleteBtnTxt: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
   logoutBtn: {
-    backgroundColor: "#283043",
-    borderRadius: 10, paddingVertical: 12, paddingHorizontal: 26,
-    alignItems: "center", marginTop: 10, width: 275,
-    flexDirection: "row", justifyContent: "center"
+    backgroundColor: '#283043',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 26,
+    alignItems: 'center',
+    marginTop: 10,
+    width: 275,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
-  logoutBtnTxt: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  logoutBtnTxt: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
   msg: {
-    color: "#88dda5",
-    textAlign: "center",
+    color: '#88dda5',
+    textAlign: 'center',
     marginVertical: 12,
     fontSize: 15,
-    fontWeight: "500"
+    fontWeight: '500',
   },
   infoContainer: {
     paddingVertical: 18,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoText: {
-    color: "#b3b3b3",
+    color: '#b3b3b3',
     fontSize: 15,
-    textAlign: "center",
+    textAlign: 'center',
     letterSpacing: 0.2,
     lineHeight: 22,
   },
   bold: {
-    color: "#1DB954",
-    fontWeight: "bold",
+    color: '#1DB954',
+    fontWeight: 'bold',
     fontSize: 16,
     letterSpacing: 0.3,
   },
   heart: {
-    color: "#de2c66",
-    fontWeight: "bold",
+    color: '#de2c66',
+    fontWeight: 'bold',
   },
   meta: {
-    color: "#888",
+    color: '#888',
     fontSize: 13,
-    fontStyle: "italic",
+    fontStyle: 'italic',
   },
-  title: {
-    color: "#fff",
-    fontSize: 38,
-    fontWeight: "bold",
-    letterSpacing: 1,
-    marginTop: 22,
-  }
-
 });
 
 // for notifying, The whole design is inspired by Aryan Bhanot's earlier work on the Tune Space music app.

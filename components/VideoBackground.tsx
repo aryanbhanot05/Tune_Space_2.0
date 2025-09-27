@@ -4,13 +4,27 @@ import { StyleSheet, View } from 'react-native';
 
 const VIDEO_SOURCE = require('../assets/videos/bg1.mp4');
 
-export function VideoBackground() {
+export const VIDEO_SOURCE_MAP = {
+    main: require('../assets/videos/bg1.mp4'),
+    bg2: require('../assets/videos/bg2.mp4'),
+    bg3: require('../assets/videos/bg3.mp4'),
+    bg4: require('../assets/videos/bg4.mp4'),
+    bg5: require('../assets/videos/bg5.mp4'),
+    bg6: require('../assets/videos/bg6.mp4'),
+    bg7: require('../assets/videos/bg7.mp4'),
+    bg8: require('../assets/videos/bg8.mp4'),
+    bg9: require('../assets/videos/bg9.mp4'),
+    bg10: require('../assets/videos/bg10.mp4'),
+};
+
+export function VideoBackground({ source }: { source: any }) {
+    const finalSource = source || VIDEO_SOURCE_MAP.main;
     return (
         <View style={styles.container}>
             {/* Video Component */}
             <Video
                 style={styles.backgroundVideo}
-                source={VIDEO_SOURCE}
+                source={finalSource}
                 rate={1.0}
                 volume={0.0}
                 isMuted={true}
@@ -38,3 +52,5 @@ const styles = StyleSheet.create({
         zIndex: 1,
     },
 });
+
+// all the video assets have been taken from https://pixabay.com/users/3092371/?tab=videos&order=latest&pagi=1

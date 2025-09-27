@@ -1,9 +1,9 @@
 import AnimatedTabButton from '@/components/AnimatedTabButton';
 import { Ionicons } from '@expo/vector-icons';
-import { ResizeMode, Video } from 'expo-av';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Easing, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { VideoBackground } from '../../components/VideoBackground';
 import { supabase } from '../../lib/supabase';
 import { deleteUser, getUserById, updateUser } from '../../lib/supabase_crud';
 
@@ -15,12 +15,10 @@ const SectionContent = ({ activeSection, state, handlers }: {
 }) => {
   const { firstName, lastName, email, msg, notificationsEnabled, darkModeEnabled, feedbackText } = state;
   const { setFirstName, setLastName, setEmail, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback } = handlers;
-
   switch (activeSection) {
     case 'account':
       return (
         <View style={styles.sectionContent}>
-          <Text style={styles.sectionTitle}>Account Settings</Text>
           <View style={styles.field}>
             <Text style={styles.label}>First Name</Text>
             <TextInput
@@ -43,18 +41,6 @@ const SectionContent = ({ activeSection, state, handlers }: {
               autoCapitalize="words"
             />
           </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Email"
-              placeholderTextColor="#888"
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-          </View>
           <TouchableOpacity style={styles.updateBtn} onPress={handleUpdate}>
             <Ionicons name="save-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
             <Text style={styles.updateBtnTxt}>Update Info</Text>
@@ -73,7 +59,6 @@ const SectionContent = ({ activeSection, state, handlers }: {
     case 'general':
       return (
         <View style={styles.sectionContent}>
-          <Text style={styles.sectionTitle}>General Settings</Text>
           <View style={[styles.field, { marginTop: 15 }]}>
             <View style={styles.row}>
               <Text style={styles.label}>Notifications</Text>
@@ -91,7 +76,6 @@ const SectionContent = ({ activeSection, state, handlers }: {
     case 'about':
       return (
         <View style={styles.sectionContent}>
-          <Text style={styles.sectionTitle}>About</Text>
           <View style={styles.infoContainer}>
             <Text style={styles.infoText}>
               <Text style={styles.bold}>Tune Space</Text> — Crafted with <Text style={styles.heart}>♥</Text> by Aryan Bhanot{"\n"}
@@ -104,7 +88,6 @@ const SectionContent = ({ activeSection, state, handlers }: {
     case 'feedback':
       return (
         <View style={styles.sectionContent}>
-          <Text style={styles.sectionTitle}>Feedback</Text>
           <View style={styles.field}>
             <Text style={styles.label}>Your Feedback</Text>
             <TextInput
@@ -261,18 +244,7 @@ export default function SettingsPage() {
 
   return (
     <View style={styles.container}>
-      <Video
-        style={styles.backgroundVideo}
-        source={require('../../assets/videos/bg1.mp4')}
-        rate={1.0}
-        volume={0.0}
-        isMuted={true}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-      />
-
-      <View style={styles.overlay} />
+      <VideoBackground />
       <Animated.View style={[
         styles.mainContent,
         {
@@ -331,13 +303,17 @@ export default function SettingsPage() {
           },
         ]}
       >
+        <VideoBackground />
         <Animated.View style={[styles.expandedContentWrapper, { opacity: contentOpacityAnim }]}>
-          <Animated.View style={[styles.backBtnContainer, { transform: [{ translateY: backButtonSlideAnim }] }]}>
-            <TouchableOpacity style={styles.backBtn} onPress={handleSectionClose}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
-              <Text style={styles.backText}>Back</Text>
-            </TouchableOpacity>
-          </Animated.View>
+          <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'center' }}>
+            <Animated.View style={[styles.backBtnContainer, { transform: [{ translateY: backButtonSlideAnim }] }]}>
+              <TouchableOpacity style={styles.backBtn} onPress={handleSectionClose}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
+            </Animated.View>
+            <Text style={styles.sectionTitle}>{activeSection?.charAt(0).toUpperCase()}{activeSection?.slice(1)}</Text>
+          </View>
           {activeSection && (
             <View style={styles.sectionCard}>
               <SectionContent activeSection={activeSection} state={stateProps} handlers={handlerProps} />
@@ -428,22 +404,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#121212',
     zIndex: 10,
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: 50,
   },
   expandedContentWrapper: {
     flex: 1,
     width: '100%',
+    gap: 20,
   },
   sectionCard: {
     width: '100%',
-    backgroundColor: 'rgba(35,39,47,0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: 15,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: '#ffffff3b',
+    padding: 15,
   },
   sectionContent: {
     width: '100%',
@@ -451,23 +425,29 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: '#fff',
     fontSize: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: '#ffffff3b',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
     fontWeight: 'bold',
-    marginBottom: 20,
     textAlign: 'center',
+    marginHorizontal: 'auto',
   },
   backBtnContainer: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
     zIndex: 20,
+    left: 0,
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(35,39,47,0.7)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: '#ffffff3b',
     padding: 10,
     borderRadius: 10,
-    width: 80,
+    width: 90,
   },
   backText: {
     color: '#fff',

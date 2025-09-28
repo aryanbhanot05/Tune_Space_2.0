@@ -1,4 +1,5 @@
 import AnimatedTabButton from '@/components/AnimatedTabButton';
+import { useTheme } from '@/lib/themeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -40,7 +41,6 @@ const CustomDropdown = ({ selectedTheme, onSelect, isModalVisible, toggleModal }
   isModalVisible: boolean;
   toggleModal: () => void;
 }) => {
-
   const handleSelect = (item: ThemeOption) => {
     onSelect(item.value);
     toggleModal();
@@ -95,13 +95,12 @@ const CustomDropdown = ({ selectedTheme, onSelect, isModalVisible, toggleModal }
   );
 };
 
-
 const SectionContent = ({ activeSection, state, handlers }: {
   activeSection: string;
   state: any;
   handlers: any;
 }) => {
-  const { firstName, lastName, msg, notificationsEnabled, feedbackText, selectedThemeValue, selectedThemeLabel, isThemeDropdownVisible } = state;
+  const { firstName, lastName, msg, notificationsEnabled, feedbackText, selectedThemeLabel, isThemeDropdownVisible } = state;
   const { setFirstName, setLastName, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setFeedbackText, handleSendFeedback, setSelectedTheme, toggleThemeDropdown } = handlers;
 
   switch (activeSection) {
@@ -204,6 +203,7 @@ const SectionContent = ({ activeSection, state, handlers }: {
 };
 
 export default function SettingsPage() {
+  const { selectedTheme, setTheme } = useTheme();
   const [userId, setUserId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -213,7 +213,6 @@ export default function SettingsPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
-  const [selectedTheme, setSelectedTheme] = useState(themeOptions[0].value);
   const [isThemeDropdownVisible, setThemeDropdownVisible] = useState(false);
   const expandAnim = useRef(new Animated.Value(0)).current;
   const contentOpacityAnim = useRef(new Animated.Value(0)).current;
@@ -341,19 +340,19 @@ export default function SettingsPage() {
 
   const stateProps = {
     firstName, lastName, email, msg, notificationsEnabled, darkModeEnabled, feedbackText,
-    selectedThemeValue: selectedTheme,
     selectedThemeLabel: getSelectedThemeLabel(selectedTheme),
     isThemeDropdownVisible
   };
   const handlerProps = {
     setFirstName, setLastName, setEmail, handleUpdate, handleDelete, handleLogout,
     setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback,
-    setSelectedTheme, toggleThemeDropdown
+    setSelectedTheme: setTheme,
+    toggleThemeDropdown
   };
 
   return (
     <View style={styles.container}>
-      <VideoBackground source={{ selectedTheme }} />
+      <VideoBackground />
       <Animated.View style={[
         styles.mainContent,
         {
@@ -412,7 +411,7 @@ export default function SettingsPage() {
           },
         ]}
       >
-        <VideoBackground source={{ selectedTheme }} />
+        <VideoBackground />
         <Animated.View style={[styles.expandedContentWrapper, { opacity: contentOpacityAnim }]}>
           <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'center' }}>
             <Animated.View style={[styles.backBtnContainer, { transform: [{ translateY: backButtonSlideAnim }] }]}>

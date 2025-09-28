@@ -1,6 +1,7 @@
 import { ResizeMode, Video } from 'expo-av';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useTheme } from '@/lib/themeContext';
 
 export const VIDEO_SOURCE_MAP = {
     bg1: require('../assets/videos/bg1.mp4'),
@@ -17,15 +18,13 @@ export const VIDEO_SOURCE_MAP = {
 
 type VideoThemeKey = keyof typeof VIDEO_SOURCE_MAP;
 
-export function VideoBackground({ source }: { source: { selectedTheme: VideoThemeKey | string } }) {
-    
-    const themeKey = source?.selectedTheme || 'bg1'; 
-    
+export function VideoBackground() {
+    const { selectedTheme } = useTheme();
+    const themeKey = selectedTheme || 'bg1';
     const finalSource = VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1;
     
     return (
         <View style={styles.container}>
-            {/* Video Component */}
             <Video
                 style={styles.backgroundVideo}
                 source={finalSource}
@@ -36,7 +35,6 @@ export function VideoBackground({ source }: { source: { selectedTheme: VideoThem
                 shouldPlay
                 isLooping
             />
-            {/* Semi-Transparent Overlay for Contrast */}
             <View style={styles.overlay} />
         </View>
     );

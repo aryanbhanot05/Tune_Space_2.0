@@ -9,7 +9,7 @@ export default function TabsLayout() {
         <View style={styles.container}>
 
             <View style={styles.tabBarBackgroundOverlay}>
-                <VideoBackground />
+                <VideoBackground source={{selectedTheme: '' }} />
             </View>
             <View style={styles.tabBarBackgroundOverlay2} />
 

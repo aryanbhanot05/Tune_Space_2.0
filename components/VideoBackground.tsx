@@ -2,10 +2,8 @@ import { ResizeMode, Video } from 'expo-av';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
-const VIDEO_SOURCE = require('../assets/videos/bg1.mp4');
-
 export const VIDEO_SOURCE_MAP = {
-    main: require('../assets/videos/bg1.mp4'),
+    bg1: require('../assets/videos/bg1.mp4'),
     bg2: require('../assets/videos/bg2.mp4'),
     bg3: require('../assets/videos/bg3.mp4'),
     bg4: require('../assets/videos/bg4.mp4'),
@@ -17,8 +15,14 @@ export const VIDEO_SOURCE_MAP = {
     bg10: require('../assets/videos/bg10.mp4'),
 };
 
-export function VideoBackground({ source }: { source: any }) {
-    const finalSource = source || VIDEO_SOURCE_MAP.main;
+type VideoThemeKey = keyof typeof VIDEO_SOURCE_MAP;
+
+export function VideoBackground({ source }: { source: { selectedTheme: VideoThemeKey | string } }) {
+    
+    const themeKey = source?.selectedTheme || 'bg1'; 
+    
+    const finalSource = VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1;
+    
     return (
         <View style={styles.container}>
             {/* Video Component */}

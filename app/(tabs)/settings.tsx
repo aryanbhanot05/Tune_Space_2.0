@@ -1,20 +1,108 @@
 import AnimatedTabButton from '@/components/AnimatedTabButton';
+import { useTheme } from '@/lib/themeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Easing, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Easing, FlatList, Modal, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { VideoBackground } from '../../components/VideoBackground';
 import { supabase } from '../../lib/supabase';
 import { deleteUser, getUserById, updateUser } from '../../lib/supabase_crud';
 
+const themeOptions = [
+  { label: 'Blue Theme', value: 'bg1' },
+  { label: 'Option 1', value: 'bg2' },
+  { label: 'Option 2', value: 'bg3' },
+  { label: 'Option 3', value: 'bg4' },
+  { label: 'Option 4', value: 'bg5' },
+  { label: 'Option 5', value: 'bg6' },
+  { label: 'Option 6', value: 'bg7' },
+  { label: 'Option 7', value: 'bg8' },
+  { label: 'Option 8', value: 'bg9' },
+  { label: 'Option 9', value: 'bg10' },
+];
+
+type ThemeOption = {
+  label: string;
+  value: string;
+};
+
+const DropdownItem = ({ item, onSelect }: { item: ThemeOption; onSelect: (item: ThemeOption) => void }) => (
+  <TouchableOpacity
+    style={styles.option}
+    onPress={() => onSelect(item)}
+  >
+    <Text style={styles.optionText}>{item.label}</Text>
+  </TouchableOpacity>
+);
+
+const CustomDropdown = ({ selectedTheme, onSelect, isModalVisible, toggleModal }: {
+  selectedTheme: string;
+  onSelect: (themeValue: string) => void;
+  isModalVisible: boolean;
+  toggleModal: () => void;
+}) => {
+  const handleSelect = (item: ThemeOption) => {
+    onSelect(item.value);
+    toggleModal();
+  };
+
+  const renderDropdown = () => {
+    return (
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={toggleModal}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          onPress={toggleModal}
+        >
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <View style={styles.dropdownContent}>
+              <FlatList
+                data={themeOptions}
+                keyExtractor={(item) => item.value}
+                renderItem={({ item }) => (
+                  <DropdownItem item={item} onSelect={handleSelect} />
+                )}
+              />
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  };
+
+  return (
+    <View style={styles.dropdownContainer}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={toggleModal}
+      >
+        <Text style={styles.buttonText}>
+          {selectedTheme || 'Select Theme'}
+        </Text>
+        <Ionicons
+          name={isModalVisible ? "chevron-up" : "chevron-down"}
+          size={16}
+          color="#333"
+        />
+      </TouchableOpacity>
+
+      {renderDropdown()}
+    </View>
+  );
+};
 
 const SectionContent = ({ activeSection, state, handlers }: {
   activeSection: string;
   state: any;
   handlers: any;
 }) => {
-  const { firstName, lastName, email, msg, notificationsEnabled, darkModeEnabled, feedbackText } = state;
-  const { setFirstName, setLastName, setEmail, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback } = handlers;
+  const { firstName, lastName, msg, notificationsEnabled, feedbackText, selectedThemeLabel, isThemeDropdownVisible } = state;
+  const { setFirstName, setLastName, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setFeedbackText, handleSendFeedback, setSelectedTheme, toggleThemeDropdown } = handlers;
+
   switch (activeSection) {
     case 'account':
       return (
@@ -65,11 +153,14 @@ const SectionContent = ({ activeSection, state, handlers }: {
               <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={{ false: '#888', true: '#1DB954' }} />
             </View>
           </View>
-          <View style={styles.field}>
-            <View style={styles.row}>
-              <Text style={styles.label}>Dark Mode</Text>
-              <Switch value={darkModeEnabled} onValueChange={setDarkModeEnabled} trackColor={{ false: '#888', true: '#1DB954' }} />
-            </View>
+          <View style={[styles.field, { marginTop: 15 }]}>
+            <Text style={styles.label}>App Theme</Text>
+            <CustomDropdown
+              selectedTheme={selectedThemeLabel}
+              onSelect={setSelectedTheme}
+              isModalVisible={isThemeDropdownVisible}
+              toggleModal={toggleThemeDropdown}
+            />
           </View>
         </View>
       );
@@ -112,6 +203,7 @@ const SectionContent = ({ activeSection, state, handlers }: {
 };
 
 export default function SettingsPage() {
+  const { selectedTheme, setTheme } = useTheme();
   const [userId, setUserId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -121,7 +213,7 @@ export default function SettingsPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
-
+  const [isThemeDropdownVisible, setThemeDropdownVisible] = useState(false);
   const expandAnim = useRef(new Animated.Value(0)).current;
   const contentOpacityAnim = useRef(new Animated.Value(0)).current;
   const backButtonSlideAnim = useRef(new Animated.Value(-100)).current;
@@ -239,8 +331,24 @@ export default function SettingsPage() {
     setFeedbackText('');
   };
 
-  const stateProps = { firstName, lastName, email, msg, notificationsEnabled, darkModeEnabled, feedbackText };
-  const handlerProps = { setFirstName, setLastName, setEmail, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback };
+  const toggleThemeDropdown = () => setThemeDropdownVisible(prev => !prev);
+
+  const getSelectedThemeLabel = (themeValue: string) => {
+    const theme = themeOptions.find(option => option.value === themeValue);
+    return theme ? theme.label : 'Select Theme';
+  };
+
+  const stateProps = {
+    firstName, lastName, email, msg, notificationsEnabled, darkModeEnabled, feedbackText,
+    selectedThemeLabel: getSelectedThemeLabel(selectedTheme),
+    isThemeDropdownVisible
+  };
+  const handlerProps = {
+    setFirstName, setLastName, setEmail, handleUpdate, handleDelete, handleLogout,
+    setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback,
+    setSelectedTheme: setTheme,
+    toggleThemeDropdown
+  };
 
   return (
     <View style={styles.container}>
@@ -458,6 +566,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    backgroundColor: '#fff',
+  },
+  buttonText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  arrowIcon: {
+    fontSize: 12,
+    color: '#333',
+    marginLeft: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Dark overlay background
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownContainer: {
+    zIndex: 1, // Ensure the dropdown button is layered correctly
+    width: '100%',
+  },
+  dropdownContent: {
+    width: '80%', // Adjust width as needed
+    maxHeight: 200, // Limit the height of the options list
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 5,
+    // Add shadow/elevation for better visibility
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  option: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  optionText: {
+    fontSize: 16,
+    color: '#333',
   },
   input: {
     width: '100%',

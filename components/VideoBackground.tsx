@@ -1,16 +1,33 @@
 import { ResizeMode, Video } from 'expo-av';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useTheme } from '@/lib/themeContext';
 
-const VIDEO_SOURCE = require('../assets/videos/bg1.mp4');
+export const VIDEO_SOURCE_MAP = {
+    bg1: require('../assets/videos/bg1.mp4'),
+    bg2: require('../assets/videos/bg2.mp4'),
+    bg3: require('../assets/videos/bg3.mp4'),
+    bg4: require('../assets/videos/bg4.mp4'),
+    bg5: require('../assets/videos/bg5.mp4'),
+    bg6: require('../assets/videos/bg6.mp4'),
+    bg7: require('../assets/videos/bg7.mp4'),
+    bg8: require('../assets/videos/bg8.mp4'),
+    bg9: require('../assets/videos/bg9.mp4'),
+    bg10: require('../assets/videos/bg10.mp4'),
+};
+
+type VideoThemeKey = keyof typeof VIDEO_SOURCE_MAP;
 
 export function VideoBackground() {
+    const { selectedTheme } = useTheme();
+    const themeKey = selectedTheme || 'bg1';
+    const finalSource = VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1;
+    
     return (
         <View style={styles.container}>
-            {/* Video Component */}
             <Video
                 style={styles.backgroundVideo}
-                source={VIDEO_SOURCE}
+                source={finalSource}
                 rate={1.0}
                 volume={0.0}
                 isMuted={true}
@@ -18,7 +35,6 @@ export function VideoBackground() {
                 shouldPlay
                 isLooping
             />
-            {/* Semi-Transparent Overlay for Contrast */}
             <View style={styles.overlay} />
         </View>
     );
@@ -38,3 +54,5 @@ const styles = StyleSheet.create({
         zIndex: 1,
     },
 });
+
+// all the video assets have been taken from https://pixabay.com/users/3092371/?tab=videos&order=latest&pagi=1

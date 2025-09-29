@@ -1,3 +1,4 @@
+import { VideoBackground } from "@/components/VideoBackground";
 import React, { useState } from "react";
 import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
 
@@ -53,6 +54,7 @@ export default function HomePage() {
 
   return (
     <View style={styles.container}>
+      <VideoBackground />
       <View style={styles.top}>
         <Text style={styles.title}>Hi, User</Text>
         <Text style={styles.title}>Search</Text>
@@ -93,7 +95,7 @@ export default function HomePage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#121212",
+    backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "flex-start",
     position: "relative",

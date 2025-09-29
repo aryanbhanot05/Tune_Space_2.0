@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 interface ThemeContextType {
   selectedTheme: string;
@@ -18,8 +19,27 @@ export const useTheme = (): ThemeContextType => {
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [selectedTheme, setSelectedTheme] = useState<string>('bg1');
 
-  const setTheme = (newTheme: string) => {
-    setSelectedTheme(newTheme);
+  useEffect(() => {
+    const loadTheme = async () => {
+      try {
+        const storedTheme = await AsyncStorage.getItem('appTheme');
+        if (storedTheme) {
+          setSelectedTheme(storedTheme);
+        }
+      } catch (error) {
+        console.error('Failed to load theme:', error);
+      }
+    };
+    loadTheme();
+  }, []);
+
+  const setTheme = async (newTheme: string) => {
+    try {
+      setSelectedTheme(newTheme);
+      await AsyncStorage.setItem('appTheme', newTheme);
+    } catch (error) {
+      console.error('Failed to save theme:', error);
+    }
   };
 
   return (

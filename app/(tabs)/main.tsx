@@ -1,3 +1,4 @@
+import { VideoBackground } from "@/components/VideoBackground";
 import { useRouter } from "expo-router";
 import React from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -11,6 +12,7 @@ export default function WelcomeScreen() {
   };
   return (
     <View style={styles.container}>
+      <VideoBackground />
       <Text style={styles.text}>Welcome Back (User)</Text>
 
       <TouchableOpacity style={styles.logocontainer} onPress={HandleAnalyzeMood} >
@@ -25,7 +27,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#10151b',
+    backgroundColor: '#transparent',
     gap: 100,
 
   },

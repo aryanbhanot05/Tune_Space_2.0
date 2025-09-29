@@ -1,17 +1,18 @@
+import { VideoBackground } from "@/components/VideoBackground";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  SectionList,
   Image,
-  Pressable,
-  TextInput,
-  StyleSheet,
   Platform,
+  Pressable,
+  SectionList,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, useRouter } from "expo-router";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 
 type LibraryItem = {
   id: string;
@@ -132,6 +133,7 @@ export default function LibraryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <VideoBackground />
       <Header />
 
       <SearchRow
@@ -298,13 +300,13 @@ function Row({ item, onPress }: { item: LibraryItem; onPress: () => void }) {
 
 /* ------------------------ Styles ------------------------ */
 
-const BG = "#121212";
+const BG = "transparent";
 const FG = "#eaeaea";
 const MUTED = "#9aa0a6";
 const CARD = "#1f1f1f";
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG },
+  container: { flex: 1, backgroundColor: BG, paddingBottom: 60 },
   header: {
     paddingHorizontal: 16,
     paddingTop: Platform.select({ ios: 4, android: 8, default: 8 }),

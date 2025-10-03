@@ -2,6 +2,7 @@ import { VideoBackground } from "@/components/VideoBackground";
 import React, { useState } from "react";
 import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
 
+
 const SONGS = [
   {
     id: "1",
@@ -58,6 +59,7 @@ export default function HomePage() {
       <View style={styles.top}>
         <Text style={styles.title}>Hi, User</Text>
         <Text style={styles.title}>Search</Text>
+
       </View>
 
       <TextInput
@@ -147,3 +149,5 @@ const styles = StyleSheet.create({
     borderBottomColor: "#2a2f3a",
   },
 });
+
+

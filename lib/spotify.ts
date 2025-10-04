@@ -7,7 +7,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 const SCHEME = "tunespace20";           // <-- matches app.json
 const CALLBACK_PATH = "auth/callback";
-const SCOPES = "user-read-email user-read-private";
+const SCOPES = "user-read-email user-read-private streaming";
 
 const returnUrl = AuthSession.makeRedirectUri({
   scheme: SCHEME,

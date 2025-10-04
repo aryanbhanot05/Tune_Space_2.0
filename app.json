@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "extra": {
-      "EXPO_PUBLIC_SPOTIFY_CLIENT_ID": "b84a8fccacfc40e3aa72f12e3f7f7209"
+      "EXPO_PUBLIC_SPOTIFY_CLIENT_ID": "85182cf9ea2f44eca75641e41a8b1923"
     },
     "ios": {
       "supportsTablet": true

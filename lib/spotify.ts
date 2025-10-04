@@ -78,3 +78,50 @@ export async function searchTracks(q: string, limit = 20, offset = 0): Promise<S
     preview_url: t.preview_url ?? null,
   }));
 }
+// Add this function to handle PUT requests
+async function spotifyPut<T = any>(path: string, body?: Record<string, any>) {
+  const token = await requireSpotifyToken();
+  const url = new URL(`https://api.spotify.com/v1${path}`);
+  const res = await fetch(url.toString(), {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (res.status === 401) throw new Error("Spotify token expired (401). Re-auth required.");
+  // A 204 No Content response is a success for playback commands
+  if (res.status === 204) return null;
+  if (!res.ok) throw new Error(`Spotify ${res.status}: ${await res.text()}`);
+  return res.json() as Promise<T>;
+}
+
+
+// Add these two new functions to the end of lib/spotify.ts
+
+export type Device = {
+  id: string | null;
+  is_active: boolean;
+  is_private_session: boolean;
+  is_restricted: boolean;
+  name: string;
+  type: string;
+  volume_percent: number | null;
+};
+
+export async function getAvailableDevices(): Promise<Device[]> {
+  const data = await spotifyGet<{ devices: Device[] }>("/me/player/devices");
+  return data.devices;
+}
+
+export async function playTrack(trackUri: string, deviceId?: string) {
+  const params: { uris: string[], device_id?: string } = {
+    uris: [trackUri],
+  };
+  if (deviceId) {
+    params.device_id = deviceId;
+  }
+  // The play endpoint doesn't return any content on success, so we return null
+  await spotifyPut("/me/player/play", params);
+}

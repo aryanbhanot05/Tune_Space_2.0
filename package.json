@@ -11,6 +11,8 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@aws-sdk/client-rekognition": "^3.901.0",
+    "@aws-sdk/credential-providers": "^3.901.0",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
@@ -21,7 +23,7 @@
     "expo-auth-session": "~7.0.8",
     "expo-blur": "~15.0.7",
     "expo-camera": "~17.0.7",
-    "expo-constants": "~18.0.8",
+    "expo-constants": "~18.0.9",
     "expo-font": "~14.0.8",
     "expo-haptics": "~15.0.7",
     "expo-image": "~3.0.8",

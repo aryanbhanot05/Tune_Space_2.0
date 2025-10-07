@@ -22,8 +22,9 @@ export async function signInWithSpotify(): Promise<void> {
   if (error) throw error;
 
   const result = await WebBrowser.openAuthSessionAsync(data.url!, returnUrl);
-  if (result.type !== "success" || !result.url) throw new Error("Spotify auth cancelled");
-
+  if (result.type !== "success" || !result.url) {
+    throw new Error("Spotify auth cancelled");
+  }
   const url = new URL(result.url);
   const authCode =
     url.searchParams.get("code") ??

@@ -1,11 +1,10 @@
-// lib/spotify.ts (minimal search-only version)
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import { supabase } from "./supabase";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const SCHEME = "tunespace20";           // <-- matches app.json
+const SCHEME = "tunespace20";  
 const CALLBACK_PATH = "auth/callback";
 const SCOPES = "user-read-email user-read-private streaming";
 
@@ -31,7 +30,6 @@ export async function signInWithSpotify(): Promise<void> {
     new URLSearchParams(url.hash.replace(/^#/, "")).get("code");
   if (!authCode) throw new Error("No auth code in callback");
 
-  // If your supabase-js is older, this takes a string:
   const { error: exErr } = await supabase.auth.exchangeCodeForSession(authCode as string);
   if (exErr) throw exErr;
 }
@@ -79,7 +77,6 @@ export async function searchTracks(q: string, limit = 20, offset = 0): Promise<S
     preview_url: t.preview_url ?? null,
   }));
 }
-// Add this function to handle PUT requests
 async function spotifyPut<T = any>(path: string, body?: Record<string, any>) {
   const token = await requireSpotifyToken();
   const url = new URL(`https://api.spotify.com/v1${path}`);
@@ -92,14 +89,12 @@ async function spotifyPut<T = any>(path: string, body?: Record<string, any>) {
     body: body ? JSON.stringify(body) : undefined,
   });
   if (res.status === 401) throw new Error("Spotify token expired (401). Re-auth required.");
-  // A 204 No Content response is a success for playback commands
   if (res.status === 204) return null;
   if (!res.ok) throw new Error(`Spotify ${res.status}: ${await res.text()}`);
   return res.json() as Promise<T>;
 }
 
 
-// Add these two new functions to the end of lib/spotify.ts
 
 export type Device = {
   id: string | null;
@@ -123,6 +118,8 @@ export async function playTrack(trackUri: string, deviceId?: string) {
   if (deviceId) {
     params.device_id = deviceId;
   }
-  // The play endpoint doesn't return any content on success, so we return null
   await spotifyPut("/me/player/play", params);
 }
+
+// parts of this code is provided from AI
+// type AI used Gemini 2.5 pro

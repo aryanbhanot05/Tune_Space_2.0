@@ -19,6 +19,7 @@
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
     "@supabase/supabase-js": "^2.57.4",
+    "base-64": "^1.0.0",
     "expo": "^54.0.10",
     "expo-auth-session": "~7.0.8",
     "expo-blur": "~15.0.7",

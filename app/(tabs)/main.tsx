@@ -1,86 +1,214 @@
 import { VideoBackground } from "@/components/VideoBackground";
-import { ensureSpotifySignedIn, getAvailableDevices, playTrack } from "@/lib/spotify"; // Adjust path if needed
-import { useRouter } from "expo-router";
-import React from "react";
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ensureSpotifySignedIn, getAvailableDevices, playTrack, searchTracks, SimpleTrack } from "@/lib/spotify";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function WelcomeScreen() {
+    const router = useRouter();
+    const { emotion } = useLocalSearchParams<{ emotion?: string }>();
+    const [tracks, setTracks] = useState<SimpleTrack[]>([]);
+    const [currentEmotion, setCurrentEmotion] = useState<string | null>(null);
 
-  const router = useRouter();
+    useEffect(() => {
+        if (emotion) {
+            handleEmotion(emotion);
+        }
+    }, [emotion]);
 
-  const HandleAnalyzeMood = async () => {
-  try {
-    // Make sure the user is signed in
-    await ensureSpotifySignedIn();
+    const handleEmotion = async (detectedEmotion: string) => {
+        setCurrentEmotion(detectedEmotion);
+        let searchQuery = "popular happy songs"; // Default search
 
-    // Get the user's available devices
-    const devices = await getAvailableDevices();
-    if (devices.length === 0) {
-      Alert.alert("No Active Devices", "Please open Spotify on one of your devices and try again.");
-      return;
-    }
+        // Map Rekognition emotions to Spotify search queries
+        switch (detectedEmotion.toUpperCase()) {
+            case 'HAPPY':
+                searchQuery = "happy upbeat pop";
+                break;
+            case 'SAD':
+                searchQuery = "sad emotional ballads";
+                break;
+            case 'ANGRY':
+                searchQuery = "angry rock metal";
+                break;
+            case 'SURPRISED':
+                searchQuery = "energetic electronic dance";
+                break;
+            case 'CALM':
+                searchQuery = "calm relaxing instrumental";
+                break;
+            case 'FEAR':
+                searchQuery = "dark ambient music";
+                break;
+            case 'DISGUST':
+                searchQuery = "heavy industrial music";
+                break;
+            default:
+                searchQuery = "top global hits"; // Fallback for 'DEFAULT' or other emotions
+                break;
+        }
 
-    // Find the first active device, or just take the first device if none are active
-    const activeDevice = devices.find(d => d.is_active);
-    const deviceId = activeDevice?.id ?? devices[0]?.id ?? undefined;
+        try {
+            await ensureSpotifySignedIn();
+            const searchResults = await searchTracks(searchQuery, 10);
+            setTracks(searchResults);
+        } catch (error) {
+            console.error("Error searching tracks:", error);
+            Alert.alert("Error", "Could not fetch songs from Spotify.");
+        }
+    };
 
-    if (!deviceId) {
-      Alert.alert("No Devices Found", "Could not find a device to play on.");
-      return;
-    }
+    const handlePlayTrack = async (trackUri: string) => {
+        try {
+            await ensureSpotifySignedIn();
+            const devices = await getAvailableDevices();
+            if (devices.length === 0) {
+                Alert.alert("No Active Devices", "Please open Spotify on one of your devices and try again.");
+                return;
+            }
 
-    // Play the track on the found device
-    const trackUri = "spotify:track:7qiZfU4dY1lWllzX7mP3AU"; // Spotify URI for "Shape of You"
-    await playTrack(trackUri, deviceId);
-    Alert.alert("Playback Started", "Check your Spotify device!");
+            const activeDevice = devices.find(d => d.is_active);
+            const deviceId = activeDevice?.id ?? devices[0]?.id ?? undefined;
 
-  } catch (error) {
-    console.error("Playback error:", error);
-    Alert.alert("Error", "Could not start playback. " + (error as Error).message);
-  }
-};
-  return (
-    <View style={styles.container}>
-      <VideoBackground />
-      <Text style={styles.text}>Welcome Back (User)</Text>
+            if (!deviceId) {
+                Alert.alert("No Devices Found", "Could not find a device to play on.");
+                return;
+            }
 
-      <TouchableOpacity style={styles.logocontainer} onPress={HandleAnalyzeMood} >
-        <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
-      </TouchableOpacity>
-      <Text style={styles.text}>Press The Button above to start.</Text>
-    </View>
-  );
+            await playTrack(trackUri, deviceId);
+            Alert.alert("Playback Started", "Check your Spotify device!");
+        } catch (error) {
+            console.error("Playback error:", error);
+            Alert.alert("Error", "Could not start playback. " + (error as Error).message);
+        }
+    };
+
+
+    const HandleAnalyzeMood = () => {
+        setTracks([]);
+        setCurrentEmotion(null);
+        router.push('../capture');
+    };
+
+    const renderTrackItem = ({ item }: { item: SimpleTrack }) => (
+        <TouchableOpacity style={styles.trackItem} onPress={() => handlePlayTrack(item.uri)}>
+            <Image source={{ uri: item.image || 'https://placehold.co/64' }} style={styles.trackImage} />
+            <View style={styles.trackInfo}>
+                <Text style={styles.trackName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.trackArtist} numberOfLines={1}>{item.artists}</Text>
+            </View>
+        </TouchableOpacity>
+    );
+
+    return (
+        <View style={styles.container}>
+            <VideoBackground />
+            <Text style={styles.welcomeText}>Welcome Back, User</Text>
+
+            {tracks.length === 0 ? (
+                <>
+                    <TouchableOpacity style={styles.logoContainer} onPress={HandleAnalyzeMood}>
+                        <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
+                    </TouchableOpacity>
+                    <Text style={styles.promptText}>Press the button above to start.</Text>
+                </>
+            ) : (
+                <View style={styles.resultsContainer}>
+                    <Text style={styles.emotionText}>Because you look {currentEmotion?.toLowerCase()}, here are some songs:</Text>
+                    <FlatList
+                        data={tracks}
+                        renderItem={renderTrackItem}
+                        keyExtractor={(item) => item.id}
+                        contentContainerStyle={{ paddingBottom: 20 }}
+                    />
+                     <TouchableOpacity style={styles.retryButton} onPress={HandleAnalyzeMood}>
+                        <Text style={styles.retryButtonText}>Analyze Again</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+        </View>
+    );
 }
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#transparent',
-    gap: 100,
-
-  },
-  text: {
-    color: 'white',
-    fontSize: 25,
-  },
-  desc: {
-    fontSize: 15,
-    color: 'white',
-  },
-  button: {
-    color: 'black',
-    fontSize: 20,
-    fontWeight: 'bold'
-  },
-  logocontainer: {
-    width: '60%',
-    aspectRatio: 1,
-  },
-
-  logo: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'contain'
-  },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
+        paddingTop: 80,
+    },
+    welcomeText: {
+        color: 'white',
+        fontSize: 28,
+        fontWeight: 'bold',
+        position: 'absolute',
+        top: 80,
+    },
+    logoContainer: {
+        width: '60%',
+        aspectRatio: 1,
+        marginBottom: 20,
+    },
+    logo: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'contain',
+    },
+    promptText: {
+        color: 'white',
+        fontSize: 22,
+        textAlign: 'center',
+    },
+    resultsContainer: {
+        flex: 1,
+        width: '90%',
+        marginTop: 20,
+    },
+    emotionText: {
+        color: 'white',
+        fontSize: 20,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 15,
+    },
+    trackItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        padding: 10,
+        borderRadius: 8,
+        marginBottom: 10,
+    },
+    trackImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 4,
+        marginRight: 10,
+    },
+    trackInfo: {
+        flex: 1,
+    },
+    trackName: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    trackArtist: {
+        color: '#ccc',
+        fontSize: 14,
+    },
+    retryButton: {
+        backgroundColor: '#1DB954',
+        borderRadius: 25,
+        paddingVertical: 15,
+        alignItems: 'center',
+        marginTop: 20,
+        marginBottom: 120,
+    },
+    retryButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    }
 });

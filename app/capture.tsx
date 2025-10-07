@@ -1,6 +1,5 @@
-import { CameraView, useCameraPermissions } from 'expo-camera';
-// **THE FIX**: Import the legacy FileSystem API to resolve the deprecation error.
 import { useIsFocused } from '@react-navigation/native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
@@ -52,7 +51,6 @@ export default function CaptureScreen() {
                 throw new Error("Failed to save picture, URI is missing.");
             }
             
-            // Now that we have a valid picture, set the analyzing state.
             setIsAnalyzing(true);
 
             const base64 = await FileSystem.readAsStringAsync(picture.uri, {

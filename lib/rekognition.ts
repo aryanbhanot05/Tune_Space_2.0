@@ -1,9 +1,7 @@
 import { DetectFacesCommand, RekognitionClient } from "@aws-sdk/client-rekognition";
 import { Buffer } from "buffer";
-// **THE FIX**: Import the config from our new file.
 import { awsConfig } from "./config";
 
-// **THE FIX**: Use the imported config object for credentials.
 const rekognition = new RekognitionClient({
   region: awsConfig.region,
   credentials: {

@@ -37,3 +37,6 @@ export async function analyzeImageForEmotion(base64: string) {
     throw new Error(`Failed to analyze image: ${error.name}`);
   }
 }
+
+// This code is provided from AI
+// type AI used Gemini 2.5 pro

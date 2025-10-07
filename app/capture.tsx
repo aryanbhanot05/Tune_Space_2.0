@@ -45,6 +45,7 @@ export default function CaptureScreen() {
             const picture = await camera.takePictureAsync({
                 quality: 0.7,
                 skipProcessing: false,
+                shutterSound: false,
             });
 
             if (!picture || !picture.uri) {

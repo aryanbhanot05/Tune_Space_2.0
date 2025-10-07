@@ -1,5 +1,5 @@
 import { VideoBackground } from "@/components/VideoBackground";
-import { ensureSpotifySignedIn, getAvailableDevices, playTrack, searchTracks, SimpleTrack } from "@/lib/spotify";
+import { ensureSpotifySignedIn, getAvailableDevices, playTrack, SimpleTrack } from "@/lib/spotify";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -19,35 +19,53 @@ export default function WelcomeScreen() {
     const handleEmotion = async (detectedEmotion: string) => {
         setCurrentEmotion(detectedEmotion);
         let searchQuery = "popular happy songs"; // Default search
+        // **THE FIX**: Variable to hold the user-friendly message part.
+        let musicSuggestion = "some bump up music"; 
 
-        // Map Rekognition emotions to Spotify search queries
+        // Map Rekognition emotions to Spotify search queries and alert messages
         switch (detectedEmotion.toUpperCase()) {
             case 'HAPPY':
                 searchQuery = "happy upbeat pop";
+                musicSuggestion = "some hype pop music";
                 break;
             case 'SAD':
                 searchQuery = "sad emotional ballads";
+                musicSuggestion = "some emotional ballads";
                 break;
             case 'ANGRY':
                 searchQuery = "angry rock metal";
+                musicSuggestion = "some rock music";
                 break;
             case 'SURPRISED':
                 searchQuery = "energetic electronic dance";
+                musicSuggestion = "some energetic dance music";
                 break;
             case 'CALM':
                 searchQuery = "calm relaxing instrumental";
+                musicSuggestion = "some relaxing music";
                 break;
             case 'FEAR':
                 searchQuery = "dark ambient music";
+                musicSuggestion = "some dark ambient music";
                 break;
             case 'DISGUST':
                 searchQuery = "heavy industrial music";
+                musicSuggestion = "some heavy industrial music";
                 break;
             default:
                 searchQuery = "top global hits"; // Fallback for 'DEFAULT' or other emotions
+                musicSuggestion = "some of the top global hits";
                 break;
         }
 
+        // **THE FIX**: Display the personalized alert to the user.
+        Alert.alert(
+            "Mood Detected!",
+            `Hi there, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
+        );
+
+        // **THE FIX**: Comment out the Spotify logic to be used later.
+        /*
         try {
             await ensureSpotifySignedIn();
             const searchResults = await searchTracks(searchQuery, 10);
@@ -56,6 +74,7 @@ export default function WelcomeScreen() {
             console.error("Error searching tracks:", error);
             Alert.alert("Error", "Could not fetch songs from Spotify.");
         }
+        */
     };
 
     const handlePlayTrack = async (trackUri: string) => {

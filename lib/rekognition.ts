@@ -1,60 +1,41 @@
-import { DetectFacesCommand, EmotionName, RekognitionClient } from "@aws-sdk/client-rekognition";
-import Constants from "expo-constants";
+import { DetectFacesCommand, RekognitionClient } from "@aws-sdk/client-rekognition";
+import { Buffer } from "buffer";
+// **THE FIX**: Import the config from our new file.
+import { awsConfig } from "./config";
 
-const REGION = "us-east-2"; 
-
-// 1. Retrieve credentials from app.json's 'extra' field
-// This structure correctly reads the keys you've locally populated.
-const AWS_CREDENTIALS = Constants.expoConfig?.extra as { 
-  AWS_ACCESS_KEY_ID?: string, 
-  AWS_SECRET_ACCESS_KEY?: string 
-} ?? {};
-
-// 2. Manually construct the credentials object to bypass the bundling issue
-const credentials = {
-  accessKeyId: AWS_CREDENTIALS.AWS_ACCESS_KEY_ID || '',
-  secretAccessKey: AWS_CREDENTIALS.AWS_SECRET_ACCESS_KEY || '',
-};
-
-// Initialize the Rekognition client
-const rekognitionClient = new RekognitionClient({
-  region: REGION,
-  // 3. Pass the raw object directly
-  credentials: credentials, 
+// **THE FIX**: Use the imported config object for credentials.
+const rekognition = new RekognitionClient({
+  region: awsConfig.region,
+  credentials: {
+    accessKeyId: awsConfig.accessKeyId,
+    secretAccessKey: awsConfig.secretAccessKey,
+  },
 });
 
-/**
- * Analyzes a base64 encoded image for facial expressions.
- * @param imageBase64 The base64 string of the image.
- * @returns The dominant emotion detected, or null if no face is found.
- */
-export async function analyzeImageForEmotion(imageBase64: string): Promise<EmotionName | null> {
+export async function analyzeImageForEmotion(base64: string) {
+  const buffer = Buffer.from(base64, 'base64');
+
+  const command = new DetectFacesCommand({
+    Image: { Bytes: buffer },
+    Attributes: ["ALL"],
+  });
+
   try {
-    // Ensure 'atob' is available, as it's typically polyfilled by Expo
-    const imageBytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
+    const response = await rekognition.send(command);
+    const faceDetails = response.FaceDetails;
 
-    const command = new DetectFacesCommand({
-      Image: {
-        Bytes: imageBytes,
-      },
-      Attributes: ["EMOTIONS"],
-    });
-
-    const response = await rekognitionClient.send(command);
-
-    if (response.FaceDetails && response.FaceDetails.length > 0) {
-      const emotions = response.FaceDetails[0].Emotions;
+    if (faceDetails && faceDetails.length > 0) {
+      const emotions = faceDetails[0].Emotions;
       if (emotions && emotions.length > 0) {
-        // Find the emotion with the highest confidence
-        const dominantEmotion = emotions.reduce((prev, current) => 
+        const dominantEmotion = emotions.reduce((prev, current) =>
           (prev.Confidence! > current.Confidence!) ? prev : current
         );
-        return dominantEmotion.Type as EmotionName;
+        return dominantEmotion.Type || 'DEFAULT';
       }
     }
-    return null; // No face or emotions detected
-  } catch (error) {
-    console.error("Error analyzing image with Rekognition:", error);
-    throw new Error("Failed to analyze image.");
+    return 'NEUTRAL';
+  } catch (error: any) {
+    console.error("AWS Rekognition Error:", error);
+    throw new Error(`Failed to analyze image: ${error.name}`);
   }
 }

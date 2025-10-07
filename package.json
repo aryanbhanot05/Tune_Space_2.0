@@ -20,6 +20,7 @@
     "@react-navigation/native": "^7.1.18",
     "@supabase/supabase-js": "^2.57.4",
     "base-64": "^1.0.0",
+    "buffer": "^6.0.3",
     "expo": "^54.0.10",
     "expo-auth-session": "~7.0.8",
     "expo-blur": "~15.0.7",
@@ -47,7 +48,8 @@
     "react-native-screens": "~4.16.0",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-web": "^0.21.0",
-    "react-native-webview": "13.15.0"
+    "react-native-webview": "13.15.0",
+    "text-encoding": "^0.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

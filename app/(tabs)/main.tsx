@@ -19,7 +19,6 @@ export default function WelcomeScreen() {
     const handleEmotion = async (detectedEmotion: string) => {
         setCurrentEmotion(detectedEmotion);
         let searchQuery = "popular happy songs"; // Default search
-        // **THE FIX**: Variable to hold the user-friendly message part.
         let musicSuggestion = "some bump up music"; 
 
         // Map Rekognition emotions to Spotify search queries and alert messages
@@ -58,10 +57,10 @@ export default function WelcomeScreen() {
                 break;
         }
 
-        // **THE FIX**: Display the personalized alert to the user.
+        
         Alert.alert(
             "Mood Detected!",
-            `Hi there, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
+            `Hey You, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
         );
 
         // **THE FIX**: Comment out the Spotify logic to be used later.

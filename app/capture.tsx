@@ -44,7 +44,7 @@ export default function CaptureScreen() {
                     console.log('Detected Emotion:', emotion);
                     
                     // Navigate to the main screen with the detected emotion as a parameter
-                    router.push({ pathname: '/(tabs)/main', params: { emotion: emotion || 'DEFAULT' } });
+                    router.replace({ pathname: '/(tabs)/main', params: { emotion: emotion || 'DEFAULT' } });
                 } else {
                     throw new Error("Failed to get base64 data from picture.");
                 }

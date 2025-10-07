@@ -1,12 +1,26 @@
 import { DetectFacesCommand, EmotionName, RekognitionClient } from "@aws-sdk/client-rekognition";
-import { fromEnv } from "@aws-sdk/credential-providers";
+import Constants from "expo-constants";
 
 const REGION = "us-east-2"; 
+
+// 1. Retrieve credentials from app.json's 'extra' field
+// This structure correctly reads the keys you've locally populated.
+const AWS_CREDENTIALS = Constants.expoConfig?.extra as { 
+  AWS_ACCESS_KEY_ID?: string, 
+  AWS_SECRET_ACCESS_KEY?: string 
+} ?? {};
+
+// 2. Manually construct the credentials object to bypass the bundling issue
+const credentials = {
+  accessKeyId: AWS_CREDENTIALS.AWS_ACCESS_KEY_ID || '',
+  secretAccessKey: AWS_CREDENTIALS.AWS_SECRET_ACCESS_KEY || '',
+};
 
 // Initialize the Rekognition client
 const rekognitionClient = new RekognitionClient({
   region: REGION,
-  credentials: fromEnv(),
+  // 3. Pass the raw object directly
+  credentials: credentials, 
 });
 
 /**
@@ -16,6 +30,7 @@ const rekognitionClient = new RekognitionClient({
  */
 export async function analyzeImageForEmotion(imageBase64: string): Promise<EmotionName | null> {
   try {
+    // Ensure 'atob' is available, as it's typically polyfilled by Expo
     const imageBytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
 
     const command = new DetectFacesCommand({

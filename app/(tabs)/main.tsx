@@ -87,7 +87,7 @@ export default function WelcomeScreen() {
     const HandleAnalyzeMood = () => {
         setTracks([]);
         setCurrentEmotion(null);
-        router.push('../capture');
+        router.push('/capture');
     };
 
     const renderTrackItem = ({ item }: { item: SimpleTrack }) => (

@@ -230,3 +230,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     }
 });
+
+// sections of this code is provided from AI
+// type AI used Gemini 2.5 pro

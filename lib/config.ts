@@ -13,9 +13,12 @@ const getExtraVar = <T>(key: string): T => {
 export const awsConfig = {
   accessKeyId: getExtraVar<string>('EXPO_PUBLIC_AWS_ACCESS_KEY_ID'),
   secretAccessKey: getExtraVar<string>('EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY'),
-  region: 'us-east-2', // Or your preferred region
+  region: 'us-east-2', 
 };
 
 export const spotifyConfig = {
   clientId: getExtraVar<string>('EXPO_PUBLIC_SPOTIFY_CLIENT_ID'),
 };
+
+// This code is provided from AI
+// type AI used Gemini 2.5 pro

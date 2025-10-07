@@ -181,3 +181,6 @@ const styles = StyleSheet.create({
         fontSize: 18,
     }
 });
+
+// sections of this code is provided from AI
+// type AI used Gemini 2.5 pro

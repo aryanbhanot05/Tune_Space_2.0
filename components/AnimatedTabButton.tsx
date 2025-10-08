@@ -2,29 +2,24 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-// Props interface for the reusable tab button
 interface AnimatedTabButtonProps {
     title: string;
     iconName: keyof typeof Ionicons.glyphMap;
     onPress: () => void;
 }
 
-// Reusable component that wraps the button logic with a press-down scale animation
 export default function AnimatedTabButton({ title, iconName, onPress }: AnimatedTabButtonProps) {
-    // Animated value for scale transformation, initialized to 1 (full size)
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
-    // Function to handle the button shrinking on press down
     const handlePressIn = () => {
         Animated.timing(scaleAnim, {
-            toValue: 0.98, // Shrink to 98% for a subtle press effect
+            toValue: 0.98,
             duration: 120,
             easing: Easing.inOut(Easing.ease),
             useNativeDriver: true,
         }).start();
     };
 
-    // Function to handle the button restoring to full size on release
     const handlePressOut = () => {
         Animated.timing(scaleAnim, {
             toValue: 1,
@@ -35,7 +30,6 @@ export default function AnimatedTabButton({ title, iconName, onPress }: Animated
     };
 
     return (
-        // Apply the animation to the wrapper View
         <Animated.View
             style={[
                 styles.tabBtnWrapper,
@@ -47,7 +41,7 @@ export default function AnimatedTabButton({ title, iconName, onPress }: Animated
                 onPress={onPress}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
-                activeOpacity={1} // Disable default opacity change to use our scale animation
+                activeOpacity={1}
             >
                 <Ionicons name={iconName} size={24} color="#a1cdffff" style={styles.tabIcon} />
                 <Text style={styles.tabTitle}>{title}</Text>

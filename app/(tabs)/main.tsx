@@ -16,6 +16,7 @@ export default function WelcomeScreen() {
         }
     }, [emotion]);
 
+
     const handleEmotion = async (detectedEmotion: string) => {
         setCurrentEmotion(detectedEmotion);
         let searchQuery = "popular happy songs"; // Default search
@@ -25,7 +26,7 @@ export default function WelcomeScreen() {
         switch (detectedEmotion.toUpperCase()) {
             case 'HAPPY':
                 searchQuery = "happy upbeat pop";
-                musicSuggestion = "some hype pop music";
+                musicSuggestion = "Keep being happy";
                 break;
             case 'SAD':
                 searchQuery = "sad emotional ballads";
@@ -41,7 +42,7 @@ export default function WelcomeScreen() {
                 break;
             case 'CALM':
                 searchQuery = "calm relaxing instrumental";
-                musicSuggestion = "some relaxing music";
+                musicSuggestion = "Calm ";
                 break;
             case 'FEAR':
                 searchQuery = "dark ambient music";
@@ -60,7 +61,7 @@ export default function WelcomeScreen() {
         
         Alert.alert(
             "Mood Detected!",
-            `Hey You, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
+            `Hey You, you seem to be ${detectedEmotion.toLowerCase()}.  ${musicSuggestion}!`
         );
 
         // **THE FIX**: Comment out the Spotify logic to be used later.
@@ -121,18 +122,18 @@ export default function WelcomeScreen() {
     return (
         <View style={styles.container}>
             <VideoBackground />
-            <Text style={styles.welcomeText}>Welcome Back, User</Text>
+            {/* <Text style={styles.welcomeText}>Welcome Back, User</Text> */}
 
             {tracks.length === 0 ? (
                 <>
                     <TouchableOpacity style={styles.logoContainer} onPress={HandleAnalyzeMood}>
-                        <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
+                        <Image style={styles.logo} source={require('../../assets/images/vision.png')} />
                     </TouchableOpacity>
                     <Text style={styles.promptText}>Press the button above to start.</Text>
                 </>
             ) : (
                 <View style={styles.resultsContainer}>
-                    <Text style={styles.emotionText}>Because you look {currentEmotion?.toLowerCase()}, here are some songs:</Text>
+                    <Text style={styles.emotionText}> you look {currentEmotion?.toLowerCase()}:</Text>
                     <FlatList
                         data={tracks}
                         renderItem={renderTrackItem}

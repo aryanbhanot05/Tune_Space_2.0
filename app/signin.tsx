@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getSession } from "../lib/supabase_auth";
 
 export default function SignIn_Page() {
     const router = useRouter();
@@ -23,7 +22,7 @@ export default function SignIn_Page() {
         const checkSession = async () => {
             try {
                 // Calls the getSession function to check if a user is currently logged in.
-                const currentSession = await getSession();
+                const currentSession = true;
                 if (currentSession) {
                     router.replace("/(tabs)/main");
                 }

@@ -1,55 +1,110 @@
 import { VideoBackground } from "@/components/VideoBackground";
-import React, { useState } from "react";
-import { FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  FlatList,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
+// ---- tiny Deezer search helper (uses proxy on web if provided) ----
+const FUNCTIONS_BASE = process.env.EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL || "";
 
-const SONGS = [
-  {
-    id: "1",
-    title: "Shape of You",
-    artist: "Ed Sheeran",
-    album: "Divide",
-    art: require("../../assets/images/search_images/shape.png"),
-  },
-  {
-    id: "2",
-    title: "Blinding Lights",
-    artist: "The Weeknd",
-    album: "After Hours",
-    art: require("../../assets/images/search_images/blinding.png"),
-  },
-  {
-    id: "3",
-    title: "Someone Like You",
-    artist: "Adele",
-    album: "21",
-    art: require("../../assets/images/search_images/someone.png"),
-  },
-  {
-    id: "4",
-    title: "Levitating",
-    artist: "Dua Lipa",
-    album: "Future Nostalgia",
-    art: require("../../assets/images/search_images/levitating.png"),
-  },
-];
+async function searchDeezerTracks(q: string, limit = 15) {
+  if (!q) return { data: [] };
+  const base = FUNCTIONS_BASE
+    ? `${FUNCTIONS_BASE}/deezer-proxy?path=search/track`
+    : `https://api.deezer.com/search/track`;
+  const url = `${base}${base.includes("?") ? "&" : "?"}q=${encodeURIComponent(q)}&limit=${limit}`;
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json(); // { data: Track[] }
+}
+
+// ---- optional native audio (expo-av), safely loaded at runtime ----
+type SoundRef = { unloadAsync: () => Promise<void> } | null;
+let Audio: any = null;
+if (Platform.OS !== "web") {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    Audio = require("expo-av").Audio;
+  } catch {
+    // expo-av not installed; previews on native will be disabled
+    Audio = null;
+  }
+}
 
 export default function HomePage() {
   const [searchText, setSearchText] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = (text: string) => {
-    setSearchText(text);
-    if (text.trim() === "") {
-      setSearchResults([]);
-    } else {
-      const results = SONGS.filter(
-        (song) =>
-          song.title.toLowerCase().includes(text.toLowerCase()) ||
-          song.artist.toLowerCase().includes(text.toLowerCase()) ||
-          song.album.toLowerCase().includes(text.toLowerCase())
-      );
-      setSearchResults(results);
+  // native playback state
+  const soundRef = useRef<SoundRef>(null);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+
+  // debounce the input slightly (protects Deezer 50 req / 5s quota)
+  useEffect(() => {
+    const id = setTimeout(async () => {
+      const q = searchText.trim();
+      if (!q) {
+        setResults([]);
+        setError(null);
+        return;
+      }
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await searchDeezerTracks(q, 15);
+        setResults(data?.data ?? []);
+      } catch (e: any) {
+        setError(e?.message ?? "Search failed");
+      } finally {
+        setLoading(false);
+      }
+    }, 350);
+    return () => clearTimeout(id);
+  }, [searchText]);
+
+  // cleanup native sound on unmount
+  useEffect(() => {
+    return () => {
+      if (soundRef.current) soundRef.current.unloadAsync().catch(() => {});
+    };
+  }, []);
+
+  const togglePlayNative = async (previewUrl: string, id: string) => {
+    if (!Audio) return; // expo-av not installed
+    try {
+      // stop previous
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
+      }
+      // if tapping the same item, just stop
+      if (playingId === id) {
+        setPlayingId(null);
+        return;
+      }
+      // create & play new
+      const { sound } = await Audio.Sound.createAsync({ uri: previewUrl });
+      soundRef.current = sound;
+      setPlayingId(id);
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate((st: any) => {
+        if (st.didJustFinish || st.isLoaded === false) {
+          setPlayingId(null);
+          sound.unloadAsync().catch(() => {});
+          soundRef.current = null;
+        }
+      });
+    } catch {
+      setPlayingId(null);
     }
   };
 
@@ -59,7 +114,6 @@ export default function HomePage() {
       <View style={styles.top}>
         <Text style={styles.title}>Hi, User</Text>
         <Text style={styles.title}>Search</Text>
-
       </View>
 
       <TextInput
@@ -67,25 +121,71 @@ export default function HomePage() {
         placeholder="Search by song, artist, or album…"
         placeholderTextColor="#888"
         value={searchText}
-        onChangeText={handleSearch}
+        onChangeText={setSearchText}
         autoCorrect={false}
         autoCapitalize="none"
       />
 
+      {loading ? (
+        <Text style={{ color: "#ccc", marginBottom: 8 }}>Searching…</Text>
+      ) : error ? (
+        <Text style={{ color: "#ff6b6b", marginBottom: 8 }}>{error}</Text>
+      ) : null}
+
       <FlatList
-        data={searchResults}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.songCard1}>
-            <Image source={ item.art } style={styles.songArt} />
-            <View style={{ marginLeft: 10 }}>
-              <Text style={{ color: "white", fontSize: 16 }}>{item.title}</Text>
-              <Text style={{ color: "#aaa", fontSize: 14 }}>
-                {item.artist} • {item.album}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        )}
+        data={results}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={({ item }) => {
+          const artUri = item?.album?.cover_medium || item?.album?.cover || undefined;
+          const preview = item?.preview as string | undefined;
+          return (
+            <TouchableOpacity style={styles.songCard1} activeOpacity={0.7}>
+              {artUri ? (
+                <Image source={{ uri: artUri }} style={styles.songArt} />
+              ) : (
+                <View style={[styles.songArt, { backgroundColor: "#101010" }]} />
+              )}
+              <View style={{ marginLeft: 10, flex: 1 }}>
+                <Text style={{ color: "white", fontSize: 16 }} numberOfLines={1}>
+                  {item.title}
+                </Text>
+                <Text style={{ color: "#aaa", fontSize: 14 }} numberOfLines={1}>
+                  {item.artist?.name} • {item.album?.title}
+                </Text>
+
+                {/* Preview controls */}
+                {preview ? (
+                  Platform.OS === "web" ? (
+                    <audio controls src={preview} preload="none" style={{ marginTop: 6, width: "100%" }} />
+                  ) : Audio ? (
+                    <TouchableOpacity
+                      onPress={() => togglePlayNative(preview, String(item.id))}
+                      style={{
+                        marginTop: 8,
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        backgroundColor: "#2e3440",
+                        borderRadius: 8,
+                        alignSelf: "flex-start",
+                      }}
+                    >
+                      <Text style={{ color: "white" }}>
+                        {playingId === String(item.id) ? "Pause" : "Play 30s Preview"}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <Text style={{ color: "#ccc", marginTop: 6 }}>
+                      Install expo-av for previews on mobile:{" "}
+                      <Text style={{ fontStyle: "italic" }}>npx expo install expo-av</Text>
+                    </Text>
+                  )
+                ) : (
+                  <Text style={{ color: "#888", marginTop: 6 }}>No preview available</Text>
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        }}
         style={styles.resultsList}
         nestedScrollEnabled
         keyboardShouldPersistTaps="handled"
@@ -149,5 +249,3 @@ const styles = StyleSheet.create({
     borderBottomColor: "#2a2f3a",
   },
 });
-
-

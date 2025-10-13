@@ -49,6 +49,7 @@ export default function HomePage() {
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   // debounce the input slightly (protects Deezer 50 req / 5s quota)
+  //Used AI here : 
   useEffect(() => {
     const id = setTimeout(async () => {
       const q = searchText.trim();

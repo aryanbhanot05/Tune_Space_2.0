@@ -1,16 +1,14 @@
-// lib/deezer.ts
 // Minimal helper for Deezer Simple API (search + browse).
 // Works natively (direct) and on web via an optional proxy (Supabase Edge Function).
 
 const DEEZER_BASE = "https://api.deezer.com";
 
-// If you set this env, we’ll use it on all platforms (needed for Web due to CORS).
-// Example: http://127.0.0.1:54321/functions/v1  (local)
-//          https://<your-ref>.functions.supabase.co (prod)
 const FUNCTIONS_BASE = process.env.EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL || "";
 
 const USE_PROXY = !!FUNCTIONS_BASE;
 
+
+//Used AI here — Prompt: How to build a URL with optional path and query parameters.
 function buildUrl(base: string, pathOrEmpty: string, params?: Record<string, any>) {
   const clean = pathOrEmpty.replace(/^\/+/, "");
   const qs = params
@@ -31,6 +29,7 @@ async function fetchJson(url: string) {
 }
 
 // Public API
+//Used AI here Prompt: How can I get Deezer search to work for web and native in Expo/React Native?
 
 export async function searchTracks(q: string, limit = 12, index = 0) {
   if (USE_PROXY) {

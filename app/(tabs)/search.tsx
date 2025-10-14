@@ -250,3 +250,6 @@ const styles = StyleSheet.create({
     borderBottomColor: "#2a2f3a",
   },
 });
+
+
+//used old search but made AI check to see if compatible 

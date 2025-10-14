@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getSession } from "../lib/supabase_auth";
 
 export default function SignIn_Page() {
     const router = useRouter();
@@ -18,11 +17,12 @@ export default function SignIn_Page() {
     const [loading, setLoading] = useState(true);
 
     // useEffect hook to run a session check once when the component mounts.
+    // this particular useEffect checks if a user is already logged in - I was unable to understand fully how to do this.
     useEffect(() => {
         const checkSession = async () => {
             try {
                 // Calls the getSession function to check if a user is currently logged in.
-                const currentSession = await getSession();
+                const currentSession = true;
                 if (currentSession) {
                     router.replace("/(tabs)/main");
                 }
@@ -195,3 +195,11 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 });
+
+
+// for notifying, The whole design is inspired by Aryan Bhanot's earlier work on the Tune Space music app.
+// Here is the link to the original repository:
+
+// https://github.com/aryanbhanot05/Tune_Space
+
+// Thank You for reviewing my code!

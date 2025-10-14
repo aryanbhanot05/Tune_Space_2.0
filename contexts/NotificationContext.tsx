@@ -40,6 +40,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         refreshNotifications();
       } catch (error) {
         console.error('Failed to initialize notifications:', error);
+        // Log more specific error information for debugging
+        if (error instanceof Error) {
+          console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
+        }
       }
     };
 
@@ -184,6 +192,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       setNotifications(localNotifications);
     } catch (error) {
       console.error('Error syncing with backend:', error);
+      // Provide more context about the sync failure
+      if (error instanceof Error) {
+        console.error('Backend sync error details:', {
+          message: error.message,
+          operation: 'syncWithBackend',
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   };
 
@@ -199,6 +215,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       );
     } catch (error) {
       console.error('Error sending template notification:', error);
+      // Log template-specific error details
+      if (error instanceof Error) {
+        console.error('Template notification error details:', {
+          message: error.message,
+          templateName,
+          templateData,
+          timestamp: new Date().toISOString()
+        });
+      }
       return false;
     }
   };

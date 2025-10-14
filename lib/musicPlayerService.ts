@@ -20,7 +20,7 @@ class MusicPlayerService {
   private duration: number = 0;
   private nowPlayingNotificationId: string | null = null;
   private notificationService: NotificationService;
-  private progressInterval: any = null;
+  private progressInterval: number | null = null;
 
   private constructor() {
     this.notificationService = NotificationService.getInstance();
@@ -34,7 +34,7 @@ class MusicPlayerService {
     return MusicPlayerService.instance;
   }
 
-  private async initializeAudio() {
+  private async initializeAudio(): Promise<void> {
     try {
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,

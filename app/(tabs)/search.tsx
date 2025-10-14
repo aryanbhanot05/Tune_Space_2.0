@@ -170,7 +170,7 @@ export default function HomePage() {
                       }}
                     >
                       <Text style={{ color: "white" }}>
-                        {playingId === String(item.id) ? "Pause" : "Play 30s Preview"}
+                        {playingId === String(item.id) ? "Pause" : "Play"}
                       </Text>
                     </TouchableOpacity>
                   ) : (

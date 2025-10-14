@@ -19,7 +19,7 @@ export interface Notification {
   type: 'music' | 'system' | 'now_playing';
   title: string;
   body: string;
-  data: any;
+  data: Record<string, unknown>;
   image_url?: string;
   action_url?: string;
   read_at?: string;
@@ -40,7 +40,7 @@ export interface NotificationTemplate {
   name: string;
   title_template: string;
   body_template: string;
-  default_data: any;
+  default_data: Record<string, unknown>;
   is_active: boolean;
 }
 
@@ -223,7 +223,7 @@ class SupabaseNotificationService {
     templateData: Record<string, any> = {},
     customTitle?: string,
     customBody?: string,
-    additionalData?: any,
+    additionalData?: Record<string, unknown>,
     imageUrl?: string,
     actionUrl?: string
   ): Promise<boolean> {
@@ -231,7 +231,7 @@ class SupabaseNotificationService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      const { data, error } = await supabase.functions.invoke('send-notification', {
+      const { data, error } = await supabase.functions.invoke<{ success: boolean }>('send-notification', {
         body: {
           user_id: user.id,
           template_name: templateName,
@@ -260,7 +260,7 @@ class SupabaseNotificationService {
   async sendPushNotification(
     title: string,
     body: string,
-    data?: any,
+    data?: Record<string, unknown>,
     imageUrl?: string,
     actionUrl?: string
   ): Promise<boolean> {
@@ -268,7 +268,7 @@ class SupabaseNotificationService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      const { data, error } = await supabase.functions.invoke('send-push-notification', {
+      const { data: response, error } = await supabase.functions.invoke<{ success: boolean }>('send-push-notification', {
         body: {
           user_id: user.id,
           title,
@@ -284,7 +284,7 @@ class SupabaseNotificationService {
         return false;
       }
 
-      return data?.success || false;
+      return response?.success || false;
     } catch (error) {
       console.error('Error in sendPushNotification:', error);
       return false;

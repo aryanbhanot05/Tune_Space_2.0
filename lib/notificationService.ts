@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+
 import { Platform } from 'react-native';
 
 export interface AppNotification {
@@ -41,7 +42,11 @@ class NotificationService {
     return NotificationService.instance;
   }
 
-  // Initialize notification service
+  /**
+   * Initialize the notification service with proper configuration
+   * Sets up notification handlers, channels, and permissions
+   * @returns Promise<void>
+   */
   public async initialize(): Promise<void> {
     try {
       // Configure notification behavior
@@ -73,7 +78,11 @@ class NotificationService {
     }
   }
 
-  // Create notification channels for Android
+  /**
+   * Create notification channels for Android devices
+   * Sets up different channels for music, system, and now playing notifications
+   * @returns Promise<void>
+   */
   private async createNotificationChannels(): Promise<void> {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('music', {
@@ -143,7 +152,14 @@ class NotificationService {
     }
   }
 
-  // Send local notification
+  /**
+   * Send a local notification to the device
+   * @param title - The notification title
+   * @param body - The notification body text
+   * @param data - Optional data payload
+   * @param type - The type of notification (music, system, now_playing)
+   * @returns Promise<string> - The notification ID
+   */
   public async sendLocalNotification(
     title: string,
     body: string,
@@ -180,7 +196,11 @@ class NotificationService {
     return notificationId;
   }
 
-  // Send now playing notification
+  /**
+   * Send a now playing notification with media controls
+   * @param track - The track information to display
+   * @returns Promise<string> - The notification ID
+   */
   public async sendNowPlayingNotification(
     track: NowPlayingNotification
   ): Promise<string> {

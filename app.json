@@ -7,7 +7,11 @@
     "icon": "./assets/images/Emotify.png",
     "scheme": "tunespace20",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/Emotify.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -15,28 +19,35 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/Emotify.png",
         "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
       [
-        "expo-splash-screen",
+        "expo-camera",
         {
-          "image": "./assets/images/Emotify.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera.",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone.",
+          "recordAudioAndroid": true
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "YOUR_PROJECT_ID_HERE"
+      },
+      "EXPO_PUBLIC_SPOTIFY_CLIENT_ID": "7590363d9b444af48a54fe6970a58aed",
+      "EXPO_PUBLIC_AWS_ACCESS_KEY_ID": "",
+      "EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY": ""
     }
   }
 }

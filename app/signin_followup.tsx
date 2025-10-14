@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { signIn, signUp } from "../lib/supabase_auth";
 import { createUser } from "../lib/supabase_crud";
 
-export default function SupabaseAuth() {
+export default function SignIn_Actual() {
     const router = useRouter();
     const { isSignIn: isSignInParam } = useLocalSearchParams();
 
@@ -171,6 +171,17 @@ export default function SupabaseAuth() {
                 )}
             </TouchableOpacity>
 
+            <TouchableOpacity
+                style={styles.googleButton}
+                // Placeholder for Google Auth logic
+                onPress={() => {}}
+            >
+                <FontAwesome size={20} name="google" color="#11161a" />
+                <Text style={styles.googleButtonText}>
+                    Sign In with Google
+                </Text>
+            </TouchableOpacity>
+
             {/* Button to switch between sign-in and sign-up forms. */}
             <TouchableOpacity
                 onPress={() => {
@@ -318,4 +329,34 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 70,
     },
+    googleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 10,
+        marginTop: 15,
+        width: '50%',
+        backgroundColor: 'white',
+        height: 50,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+        borderWidth: 2,
+        borderColor: 'white',
+    },
+    googleButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#11161a',
+        marginLeft: 10,
+    },
 });
+
+
+// for notifying, The whole design is inspired by Aryan Bhanot's earlier work on the Tune Space music app.
+// Here is the link to the original repository:
+
+// https://github.com/aryanbhanot05/Tune_Space
+
+// Thank You for reviewing my code!

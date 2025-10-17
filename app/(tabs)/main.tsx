@@ -127,7 +127,7 @@ export default function WelcomeScreen() {
             {tracks.length === 0 ? (
                 <>
                     <TouchableOpacity style={styles.logoContainer} onPress={HandleAnalyzeMood}>
-                        <Image style={styles.logo} source={require('../../assets/images/vision.png')} />
+                        <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
                     </TouchableOpacity>
                     <Text style={styles.promptText}>Press the button above to start.</Text>
                 </>

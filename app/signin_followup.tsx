@@ -2,7 +2,7 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useFonts } from 'expo-font';
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { createContext, ReactNode, useContext, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { signIn, signUp } from "../lib/supabase_auth";
@@ -352,6 +352,58 @@ const styles = StyleSheet.create({
         marginLeft: 10,
     },
 });
+
+// This is a basic example of how you might use React Context to share state.
+// You would typically place this in its own file, e.g., `contexts/UserContext.js`
+
+// 1. Create a Context
+// This creates a context object. When React renders a component that subscribes to this
+// Context object, it will read the current context value from the closest matching
+// Provider above it in the tree.
+const UserContext = createContext<{
+    firstName: string;
+    setFirstName: (name: string) => void;
+} | undefined>(undefined);
+
+// 2. Create a custom hook for easy access to the context
+// This is a convenience hook that abstracts away the useContext call and also
+// provides a check to ensure the context is used within a provider.
+export function useUser() {
+    const context = useContext(UserContext);
+    if (context === undefined) {
+        throw new Error('useUser must be used within a UserProvider');
+    }
+    return context;
+}
+
+// 3. Create a Provider Component
+// This component will wrap your application or parts of it, providing the state
+// and functions to modify it to all children components.
+export function UserProvider({ children }: { children: ReactNode }) {
+    const [firstName, setFirstName] = useState("");
+
+    return (
+        <UserContext.Provider value={{ firstName, setFirstName }}>
+            {children}
+        </UserContext.Provider>
+    );
+}
+
+// How to use it:
+//
+// a. Wrap your app's root layout (e.g., in `_layout.tsx`) with the provider:
+//    <UserProvider>
+//      <Stack />
+//    </UserProvider>
+//
+// b. In your `signin_followup.tsx` file, replace local state with the context:
+//    const { setFirstName } = useUser();
+//    // ... then in your TextInput
+//    onChangeText={setFirstName}
+//
+// c. In any other page where you need the first name:
+//    const { firstName } = useUser();
+//    return <Text>Hello, {firstName}</Text>;
 
 
 // for notifying, The whole design is inspired by Aryan Bhanot's earlier work on the Tune Space music app.

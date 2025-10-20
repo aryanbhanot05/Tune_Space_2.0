@@ -22,7 +22,7 @@ export default function SignIn_Page() {
         const checkSession = async () => {
             try {
                 // Calls the getSession function to check if a user is currently logged in.
-                const currentSession = true;
+                const currentSession = false;
                 if (currentSession) {
                     router.replace("/(tabs)/main");
                 }

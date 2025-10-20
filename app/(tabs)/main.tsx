@@ -26,7 +26,7 @@ export default function WelcomeScreen() {
         switch (detectedEmotion.toUpperCase()) {
             case 'HAPPY':
                 searchQuery = "happy upbeat pop";
-                musicSuggestion = "Keep being happy";
+                musicSuggestion = "something upbeat";
                 break;
             case 'SAD':
                 searchQuery = "sad emotional ballads";
@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
                 break;
             case 'CALM':
                 searchQuery = "calm relaxing instrumental";
-                musicSuggestion = "Calm ";
+                musicSuggestion = "Calm music";
                 break;
             case 'FEAR':
                 searchQuery = "dark ambient music";
@@ -61,7 +61,7 @@ export default function WelcomeScreen() {
         
         Alert.alert(
             "Mood Detected!",
-            `Hey You, you seem to be ${detectedEmotion.toLowerCase()}.  ${musicSuggestion}!`
+            `Hey You, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
         );
 
         // **THE FIX**: Comment out the Spotify logic to be used later.
@@ -155,7 +155,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'transparent',
-        paddingTop: 80,
+        paddingTop: 100,
+        gap: 40
     },
     welcomeText: {
         color: 'white',
@@ -165,7 +166,7 @@ const styles = StyleSheet.create({
         top: 80,
     },
     logoContainer: {
-        width: '60%',
+        width: '50%',
         aspectRatio: 1,
         marginBottom: 20,
     },
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     },
     promptText: {
         color: 'white',
-        fontSize: 22,
+        fontSize: 25,
         textAlign: 'center',
     },
     resultsContainer: {

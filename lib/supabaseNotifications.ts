@@ -121,7 +121,7 @@ class SupabaseNotificationService {
           .eq('user_id', user.id)
           .select()
           .single();
-        
+
         if (error) {
           console.error('Error updating notification preferences:', error);
           return null;
@@ -137,7 +137,7 @@ class SupabaseNotificationService {
           }])
           .select()
           .single();
-        
+
         if (error) {
           console.error('Error creating notification preferences:', error);
           return null;

@@ -38,7 +38,7 @@ export async function createUser(user: UserDetails) {
         .from('user_details')
         .insert([user]);
 
-    if (error) {    
+    if (error) {
         console.error("Error creating user:", error);
         throw error;
     }

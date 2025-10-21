@@ -14,10 +14,10 @@ function buildUrl(base: string, pathOrEmpty: string, params?: Record<string, any
   const clean = pathOrEmpty.replace(/^\/+/, "");
   const qs = params
     ? "?" +
-      Object.entries(params)
-        .filter(([, v]) => v !== undefined && v !== null && v !== "")
-        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
-        .join("&")
+    Object.entries(params)
+      .filter(([, v]) => v !== undefined && v !== null && v !== "")
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+      .join("&")
     : "";
   // handle base only (for proxy route with ?path=... only)
   return clean ? `${base}/${clean}${qs}` : `${base}${qs}`;

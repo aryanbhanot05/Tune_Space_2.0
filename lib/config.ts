@@ -13,7 +13,7 @@ const getExtraVar = <T>(key: string): T => {
 export const awsConfig = {
   accessKeyId: getExtraVar<string>('EXPO_PUBLIC_AWS_ACCESS_KEY_ID'),
   secretAccessKey: getExtraVar<string>('EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY'),
-  region: 'us-east-2', 
+  region: 'us-east-2',
 };
 
 export const spotifyConfig = {

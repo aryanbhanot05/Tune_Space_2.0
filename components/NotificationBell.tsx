@@ -10,10 +10,10 @@ interface NotificationBellProps {
   style?: object;
 }
 
-export const NotificationBell: React.FC<NotificationBellProps> = ({ 
-  size = 24, 
+export const NotificationBell: React.FC<NotificationBellProps> = ({
+  size = 24,
   color = '#ffffff',
-  style 
+  style
 }) => {
   const router = useRouter();
   const { unreadCount } = useNotifications();
@@ -23,17 +23,17 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   };
 
   return (
-    <TouchableOpacity 
-      style={[styles.container, style]} 
+    <TouchableOpacity
+      style={[styles.container, style]}
       onPress={handlePress}
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
       <FontAwesome name="bell" size={size} color={color} />
       {unreadCount > 0 && (
         <View style={styles.badge}>
-        <Text style={styles.badgeContent}>
-          {unreadCount > 99 ? '99+' : unreadCount.toString()}
-        </Text>
+          <Text style={styles.badgeContent}>
+            {unreadCount > 99 ? '99+' : unreadCount.toString()}
+          </Text>
         </View>
       )}
     </TouchableOpacity>

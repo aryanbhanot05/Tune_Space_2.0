@@ -100,7 +100,7 @@ export const NotificationDemo: React.FC = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Notification Demo</Text>
-      
+
       <TouchableOpacity style={styles.button} onPress={handleSendTestNotification}>
         <Text style={styles.buttonText}>Send Test Notification</Text>
       </TouchableOpacity>
@@ -126,15 +126,15 @@ export const NotificationDemo: React.FC = () => {
         <TouchableOpacity style={[styles.controlButton, styles.previousButton]} onPress={handlePreviousTrack}>
           <Text style={styles.buttonText}>⏮️ Previous</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={[styles.controlButton, styles.pauseButton]} onPress={handlePauseResume}>
           <Text style={styles.buttonText}>{isPlaying ? '⏸️ Pause' : '▶️ Resume'}</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={[styles.controlButton, styles.nextButton]} onPress={handleNextTrack}>
           <Text style={styles.buttonText}>⏭️ Next</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={[styles.controlButton, styles.stopButton]} onPress={handleStop}>
           <Text style={styles.buttonText}>⏹️ Stop</Text>
         </TouchableOpacity>

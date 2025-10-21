@@ -138,7 +138,6 @@ export default function HomePage() {
       </View>
 
       <View style={styles.top}>
-        <Text style={styles.title}>Hi, User</Text>
         <Text style={styles.title}>Search</Text>
       </View>
 

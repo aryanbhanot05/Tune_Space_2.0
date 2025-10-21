@@ -1,4 +1,3 @@
-// lib/deezer.ts
 // Minimal helper for Deezer Simple API (search + browse).
 // Works natively (direct) and on web via an optional proxy (Supabase Edge Function).
 

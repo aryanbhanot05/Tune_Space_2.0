@@ -1,4 +1,6 @@
+import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { ensureSpotifySignedIn, getAvailableDevices, playTrack, SimpleTrack } from "@/lib/spotify";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -9,6 +11,12 @@ export default function WelcomeScreen() {
     const { emotion } = useLocalSearchParams<{ emotion?: string }>();
     const [tracks, setTracks] = useState<SimpleTrack[]>([]);
     const [currentEmotion, setCurrentEmotion] = useState<string | null>(null);
+    const notificationContext = useNotifications();
+    const { sendNotification } = notificationContext || {};
+    
+    // Debug log
+    console.log('Notification context available:', !!notificationContext);
+    console.log('Send notification function available:', !!sendNotification);
 
     useEffect(() => {
         if (emotion) {
@@ -109,6 +117,26 @@ export default function WelcomeScreen() {
         router.push('/capture');
     };
 
+    const handleTestNotification = async () => {
+        if (!sendNotification) {
+            Alert.alert('Error', 'Notification service not available');
+            return;
+        }
+        
+        try {
+            await sendNotification(
+                'Test Notification',
+                'This is a test notification from Emotify! 🎵',
+                { type: 'system', test: true },
+                'system'
+            );
+            Alert.alert('Success', 'Test notification sent!');
+        } catch (error) {
+            console.error('Error sending test notification:', error);
+            Alert.alert('Error', 'Failed to send test notification');
+        }
+    };
+
     const renderTrackItem = ({ item }: { item: SimpleTrack }) => (
         <TouchableOpacity style={styles.trackItem} onPress={() => handlePlayTrack(item.uri)}>
             <Image source={{ uri: item.image || 'https://placehold.co/64' }} style={styles.trackImage} />
@@ -122,7 +150,11 @@ export default function WelcomeScreen() {
     return (
         <View style={styles.container}>
             <VideoBackground />
-            {/* <Text style={styles.welcomeText}>Welcome Back, User</Text> */}
+            
+            {/* Notification Bell */}
+            <View style={styles.notificationContainer}>
+                <NotificationBell size={28} color="#ffffff" />
+            </View>
 
             {tracks.length === 0 ? (
                 <>
@@ -130,6 +162,11 @@ export default function WelcomeScreen() {
                         <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
                     </TouchableOpacity>
                     <Text style={styles.promptText}>Press the button above to start.</Text>
+                    
+                    {/* Test Notification Button */}
+                    <TouchableOpacity style={styles.testButton} onPress={handleTestNotification}>
+                        <Text style={styles.testButtonText}>Test Notification</Text>
+                    </TouchableOpacity>
                 </>
             ) : (
                 <View style={styles.resultsContainer}>
@@ -157,6 +194,12 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
         paddingTop: 100,
         gap: 40
+    },
+    notificationContainer: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        zIndex: 10,
     },
     welcomeText: {
         color: 'white',
@@ -227,6 +270,19 @@ const styles = StyleSheet.create({
         marginBottom: 120,
     },
     retryButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    testButton: {
+        backgroundColor: '#1DB954',
+        borderRadius: 25,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    testButtonText: {
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',

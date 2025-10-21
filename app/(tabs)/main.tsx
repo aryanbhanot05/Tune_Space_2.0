@@ -1,4 +1,6 @@
+import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { ensureSpotifySignedIn, getAvailableDevices, playTrack, SimpleTrack } from "@/lib/spotify";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -9,6 +11,12 @@ export default function WelcomeScreen() {
     const { emotion } = useLocalSearchParams<{ emotion?: string }>();
     const [tracks, setTracks] = useState<SimpleTrack[]>([]);
     const [currentEmotion, setCurrentEmotion] = useState<string | null>(null);
+    const notificationContext = useNotifications();
+    const { sendNotification } = notificationContext || {};
+    
+    // Debug log
+    console.log('Notification context available:', !!notificationContext);
+    console.log('Send notification function available:', !!sendNotification);
 
     useEffect(() => {
         if (emotion) {
@@ -26,7 +34,7 @@ export default function WelcomeScreen() {
         switch (detectedEmotion.toUpperCase()) {
             case 'HAPPY':
                 searchQuery = "happy upbeat pop";
-                musicSuggestion = "Keep being happy";
+                musicSuggestion = "something upbeat";
                 break;
             case 'SAD':
                 searchQuery = "sad emotional ballads";
@@ -42,7 +50,7 @@ export default function WelcomeScreen() {
                 break;
             case 'CALM':
                 searchQuery = "calm relaxing instrumental";
-                musicSuggestion = "Calm ";
+                musicSuggestion = "Calm music";
                 break;
             case 'FEAR':
                 searchQuery = "dark ambient music";
@@ -61,7 +69,7 @@ export default function WelcomeScreen() {
         
         Alert.alert(
             "Mood Detected!",
-            `Hey You, you seem to be ${detectedEmotion.toLowerCase()}.  ${musicSuggestion}!`
+            `Hey You, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
         );
 
         // **THE FIX**: Comment out the Spotify logic to be used later.
@@ -109,6 +117,26 @@ export default function WelcomeScreen() {
         router.push('/capture');
     };
 
+    const handleTestNotification = async () => {
+        if (!sendNotification) {
+            Alert.alert('Error', 'Notification service not available');
+            return;
+        }
+        
+        try {
+            await sendNotification(
+                'Test Notification',
+                'This is a test notification from Emotify! 🎵',
+                { type: 'system', test: true },
+                'system'
+            );
+            Alert.alert('Success', 'Test notification sent!');
+        } catch (error) {
+            console.error('Error sending test notification:', error);
+            Alert.alert('Error', 'Failed to send test notification');
+        }
+    };
+
     const renderTrackItem = ({ item }: { item: SimpleTrack }) => (
         <TouchableOpacity style={styles.trackItem} onPress={() => handlePlayTrack(item.uri)}>
             <Image source={{ uri: item.image || 'https://placehold.co/64' }} style={styles.trackImage} />
@@ -122,14 +150,23 @@ export default function WelcomeScreen() {
     return (
         <View style={styles.container}>
             <VideoBackground />
-            {/* <Text style={styles.welcomeText}>Welcome Back, User</Text> */}
+            
+            {/* Notification Bell */}
+            <View style={styles.notificationContainer}>
+                <NotificationBell size={28} color="#ffffff" />
+            </View>
 
             {tracks.length === 0 ? (
                 <>
                     <TouchableOpacity style={styles.logoContainer} onPress={HandleAnalyzeMood}>
-                        <Image style={styles.logo} source={require('../../assets/images/vision.png')} />
+                        <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
                     </TouchableOpacity>
                     <Text style={styles.promptText}>Press the button above to start.</Text>
+                    
+                    {/* Test Notification Button */}
+                    <TouchableOpacity style={styles.testButton} onPress={handleTestNotification}>
+                        <Text style={styles.testButtonText}>Test Notification</Text>
+                    </TouchableOpacity>
                 </>
             ) : (
                 <View style={styles.resultsContainer}>
@@ -155,7 +192,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'transparent',
-        paddingTop: 80,
+        paddingTop: 100,
+        gap: 40
+    },
+    notificationContainer: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+        zIndex: 10,
     },
     welcomeText: {
         color: 'white',
@@ -165,7 +209,7 @@ const styles = StyleSheet.create({
         top: 80,
     },
     logoContainer: {
-        width: '60%',
+        width: '50%',
         aspectRatio: 1,
         marginBottom: 20,
     },
@@ -176,7 +220,7 @@ const styles = StyleSheet.create({
     },
     promptText: {
         color: 'white',
-        fontSize: 22,
+        fontSize: 25,
         textAlign: 'center',
     },
     resultsContainer: {
@@ -226,6 +270,19 @@ const styles = StyleSheet.create({
         marginBottom: 120,
     },
     retryButtonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    testButton: {
+        backgroundColor: '#1DB954',
+        borderRadius: 25,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    testButtonText: {
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',

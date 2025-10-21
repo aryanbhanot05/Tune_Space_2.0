@@ -198,3 +198,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#8B0000',
   },
 });
+
+//used AI to clear some logics and fixing errors.

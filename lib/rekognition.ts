@@ -2,13 +2,21 @@ import { DetectFacesCommand, RekognitionClient } from "@aws-sdk/client-rekogniti
 import { Buffer } from "buffer";
 import { awsConfig } from "./config";
 
-const rekognition = new RekognitionClient({
-  region: awsConfig.region,
-  credentials: {
-    accessKeyId: awsConfig.accessKeyId,
-    secretAccessKey: awsConfig.secretAccessKey,
-  },
-});
+// Create a lazy-loaded Rekognition client to avoid dynamic import issues
+let rekognitionClient: RekognitionClient | null = null;
+
+const getRekognitionClient = () => {
+  if (!rekognitionClient) {
+    rekognitionClient = new RekognitionClient({
+      region: awsConfig.region,
+      credentials: {
+        accessKeyId: awsConfig.accessKeyId,
+        secretAccessKey: awsConfig.secretAccessKey,
+      },
+    });
+  }
+  return rekognitionClient;
+};
 
 export async function analyzeImageForEmotion(base64: string) {
   const buffer = Buffer.from(base64, 'base64');
@@ -19,6 +27,7 @@ export async function analyzeImageForEmotion(base64: string) {
   });
 
   try {
+    const rekognition = getRekognitionClient();
     const response = await rekognition.send(command);
     const faceDetails = response.FaceDetails;
 

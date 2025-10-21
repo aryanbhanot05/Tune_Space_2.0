@@ -1,14 +1,15 @@
+import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  FlatList,
-  Image,
-  Platform,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    FlatList,
+    Image,
+    Platform,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 // ---- tiny Deezer search helper (uses proxy on web if provided) ----
@@ -111,6 +112,12 @@ export default function HomePage() {
   return (
     <View style={styles.container}>
       <VideoBackground />
+      
+      {/* Notification Bell */}
+      <View style={styles.notificationContainer}>
+        <NotificationBell size={28} color="#ffffff" />
+      </View>
+      
       <View style={styles.top}>
         <Text style={styles.title}>Hi, User</Text>
         <Text style={styles.title}>Search</Text>
@@ -202,6 +209,12 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     position: "relative",
     paddingTop: 70,
+  },
+  notificationContainer: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
   },
   searchInput: {
     backgroundColor: "#191c24",

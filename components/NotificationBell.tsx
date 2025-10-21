@@ -7,7 +7,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 interface NotificationBellProps {
   size?: number;
   color?: string;
-  style?: any;
+  style?: object;
 }
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({ 

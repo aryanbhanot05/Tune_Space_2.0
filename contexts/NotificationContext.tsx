@@ -29,10 +29,22 @@ interface NotificationProviderProps {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [notificationService] = useState(() => NotificationService.getInstance());
+  const [notificationService] = useState(() => {
+    try {
+      return NotificationService.getInstance();
+    } catch (error) {
+      console.error('Failed to create NotificationService:', error);
+      return null;
+    }
+  });
 
   // Initialize notification service
   useEffect(() => {
+    if (!notificationService) {
+      console.warn('NotificationService not available');
+      return;
+    }
+
     const initializeNotifications = async () => {
       try {
         await notificationService.initialize();
@@ -40,6 +52,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         refreshNotifications();
       } catch (error) {
         console.error('Failed to initialize notifications:', error);
+        // Log more specific error information for debugging
+        if (error instanceof Error) {
+          console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
+        }
       }
     };
 
@@ -48,6 +68,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Set up notification listeners
   useEffect(() => {
+    if (!notificationService) {
+      return;
+    }
+
     const notificationListener = notificationService.addNotificationListener(
       (notification) => {
         console.log('Notification received:', notification);
@@ -80,6 +104,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Refresh notifications from service
   const refreshNotifications = () => {
+    if (!notificationService) {
+      return;
+    }
     const allNotifications = notificationService.getNotifications();
     const unread = notificationService.getUnreadCount();
     setNotifications(allNotifications);
@@ -93,6 +120,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     data?: any,
     type: AppNotification['type'] = 'system'
   ): Promise<string> => {
+    if (!notificationService) {
+      throw new Error('Notification service not available');
+    }
     const notificationId = await notificationService.sendLocalNotification(title, body, data, type);
     refreshNotifications();
     return notificationId;
@@ -100,6 +130,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Send now playing notification
   const sendNowPlayingNotification = async (track: NowPlayingNotification): Promise<string> => {
+    if (!notificationService) {
+      throw new Error('Notification service not available');
+    }
     const notificationId = await notificationService.sendNowPlayingNotification(track);
     return notificationId;
   };
@@ -109,29 +142,44 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     notificationId: string,
     track: NowPlayingNotification
   ): Promise<void> => {
+    if (!notificationService) {
+      throw new Error('Notification service not available');
+    }
     await notificationService.updateNowPlayingNotification(notificationId, track);
   };
 
   // Mark notification as read
   const markAsRead = async (notificationId: string): Promise<void> => {
+    if (!notificationService) {
+      throw new Error('Notification service not available');
+    }
     await notificationService.markAsRead(notificationId);
     refreshNotifications();
   };
 
   // Mark all notifications as read
   const markAllAsRead = async (): Promise<void> => {
+    if (!notificationService) {
+      throw new Error('Notification service not available');
+    }
     await notificationService.markAllAsRead();
     refreshNotifications();
   };
 
   // Clear all notifications
   const clearAllNotifications = async (): Promise<void> => {
+    if (!notificationService) {
+      throw new Error('Notification service not available');
+    }
     await notificationService.clearAllNotifications();
     refreshNotifications();
   };
 
   // Cancel notification
   const cancelNotification = async (notificationId: string): Promise<void> => {
+    if (!notificationService) {
+      throw new Error('Notification service not available');
+    }
     await notificationService.cancelNotification(notificationId);
     refreshNotifications();
   };
@@ -140,15 +188,20 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const handleMusicPlayerAction = (data: any) => {
     console.log('Music player action:', data);
     
-    // Import MusicPlayerService dynamically to avoid circular imports
-    import('../lib/musicPlayerService').then(({ default: MusicPlayerService }) => {
-      const musicPlayer = MusicPlayerService.getInstance();
-      
-      // Use the music player's handleNotificationAction method
-      if (data.actionIdentifier) {
-        musicPlayer.handleNotificationAction(data.actionIdentifier);
+    // Use a timeout to avoid circular import issues
+    setTimeout(async () => {
+      try {
+        const { default: MusicPlayerService } = await import('../lib/musicPlayerService');
+        const musicPlayer = MusicPlayerService.getInstance();
+        
+        // Use the music player's handleNotificationAction method
+        if (data.actionIdentifier) {
+          await musicPlayer.handleNotificationAction(data.actionIdentifier);
+        }
+      } catch (error) {
+        console.error('Failed to handle music player action:', error);
       }
-    });
+    }, 0);
   };
 
   // Handle other notification actions
@@ -184,6 +237,14 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       setNotifications(localNotifications);
     } catch (error) {
       console.error('Error syncing with backend:', error);
+      // Provide more context about the sync failure
+      if (error instanceof Error) {
+        console.error('Backend sync error details:', {
+          message: error.message,
+          operation: 'syncWithBackend',
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   };
 
@@ -199,6 +260,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       );
     } catch (error) {
       console.error('Error sending template notification:', error);
+      // Log template-specific error details
+      if (error instanceof Error) {
+        console.error('Template notification error details:', {
+          message: error.message,
+          templateName,
+          templateData,
+          timestamp: new Date().toISOString()
+        });
+      }
       return false;
     }
   };
@@ -227,18 +297,18 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const contextValue: NotificationContextType = {
     notifications,
     unreadCount,
-    sendNotification,
-    sendNowPlayingNotification,
-    updateNowPlayingNotification,
-    markAsRead,
-    markAllAsRead,
-    clearAllNotifications,
-    cancelNotification,
-    refreshNotifications,
-    syncWithBackend,
-    sendTemplateNotification,
-    getUserPreferences,
-    updateUserPreferences,
+    sendNotification: sendNotification || (() => Promise.reject(new Error('Notification service not available'))),
+    sendNowPlayingNotification: sendNowPlayingNotification || (() => Promise.reject(new Error('Notification service not available'))),
+    updateNowPlayingNotification: updateNowPlayingNotification || (() => Promise.reject(new Error('Notification service not available'))),
+    markAsRead: markAsRead || (() => Promise.reject(new Error('Notification service not available'))),
+    markAllAsRead: markAllAsRead || (() => Promise.reject(new Error('Notification service not available'))),
+    clearAllNotifications: clearAllNotifications || (() => Promise.reject(new Error('Notification service not available'))),
+    cancelNotification: cancelNotification || (() => Promise.reject(new Error('Notification service not available'))),
+    refreshNotifications: refreshNotifications || (() => {}),
+    syncWithBackend: syncWithBackend || (() => Promise.resolve()),
+    sendTemplateNotification: sendTemplateNotification || (() => Promise.resolve(false)),
+    getUserPreferences: getUserPreferences || (() => Promise.resolve(null)),
+    updateUserPreferences: updateUserPreferences || (() => Promise.resolve(false)),
   };
 
   return (

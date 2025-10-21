@@ -1,4 +1,6 @@
+// Import necessary components, hooks, and libraries
 import AnimatedTabButton from '@/components/AnimatedTabButton';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { useTheme } from '@/lib/themeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -8,6 +10,7 @@ import { VideoBackground } from '../../components/VideoBackground';
 import { supabase } from '../../lib/supabase';
 import { deleteUser, getUserById, updateUser } from '../../lib/supabase_crud';
 
+// Theme selection options for the dropdown
 const themeOptions = [
   { label: 'Blue Theme', value: 'bg1' },
   { label: 'Option 1', value: 'bg2' },
@@ -21,11 +24,13 @@ const themeOptions = [
   { label: 'Option 9', value: 'bg10' },
 ];
 
+// Type definition for a theme option
 type ThemeOption = {
   label: string;
   value: string;
 };
 
+// DropdownItem: Renders a single selectable option in the dropdown
 const DropdownItem = ({ item, onSelect }: { item: ThemeOption; onSelect: (item: ThemeOption) => void }) => (
   <TouchableOpacity
     style={styles.option}
@@ -35,19 +40,24 @@ const DropdownItem = ({ item, onSelect }: { item: ThemeOption; onSelect: (item: 
   </TouchableOpacity>
 );
 
+
+// CustomDropdown: Full dropdown component for theme selection
 const CustomDropdown = ({ selectedTheme, onSelect, isModalVisible, toggleModal }: {
   selectedTheme: string;
   onSelect: (themeValue: string) => void;
   isModalVisible: boolean;
   toggleModal: () => void;
 }) => {
+  // Handles selection and closes modal
   const handleSelect = (item: ThemeOption) => {
     onSelect(item.value);
     toggleModal();
   };
 
+  // Renders dropdown modal
   const renderDropdown = () => {
     return (
+      // Modal component: appears over everything else when visible
       <Modal
         visible={isModalVisible}
         transparent={true}
@@ -58,8 +68,10 @@ const CustomDropdown = ({ selectedTheme, onSelect, isModalVisible, toggleModal }
           style={styles.modalOverlay}
           onPress={toggleModal}
         >
+          {/* Centers dropdown content vertically + horizontally */}
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <View style={styles.dropdownContent}>
+              {/* FlatList for rendering all available theme options */}
               <FlatList
                 data={themeOptions}
                 keyExtractor={(item) => item.value}
@@ -74,6 +86,7 @@ const CustomDropdown = ({ selectedTheme, onSelect, isModalVisible, toggleModal }
     );
   };
 
+  // Dropdown button + modal
   return (
     <View style={styles.dropdownContainer}>
       <TouchableOpacity
@@ -95,18 +108,22 @@ const CustomDropdown = ({ selectedTheme, onSelect, isModalVisible, toggleModal }
   );
 };
 
+// SectionContent: Dynamically renders settings content based on the selected section
 const SectionContent = ({ activeSection, state, handlers }: {
   activeSection: string;
   state: any;
   handlers: any;
 }) => {
   const { firstName, lastName, msg, notificationsEnabled, feedbackText, selectedThemeLabel, isThemeDropdownVisible } = state;
-  const { setFirstName, setLastName, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setFeedbackText, handleSendFeedback, setSelectedTheme, toggleThemeDropdown } = handlers;
+  const { setFirstName, setLastName, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setFeedbackText, handleSendFeedback, setSelectedTheme, toggleThemeDropdown, handleNotificationToggle } = handlers;
 
+  // Handle which section is active and render appropriate content
   switch (activeSection) {
+    // ================= ACCOUNT SECTION =================
     case 'account':
       return (
         <View style={styles.sectionContent}>
+          {/* Input for first name */}
           <View style={styles.field}>
             <Text style={styles.label}>First Name</Text>
             <TextInput
@@ -118,6 +135,8 @@ const SectionContent = ({ activeSection, state, handlers }: {
               autoCapitalize="words"
             />
           </View>
+
+          {/* Input for last name */}
           <View style={styles.field}>
             <Text style={styles.label}>Last Name</Text>
             <TextInput
@@ -129,30 +148,47 @@ const SectionContent = ({ activeSection, state, handlers }: {
               autoCapitalize="words"
             />
           </View>
+
+          {/* Update info button */}
           <TouchableOpacity style={styles.updateBtn} onPress={handleUpdate}>
             <Ionicons name="save-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
             <Text style={styles.updateBtnTxt}>Update Info</Text>
           </TouchableOpacity>
+
+          {/* Delete account button */}
           <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
             <Ionicons name="trash-outline" size={18} color="#fff" style={{ marginRight: 7 }} />
             <Text style={styles.deleteBtnTxt}>Delete Account</Text>
           </TouchableOpacity>
+
+          {/* Feedback or success message after actions */}
           {msg ? <Text style={styles.msg}>{msg}</Text> : null}
+
+          {/* Logout button */}
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Ionicons name="exit-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
             <Text style={styles.logoutBtnTxt}>Logout</Text>
           </TouchableOpacity>
         </View>
       );
+
+    // ================= GENERAL SETTINGS SECTION =================
     case 'general':
       return (
         <View style={styles.sectionContent}>
+          {/* Notifications toggle */}
           <View style={[styles.field, { marginTop: 15 }]}>
             <View style={styles.row}>
               <Text style={styles.label}>Notifications</Text>
-              <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={{ false: '#888', true: '#1DB954' }} />
+              <Switch 
+                value={notificationsEnabled} 
+                onValueChange={handleNotificationToggle || (() => console.warn('handleNotificationToggle not available'))} 
+                trackColor={{ false: '#888', true: '#1DB954' }} 
+              />
             </View>
           </View>
+
+          {/* Theme selection dropdown */}
           <View style={[styles.field, { marginTop: 15 }]}>
             <Text style={styles.label}>App Theme</Text>
             <CustomDropdown
@@ -164,6 +200,8 @@ const SectionContent = ({ activeSection, state, handlers }: {
           </View>
         </View>
       );
+
+    // ================= ABOUT SECTION =================
     case 'about':
       return (
         <View style={styles.sectionContent}>
@@ -176,9 +214,12 @@ const SectionContent = ({ activeSection, state, handlers }: {
           </View>
         </View>
       );
+
+    // ================= FEEDBACK SECTION =================
     case 'feedback':
       return (
         <View style={styles.sectionContent}>
+          {/* Feedback input box */}
           <View style={styles.field}>
             <Text style={styles.label}>Your Feedback</Text>
             <TextInput
@@ -191,19 +232,31 @@ const SectionContent = ({ activeSection, state, handlers }: {
               numberOfLines={4}
             />
           </View>
+
+          {/* Send feedback button */}
           <TouchableOpacity style={styles.updateBtn} onPress={handleSendFeedback}>
             <Ionicons name="send-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
             <Text style={styles.updateBtnTxt}>Send Feedback</Text>
           </TouchableOpacity>
         </View>
       );
+
+    // ================= DEFAULT CASE (if no section selected) =================
     default:
       return null;
   }
 };
 
 export default function SettingsPage() {
+
+  // --- THEME CONTEXT ---
   const { selectedTheme, setTheme } = useTheme();
+  
+  // --- NOTIFICATION CONTEXT ---
+  const notificationContext = useNotifications();
+  const { sendNotification, getUserPreferences, updateUserPreferences } = notificationContext || {};
+
+  // --- USE STATE ---
   const [userId, setUserId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -211,20 +264,28 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState('');
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] = useState<any>(null);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [isThemeDropdownVisible, setThemeDropdownVisible] = useState(false);
+
+  // --- ANIMATED VALUES ---
   const expandAnim = useRef(new Animated.Value(0)).current;
   const contentOpacityAnim = useRef(new Animated.Value(0)).current;
   const backButtonSlideAnim = useRef(new Animated.Value(-100)).current;
 
+  // LOAD USER DATA ON ACCOUNT SECTION OPEN
   useEffect(() => {
     if (activeSection === 'account') {
       supabase.auth.getSession().then(({ data: { session } }) => {
+
+        // If no session (not logged in), send user to homepage
         if (!session?.user?.id) {
           router.replace('/');
           return;
         }
+
+        // Set user ID and fetch user profile from database
         setUserId(session.user.id);
         getUserById(session.user.id).then(user => {
           if (user) {
@@ -237,16 +298,61 @@ export default function SettingsPage() {
     }
   }, [activeSection]);
 
+  // LOAD NOTIFICATION PREFERENCES ON GENERAL SECTION OPEN
+  useEffect(() => {
+    if (activeSection === 'general') {
+      const loadNotificationPreferences = async () => {
+        try {
+          let preferences = null;
+          
+          // Try to get from Supabase first
+          if (getUserPreferences) {
+            preferences = await getUserPreferences();
+          }
+          
+          // If Supabase fails, try local storage
+          if (!preferences) {
+            try {
+              const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+              const localPrefs = await AsyncStorage.getItem('notification_preferences');
+              if (localPrefs) {
+                preferences = JSON.parse(localPrefs);
+              }
+            } catch (storageError) {
+              console.warn('Failed to load from local storage:', storageError);
+            }
+          }
+          
+          if (preferences) {
+            setNotificationPreferences(preferences);
+            setNotificationsEnabled(preferences.system_enabled || false);
+          } else {
+            // Set default preferences
+            setNotificationsEnabled(true);
+          }
+        } catch (error) {
+          console.error('Error loading notification preferences:', error);
+          // Set default preferences on error
+          setNotificationsEnabled(true);
+        }
+      };
+      loadNotificationPreferences();
+    }
+  }, [activeSection, getUserPreferences]);
+
+  // SECTION OPEN ANIMATION
   const handleSectionOpen = (section: string) => {
     setActiveSection(section);
     backButtonSlideAnim.setValue(-100);
     Animated.sequence([
+      // Animate open sequence
       Animated.timing(expandAnim, {
         toValue: 1,
         duration: 700,
         easing: Easing.inOut(Easing.cubic),
         useNativeDriver: true,
       }),
+      // Fade in content + slide in back button in parallel
       Animated.parallel([
         Animated.timing(contentOpacityAnim, {
           toValue: 1,
@@ -264,8 +370,10 @@ export default function SettingsPage() {
     ]).start();
   };
 
+  // SECTION CLOSE ANIMATION
   const handleSectionClose = () => {
     Animated.sequence([
+      // Fade out content and slide out back button together
       Animated.parallel([
         Animated.timing(contentOpacityAnim, {
           toValue: 0,
@@ -280,6 +388,7 @@ export default function SettingsPage() {
           useNativeDriver: true,
         }),
       ]),
+      // Shrink section container back
       Animated.timing(expandAnim, {
         toValue: 0,
         duration: 500,
@@ -287,12 +396,14 @@ export default function SettingsPage() {
         useNativeDriver: true,
       }),
     ]).start(() => {
+      // Reset everything once animation finishes
       setActiveSection(null);
       contentOpacityAnim.setValue(0);
       backButtonSlideAnim.setValue(-100);
     });
   };
 
+  // UPDATE ACCOUNT INFO
   const handleUpdate = async () => {
     setMsg('');
     try {
@@ -304,14 +415,18 @@ export default function SettingsPage() {
     }
   };
 
+  // LOGOUT FUNCTION
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.replace('/');
   };
 
+  // DELETE ACCOUNT FUNCTION
   const handleDelete = async () => {
     setMsg('');
     if (!userId) return;
+
+    // Confirm deletion before proceeding
     Alert.alert('Are you sure?', 'This will delete your account forever!', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -326,18 +441,77 @@ export default function SettingsPage() {
     ]);
   };
 
+  // FEEDBACK HANDLER (TEMP)
   const handleSendFeedback = () => {
     Alert.alert('Feedback', 'Feedback submitted! (Placeholder)');
     setFeedbackText('');
   };
 
+  // NOTIFICATION TOGGLE HANDLER
+  const handleNotificationToggle = async (enabled: boolean) => {
+    setNotificationsEnabled(enabled);
+    
+    // Check if notification functions are available
+    if (!sendNotification) {
+      console.warn('Notification functions not available');
+      Alert.alert('Info', 'Notification service not available. Using local settings only.');
+      return;
+    }
+    
+    try {
+      // Try to update preferences in Supabase if available
+      if (updateUserPreferences) {
+        const success = await updateUserPreferences({
+          system_enabled: enabled,
+          music_enabled: enabled,
+          push_enabled: enabled,
+        });
+        
+        if (!success) {
+          console.warn('Failed to update Supabase preferences, using local storage');
+        }
+      }
+      
+      // Store preferences locally as fallback
+      try {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        await AsyncStorage.setItem('notification_preferences', JSON.stringify({
+          system_enabled: enabled,
+          music_enabled: enabled,
+          push_enabled: enabled,
+          updated_at: new Date().toISOString(),
+        }));
+      } catch (storageError) {
+        console.warn('Failed to save to local storage:', storageError);
+      }
+      
+      // Send a test notification if enabled
+      if (enabled) {
+        await sendNotification(
+          'Notifications Enabled',
+          'You will now receive notifications from Emotify!',
+          { type: 'system' },
+          'system'
+        );
+      }
+      
+    } catch (error) {
+      console.error('Error updating notification preferences:', error);
+      setNotificationsEnabled(!enabled);
+      Alert.alert('Error', 'Failed to update notification preferences');
+    }
+  };
+
+  // THEME DROPDOWN HANDLER
   const toggleThemeDropdown = () => setThemeDropdownVisible(prev => !prev);
 
+  // THEME LABEL HANDLER
   const getSelectedThemeLabel = (themeValue: string) => {
     const theme = themeOptions.find(option => option.value === themeValue);
     return theme ? theme.label : 'Select Theme';
   };
 
+  // COMBINE STATE & HANDLERS FOR CLEAN PROP PASSING
   const stateProps = {
     firstName, lastName, email, msg, notificationsEnabled, darkModeEnabled, feedbackText,
     selectedThemeLabel: getSelectedThemeLabel(selectedTheme),
@@ -347,15 +521,21 @@ export default function SettingsPage() {
     setFirstName, setLastName, setEmail, handleUpdate, handleDelete, handleLogout,
     setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback,
     setSelectedTheme: setTheme,
-    toggleThemeDropdown
+    toggleThemeDropdown,
+    handleNotificationToggle
   };
 
   return (
     <View style={styles.container}>
+
+      {/* === Background Video Layer === */}
       <VideoBackground />
+
+      {/* === Main Settings Screen Content (before expanding) === */}
       <Animated.View style={[
         styles.mainContent,
         {
+          // Fade + scale out animation when a section is opened
           opacity: expandAnim.interpolate({
             inputRange: [0, 0.5, 1],
             outputRange: [1, 0.3, 0],
@@ -370,10 +550,14 @@ export default function SettingsPage() {
           ],
         },
       ]}>
+
+        {/* Header / Title */}
         <View style={styles.top}>
           <Text style={styles.title}>Settings</Text>
         </View>
         <View style={styles.card}>
+
+          {/* Each tab button opens its corresponding section */}
           <AnimatedTabButton
             title="Account"
             iconName="person-outline"
@@ -397,6 +581,7 @@ export default function SettingsPage() {
         </View>
       </Animated.View>
 
+      {/* === Expanding Overlay (shown when a section is opened) === */}
       <Animated.View
         pointerEvents={activeSection ? 'auto' : 'none'}
         style={[
@@ -411,17 +596,29 @@ export default function SettingsPage() {
           },
         ]}
       >
+
+        {/* Background video continues underneath expanded content */}
         <VideoBackground />
+
+        {/* Expanded content wrapper (holds section content + back button) */}
         <Animated.View style={[styles.expandedContentWrapper, { opacity: contentOpacityAnim }]}>
+
+          {/* Top row: Back button + current section title */}
           <View style={{ width: '100%', flexDirection: 'row', justifyContent: 'center' }}>
+
+            {/* Back button slides in from top using animation */}
             <Animated.View style={[styles.backBtnContainer, { transform: [{ translateY: backButtonSlideAnim }] }]}>
               <TouchableOpacity style={styles.backBtn} onPress={handleSectionClose}>
                 <Ionicons name="arrow-back" size={24} color="#fff" />
                 <Text style={styles.backText}>Back</Text>
               </TouchableOpacity>
             </Animated.View>
+
+            {/* Section title (e.g., "Account", "General") */}
             <Text style={styles.sectionTitle}>{activeSection?.charAt(0).toUpperCase()}{activeSection?.slice(1)}</Text>
           </View>
+
+          {/* Render section-specific content when active */}
           {activeSection && (
             <View style={styles.sectionCard}>
               <SectionContent activeSection={activeSection} state={stateProps} handlers={handlerProps} />

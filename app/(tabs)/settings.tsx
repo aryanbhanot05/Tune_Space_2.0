@@ -1,5 +1,6 @@
 // Import necessary components, hooks, and libraries
 import AnimatedTabButton from '@/components/AnimatedTabButton';
+import { useNotifications } from '@/contexts/NotificationContext';
 import { useTheme } from '@/lib/themeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -114,7 +115,7 @@ const SectionContent = ({ activeSection, state, handlers }: {
   handlers: any;
 }) => {
   const { firstName, lastName, msg, notificationsEnabled, feedbackText, selectedThemeLabel, isThemeDropdownVisible } = state;
-  const { setFirstName, setLastName, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setFeedbackText, handleSendFeedback, setSelectedTheme, toggleThemeDropdown } = handlers;
+  const { setFirstName, setLastName, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setFeedbackText, handleSendFeedback, setSelectedTheme, toggleThemeDropdown, handleNotificationToggle } = handlers;
 
   // Handle which section is active and render appropriate content
   switch (activeSection) {
@@ -179,7 +180,11 @@ const SectionContent = ({ activeSection, state, handlers }: {
           <View style={[styles.field, { marginTop: 15 }]}>
             <View style={styles.row}>
               <Text style={styles.label}>Notifications</Text>
-              <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={{ false: '#888', true: '#1DB954' }} />
+              <Switch 
+                value={notificationsEnabled} 
+                onValueChange={handleNotificationToggle || (() => console.warn('handleNotificationToggle not available'))} 
+                trackColor={{ false: '#888', true: '#1DB954' }} 
+              />
             </View>
           </View>
 
@@ -246,6 +251,13 @@ export default function SettingsPage() {
 
   // --- THEME CONTEXT ---
   const { selectedTheme, setTheme } = useTheme();
+<<<<<<< Updated upstream
+=======
+  
+  // --- NOTIFICATION CONTEXT ---
+  const notificationContext = useNotifications();
+  const { sendNotification, getUserPreferences, updateUserPreferences } = notificationContext || {};
+>>>>>>> Stashed changes
 
   // --- USE STATE ---
   const [userId, setUserId] = useState<string | null>(null);
@@ -255,6 +267,7 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState('');
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] = useState<any>(null);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [isThemeDropdownVisible, setThemeDropdownVisible] = useState(false);
@@ -288,6 +301,51 @@ export default function SettingsPage() {
     }
   }, [activeSection]);
 
+<<<<<<< Updated upstream
+=======
+  // LOAD NOTIFICATION PREFERENCES ON GENERAL SECTION OPEN
+  useEffect(() => {
+    if (activeSection === 'general') {
+      const loadNotificationPreferences = async () => {
+        try {
+          let preferences = null;
+          
+          // Try to get from Supabase first
+          if (getUserPreferences) {
+            preferences = await getUserPreferences();
+          }
+          
+          // If Supabase fails, try local storage
+          if (!preferences) {
+            try {
+              const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+              const localPrefs = await AsyncStorage.getItem('notification_preferences');
+              if (localPrefs) {
+                preferences = JSON.parse(localPrefs);
+              }
+            } catch (storageError) {
+              console.warn('Failed to load from local storage:', storageError);
+            }
+          }
+          
+          if (preferences) {
+            setNotificationPreferences(preferences);
+            setNotificationsEnabled(preferences.system_enabled || false);
+          } else {
+            // Set default preferences
+            setNotificationsEnabled(true);
+          }
+        } catch (error) {
+          console.error('Error loading notification preferences:', error);
+          // Set default preferences on error
+          setNotificationsEnabled(true);
+        }
+      };
+      loadNotificationPreferences();
+    }
+  }, [activeSection, getUserPreferences]);
+
+>>>>>>> Stashed changes
   // SECTION OPEN ANIMATION
   const handleSectionOpen = (section: string) => {
     setActiveSection(section);
@@ -395,6 +453,64 @@ export default function SettingsPage() {
     setFeedbackText('');
   };
 
+<<<<<<< Updated upstream
+=======
+  // NOTIFICATION TOGGLE HANDLER
+  const handleNotificationToggle = async (enabled: boolean) => {
+    setNotificationsEnabled(enabled);
+    
+    // Check if notification functions are available
+    if (!sendNotification) {
+      console.warn('Notification functions not available');
+      Alert.alert('Info', 'Notification service not available. Using local settings only.');
+      return;
+    }
+    
+    try {
+      // Try to update preferences in Supabase if available
+      if (updateUserPreferences) {
+        const success = await updateUserPreferences({
+          system_enabled: enabled,
+          music_enabled: enabled,
+          push_enabled: enabled,
+        });
+        
+        if (!success) {
+          console.warn('Failed to update Supabase preferences, using local storage');
+        }
+      }
+      
+      // Store preferences locally as fallback
+      try {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        await AsyncStorage.setItem('notification_preferences', JSON.stringify({
+          system_enabled: enabled,
+          music_enabled: enabled,
+          push_enabled: enabled,
+          updated_at: new Date().toISOString(),
+        }));
+      } catch (storageError) {
+        console.warn('Failed to save to local storage:', storageError);
+      }
+      
+      // Send a test notification if enabled
+      if (enabled) {
+        await sendNotification(
+          'Notifications Enabled',
+          'You will now receive notifications from Emotify!',
+          { type: 'system' },
+          'system'
+        );
+      }
+      
+    } catch (error) {
+      console.error('Error updating notification preferences:', error);
+      setNotificationsEnabled(!enabled);
+      Alert.alert('Error', 'Failed to update notification preferences');
+    }
+  };
+
+>>>>>>> Stashed changes
   // THEME DROPDOWN HANDLER
   const toggleThemeDropdown = () => setThemeDropdownVisible(prev => !prev);
 
@@ -414,7 +530,8 @@ export default function SettingsPage() {
     setFirstName, setLastName, setEmail, handleUpdate, handleDelete, handleLogout,
     setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback,
     setSelectedTheme: setTheme,
-    toggleThemeDropdown
+    toggleThemeDropdown,
+    handleNotificationToggle
   };
 
   return (

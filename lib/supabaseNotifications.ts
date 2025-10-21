@@ -51,13 +51,33 @@ class SupabaseNotificationService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data, error } = await supabase.rpc('get_user_notification_preferences', {
-        p_user_id: user.id
-      });
+      // Try to get from notification_preferences table first
+      const { data, error } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
         console.error('Error fetching notification preferences:', error);
         return null;
+      }
+
+      // If no preferences exist, return default preferences
+      if (!data) {
+        return {
+          id: '',
+          user_id: user.id,
+          music_enabled: true,
+          system_enabled: true,
+          push_enabled: true,
+          email_enabled: false,
+          quiet_hours_start: '22:00',
+          quiet_hours_end: '08:00',
+          quiet_hours_enabled: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
       }
 
       return data;
@@ -73,23 +93,59 @@ class SupabaseNotificationService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data, error } = await supabase.rpc('update_user_notification_preferences', {
-        p_user_id: user.id,
-        p_music_enabled: preferences.music_enabled,
-        p_system_enabled: preferences.system_enabled,
-        p_push_enabled: preferences.push_enabled,
-        p_email_enabled: preferences.email_enabled,
-        p_quiet_hours_start: preferences.quiet_hours_start,
-        p_quiet_hours_end: preferences.quiet_hours_end,
-        p_quiet_hours_enabled: preferences.quiet_hours_enabled,
-      });
+      // Check if preferences already exist
+      const { data: existingData } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-      if (error) {
-        console.error('Error updating notification preferences:', error);
-        return null;
+      const updateData = {
+        user_id: user.id,
+        music_enabled: preferences.music_enabled ?? true,
+        system_enabled: preferences.system_enabled ?? true,
+        push_enabled: preferences.push_enabled ?? true,
+        email_enabled: preferences.email_enabled ?? false,
+        quiet_hours_start: preferences.quiet_hours_start ?? '22:00',
+        quiet_hours_end: preferences.quiet_hours_end ?? '08:00',
+        quiet_hours_enabled: preferences.quiet_hours_enabled ?? false,
+        updated_at: new Date().toISOString(),
+      };
+
+      let result;
+      if (existingData) {
+        // Update existing preferences
+        const { data, error } = await supabase
+          .from('notification_preferences')
+          .update(updateData)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Error updating notification preferences:', error);
+          return null;
+        }
+        result = data;
+      } else {
+        // Insert new preferences
+        const { data, error } = await supabase
+          .from('notification_preferences')
+          .insert([{
+            ...updateData,
+            created_at: new Date().toISOString(),
+          }])
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('Error creating notification preferences:', error);
+          return null;
+        }
+        result = data;
       }
 
-      return data;
+      return result;
     } catch (error) {
       console.error('Error in updateUserPreferences:', error);
       return null;
@@ -131,12 +187,18 @@ class SupabaseNotificationService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      const { data, error } = await supabase.rpc('get_user_notifications', {
-        p_user_id: user.id,
-        p_limit: limit,
-        p_offset: offset,
-        p_type: type,
-      });
+      let query = supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (type) {
+        query = query.eq('type', type);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching notifications:', error);
@@ -156,16 +218,18 @@ class SupabaseNotificationService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 0;
 
-      const { data, error } = await supabase.rpc('get_unread_notification_count', {
-        p_user_id: user.id
-      });
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .is('read_at', null);
 
       if (error) {
         console.error('Error fetching unread count:', error);
         return 0;
       }
 
-      return data || 0;
+      return count || 0;
     } catch (error) {
       console.error('Error in getUnreadCount:', error);
       return 0;
@@ -178,10 +242,11 @@ class SupabaseNotificationService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      const { error } = await supabase.rpc('mark_notification_read', {
-        p_notification_id: notificationId,
-        p_user_id: user.id,
-      });
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', notificationId)
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error marking notification as read:', error);
@@ -201,16 +266,31 @@ class SupabaseNotificationService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return 0;
 
-      const { data, error } = await supabase.rpc('mark_all_notifications_read', {
-        p_user_id: user.id
-      });
+      // First, get the count of unread notifications
+      const { count: unreadCount, error: countError } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .is('read_at', null);
 
-      if (error) {
-        console.error('Error marking all notifications as read:', error);
+      if (countError) {
+        console.error('Error getting unread count:', countError);
         return 0;
       }
 
-      return data || 0;
+      // Then update all unread notifications
+      const { error: updateError } = await supabase
+        .from('notifications')
+        .update({ read_at: new Date().toISOString() })
+        .eq('user_id', user.id)
+        .is('read_at', null);
+
+      if (updateError) {
+        console.error('Error marking all notifications as read:', updateError);
+        return 0;
+      }
+
+      return unreadCount || 0;
     } catch (error) {
       console.error('Error in markAllAsRead:', error);
       return 0;

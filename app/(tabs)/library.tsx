@@ -1,16 +1,17 @@
+import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-  Image,
-  Platform,
-  Pressable,
-  SectionList,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Image,
+    Platform,
+    Pressable,
+    SectionList,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -134,6 +135,12 @@ export default function LibraryScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <VideoBackground />
+      
+      {/* Notification Bell */}
+      <View style={styles.notificationContainer}>
+        <NotificationBell size={28} color="#ffffff" />
+      </View>
+      
       <Header />
 
       <SearchRow
@@ -307,6 +314,12 @@ const CARD = "#1f1f1f";
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG, paddingBottom: 60 },
+  notificationContainer: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    zIndex: 10,
+  },
   header: {
     paddingHorizontal: 16,
     paddingTop: Platform.select({ ios: 4, android: 8, default: 8 }),

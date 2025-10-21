@@ -2,15 +2,17 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
 import React, { useEffect, useRef, useState } from "react";
 import {
-    FlatList,
-    Image,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 // ---- tiny Deezer search helper (uses proxy on web if provided) ----
 const FUNCTIONS_BASE = process.env.EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL || "";
@@ -44,6 +46,9 @@ export default function HomePage() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // simple local playlist state (no duplicates)
+  const [playlist, setPlaylist] = useState<any[]>([]);
 
   // native playback state
   const soundRef = useRef<SoundRef>(null);
@@ -109,15 +114,29 @@ export default function HomePage() {
     }
   };
 
+  // --- Add to playlist handler ---
+  const addToPlaylist = (track: any) => {
+    setPlaylist((prev) => {
+      const exists = prev.some((t) => String(t?.id) === String(track?.id));
+      if (exists) {
+        Alert.alert("Already added", `"${track?.title}" is already in your playlist.`);
+        return prev;
+      }
+      const next = [...prev, track];
+      Alert.alert("Added to Playlist", `"${track?.title}" by ${track?.artist?.name}`);
+      return next;
+    });
+  };
+
   return (
     <View style={styles.container}>
       <VideoBackground />
-      
+
       {/* Notification Bell */}
       <View style={styles.notificationContainer}>
         <NotificationBell size={28} color="#ffffff" />
       </View>
-      
+
       <View style={styles.top}>
         <Text style={styles.title}>Hi, User</Text>
         <Text style={styles.title}>Search</Text>
@@ -145,13 +164,16 @@ export default function HomePage() {
         renderItem={({ item }) => {
           const artUri = item?.album?.cover_medium || item?.album?.cover || undefined;
           const preview = item?.preview as string | undefined;
+          const idStr = String(item.id);
+
           return (
-            <TouchableOpacity style={styles.songCard1} activeOpacity={0.7}>
+            <View style={styles.songCard1}>
               {artUri ? (
                 <Image source={{ uri: artUri }} style={styles.songArt} />
               ) : (
                 <View style={[styles.songArt, { backgroundColor: "#101010" }]} />
               )}
+
               <View style={{ marginLeft: 10, flex: 1 }}>
                 <Text style={{ color: "white", fontSize: 16 }} numberOfLines={1}>
                   {item.title}
@@ -166,18 +188,11 @@ export default function HomePage() {
                     <audio controls src={preview} preload="none" style={{ marginTop: 6, width: "100%" }} />
                   ) : Audio ? (
                     <TouchableOpacity
-                      onPress={() => togglePlayNative(preview, String(item.id))}
-                      style={{
-                        marginTop: 8,
-                        paddingHorizontal: 12,
-                        paddingVertical: 6,
-                        backgroundColor: "#2e3440",
-                        borderRadius: 8,
-                        alignSelf: "flex-start",
-                      }}
+                      onPress={() => togglePlayNative(preview, idStr)}
+                      style={styles.previewBtn}
                     >
                       <Text style={{ color: "white" }}>
-                        {playingId === String(item.id) ? "Pause" : "Play"}
+                        {playingId === idStr ? "Pause" : "Play"}
                       </Text>
                     </TouchableOpacity>
                   ) : (
@@ -190,7 +205,17 @@ export default function HomePage() {
                   <Text style={{ color: "#888", marginTop: 6 }}>No preview available</Text>
                 )}
               </View>
-            </TouchableOpacity>
+
+              {/* --- Add-to-Playlist button (right side) --- */}
+              <TouchableOpacity
+                onPress={() => addToPlaylist(item)}
+                style={styles.addBtn}
+                accessibilityLabel="Add to playlist"
+                accessibilityHint={`Add ${item?.title} to your playlist`}
+              >
+                <Ionicons name="add-circle-outline" size={26} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
           );
         }}
         style={styles.resultsList}
@@ -211,7 +236,7 @@ const styles = StyleSheet.create({
     paddingTop: 70,
   },
   notificationContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 20,
     right: 20,
     zIndex: 10,
@@ -260,5 +285,19 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#2a2f3a",
+  },
+  previewBtn: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#2e3440",
+    borderRadius: 8,
+    alignSelf: "flex-start",
+  },
+  addBtn: {
+    marginLeft: 10,
+    padding: 6,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

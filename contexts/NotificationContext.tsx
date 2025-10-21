@@ -84,7 +84,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         console.log('Notification response:', response);
         const { data } = response.notification.request.content;
         const actionIdentifier = response.actionIdentifier;
-        
+
         // Handle different notification types
         if (data?.type === 'now_playing') {
           // Handle music player actions
@@ -187,13 +187,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   // Handle music player actions from notifications
   const handleMusicPlayerAction = (data: any) => {
     console.log('Music player action:', data);
-    
+
     // Use a timeout to avoid circular import issues
     setTimeout(async () => {
       try {
         const { default: MusicPlayerService } = await import('../lib/musicPlayerService');
         const musicPlayer = MusicPlayerService.getInstance();
-        
+
         // Use the music player's handleNotificationAction method
         if (data.actionIdentifier) {
           await musicPlayer.handleNotificationAction(data.actionIdentifier);
@@ -215,13 +215,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     try {
       // Get notifications from backend
       const backendNotifications = await supabaseNotificationService.getUserNotifications();
-      
+
       // Get unread count from backend
       const backendUnreadCount = await supabaseNotificationService.getUnreadCount();
-      
+
       // Update local state
       setUnreadCount(backendUnreadCount);
-      
+
       // Convert backend notifications to local format
       const localNotifications: AppNotification[] = backendNotifications.map(notif => ({
         id: notif.id,
@@ -233,7 +233,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         read: !!notif.read_at,
         imageUrl: notif.image_url,
       }));
-      
+
       setNotifications(localNotifications);
     } catch (error) {
       console.error('Error syncing with backend:', error);
@@ -250,7 +250,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Send notification using template
   const sendTemplateNotification = async (
-    templateName: string, 
+    templateName: string,
     templateData: Record<string, any> = {}
   ): Promise<boolean> => {
     try {
@@ -304,7 +304,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     markAllAsRead: markAllAsRead || (() => Promise.reject(new Error('Notification service not available'))),
     clearAllNotifications: clearAllNotifications || (() => Promise.reject(new Error('Notification service not available'))),
     cancelNotification: cancelNotification || (() => Promise.reject(new Error('Notification service not available'))),
-    refreshNotifications: refreshNotifications || (() => {}),
+    refreshNotifications: refreshNotifications || (() => { }),
     syncWithBackend: syncWithBackend || (() => Promise.resolve()),
     sendTemplateNotification: sendTemplateNotification || (() => Promise.resolve(false)),
     getUserPreferences: getUserPreferences || (() => Promise.resolve(null)),

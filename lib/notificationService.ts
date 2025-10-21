@@ -68,7 +68,7 @@ class NotificationService {
 
       // Load saved notifications
       await this.loadNotifications();
-      
+
       console.log('✅ Notification service initialized successfully');
       console.log('📱 Local notifications: Available');
       console.log('🔔 Media controls: Available');
@@ -167,7 +167,7 @@ class NotificationService {
     type: AppNotification['type'] = 'system'
   ): Promise<string> {
     const channelId = Platform.OS === 'android' ? type : 'default';
-    
+
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title,
@@ -205,18 +205,18 @@ class NotificationService {
     track: NowPlayingNotification
   ): Promise<string> {
     const channelId = Platform.OS === 'android' ? 'now_playing' : 'default';
-    
+
     // Format time for display
     const formatTime = (ms: number) => {
       const minutes = Math.floor(ms / 60000);
       const seconds = Math.floor((ms % 60000) / 1000);
       return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
-    
+
     const currentTimeFormatted = formatTime(track.currentTime);
     const durationFormatted = formatTime(track.duration);
     const progress = track.duration > 0 ? Math.round((track.currentTime / track.duration) * 100) : 0;
-    
+
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: track.title,
@@ -287,11 +287,11 @@ class NotificationService {
       const seconds = Math.floor((ms % 60000) / 1000);
       return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
-    
+
     const currentTimeFormatted = formatTime(track.currentTime);
     const durationFormatted = formatTime(track.duration);
     const progress = track.duration > 0 ? Math.round((track.currentTime / track.duration) * 100) : 0;
-    
+
     await Notifications.scheduleNotificationAsync({
       identifier: notificationId,
       content: {

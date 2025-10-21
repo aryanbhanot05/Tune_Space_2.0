@@ -194,14 +194,14 @@ class MusicPlayerService {
       if (this.isPlaying && this.sound) {
         // Simulate progress for demo purposes
         this.currentTime += 1000; // Increment by 1 second
-        
+
         // If we've reached the end, stop
         if (this.currentTime >= this.duration) {
           this.currentTime = this.duration;
           this.isPlaying = false;
           this.stopProgressTracking();
         }
-        
+
         this.updateNowPlayingNotification();
       }
     }, 1000); // Update every second

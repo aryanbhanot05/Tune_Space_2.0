@@ -4,9 +4,15 @@
 
 // WebBrowser.maybeCompleteAuthSession();
 
+<<<<<<< Updated upstream
 // const SCHEME = "tunespace20";  
 // const CALLBACK_PATH = "auth/callback";
 // const SCOPES = "user-read-email user-read-private streaming";
+=======
+const SCHEME = "tunespace20";
+const CALLBACK_PATH = "auth/callback";
+const SCOPES = "user-read-email user-read-private streaming";
+>>>>>>> Stashed changes
 
 // const returnUrl = AuthSession.makeRedirectUri({
 //   scheme: SCHEME,

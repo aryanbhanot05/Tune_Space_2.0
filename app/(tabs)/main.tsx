@@ -13,7 +13,7 @@ export default function WelcomeScreen() {
     const [currentEmotion, setCurrentEmotion] = useState<string | null>(null);
     const notificationContext = useNotifications();
     const { sendNotification } = notificationContext || {};
-    
+
     // Debug log
     console.log('Notification context available:', !!notificationContext);
     console.log('Send notification function available:', !!sendNotification);
@@ -28,7 +28,7 @@ export default function WelcomeScreen() {
     const handleEmotion = async (detectedEmotion: string) => {
         setCurrentEmotion(detectedEmotion);
         let searchQuery = "popular happy songs"; // Default search
-        let musicSuggestion = "some bump up music"; 
+        let musicSuggestion = "some bump up music";
 
         // Map Rekognition emotions to Spotify search queries and alert messages
         switch (detectedEmotion.toUpperCase()) {
@@ -66,7 +66,7 @@ export default function WelcomeScreen() {
                 break;
         }
 
-        
+
         Alert.alert(
             "Mood Detected!",
             `Hey You, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
@@ -122,7 +122,7 @@ export default function WelcomeScreen() {
             Alert.alert('Error', 'Notification service not available');
             return;
         }
-        
+
         try {
             await sendNotification(
                 'Test Notification',
@@ -150,7 +150,7 @@ export default function WelcomeScreen() {
     return (
         <View style={styles.container}>
             <VideoBackground />
-            
+
             {/* Notification Bell */}
             <View style={styles.notificationContainer}>
                 <NotificationBell size={28} color="#ffffff" />
@@ -162,7 +162,7 @@ export default function WelcomeScreen() {
                         <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
                     </TouchableOpacity>
                     <Text style={styles.promptText}>Press the button above to start.</Text>
-                    
+
                     {/* Test Notification Button */}
                     <TouchableOpacity style={styles.testButton} onPress={handleTestNotification}>
                         <Text style={styles.testButtonText}>Test Notification</Text>
@@ -177,7 +177,7 @@ export default function WelcomeScreen() {
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={{ paddingBottom: 20 }}
                     />
-                     <TouchableOpacity style={styles.retryButton} onPress={HandleAnalyzeMood}>
+                    <TouchableOpacity style={styles.retryButton} onPress={HandleAnalyzeMood}>
                         <Text style={styles.retryButtonText}>Analyze Again</Text>
                     </TouchableOpacity>
                 </View>

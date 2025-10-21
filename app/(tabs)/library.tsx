@@ -4,14 +4,14 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-    Image,
-    Platform,
-    Pressable,
-    SectionList,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Image,
+  Platform,
+  Pressable,
+  SectionList,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -135,12 +135,12 @@ export default function LibraryScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <VideoBackground />
-      
+
       {/* Notification Bell */}
       <View style={styles.notificationContainer}>
         <NotificationBell size={28} color="#ffffff" />
       </View>
-      
+
       <Header />
 
       <SearchRow
@@ -162,7 +162,7 @@ export default function LibraryScreen() {
         renderSectionHeader={({ section }) => (
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Pressable onPress={() => {}} hitSlop={8} style={styles.seeAll}>
+            <Pressable onPress={() => { }} hitSlop={8} style={styles.seeAll}>
               <Text style={styles.seeAllText}>See all</Text>
             </Pressable>
           </View>
@@ -258,12 +258,12 @@ function FilterChips({
 
 function AddPlaylistTile() {
   return (
-      <Pressable style={styles.addTile}>
-        <View style={styles.addIcon}>
-          <Ionicons name="add" size={20} color="#111" />
-        </View>
-        <Text style={styles.addText}>Add playlist</Text>
-      </Pressable>
+    <Pressable style={styles.addTile}>
+      <View style={styles.addIcon}>
+        <Ionicons name="add" size={20} color="#111" />
+      </View>
+      <Text style={styles.addText}>Add playlist</Text>
+    </Pressable>
   );
 }
 

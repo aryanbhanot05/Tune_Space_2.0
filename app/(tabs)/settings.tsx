@@ -251,13 +251,10 @@ export default function SettingsPage() {
 
   // --- THEME CONTEXT ---
   const { selectedTheme, setTheme } = useTheme();
-<<<<<<< Updated upstream
-=======
   
   // --- NOTIFICATION CONTEXT ---
   const notificationContext = useNotifications();
   const { sendNotification, getUserPreferences, updateUserPreferences } = notificationContext || {};
->>>>>>> Stashed changes
 
   // --- USE STATE ---
   const [userId, setUserId] = useState<string | null>(null);
@@ -301,8 +298,6 @@ export default function SettingsPage() {
     }
   }, [activeSection]);
 
-<<<<<<< Updated upstream
-=======
   // LOAD NOTIFICATION PREFERENCES ON GENERAL SECTION OPEN
   useEffect(() => {
     if (activeSection === 'general') {
@@ -345,7 +340,6 @@ export default function SettingsPage() {
     }
   }, [activeSection, getUserPreferences]);
 
->>>>>>> Stashed changes
   // SECTION OPEN ANIMATION
   const handleSectionOpen = (section: string) => {
     setActiveSection(section);
@@ -453,8 +447,6 @@ export default function SettingsPage() {
     setFeedbackText('');
   };
 
-<<<<<<< Updated upstream
-=======
   // NOTIFICATION TOGGLE HANDLER
   const handleNotificationToggle = async (enabled: boolean) => {
     setNotificationsEnabled(enabled);
@@ -510,7 +502,6 @@ export default function SettingsPage() {
     }
   };
 
->>>>>>> Stashed changes
   // THEME DROPDOWN HANDLER
   const toggleThemeDropdown = () => setThemeDropdownVisible(prev => !prev);
 

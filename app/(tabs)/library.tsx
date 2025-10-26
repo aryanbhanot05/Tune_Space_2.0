@@ -136,11 +136,6 @@ export default function LibraryScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <VideoBackground />
 
-      {/* Notification Bell */}
-      <View style={styles.notificationContainer}>
-        <NotificationBell size={28} color="#ffffff" />
-      </View>
-
       <Header />
 
       <SearchRow

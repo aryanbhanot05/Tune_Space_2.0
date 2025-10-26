@@ -115,7 +115,7 @@ const SectionContent = ({ activeSection, state, handlers }: {
   handlers: any;
 }) => {
   const { firstName, lastName, msg, notificationsEnabled, feedbackText, selectedThemeLabel, isThemeDropdownVisible } = state;
-  const { setFirstName, setLastName, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setFeedbackText, handleSendFeedback, setSelectedTheme, toggleThemeDropdown, handleNotificationToggle } = handlers;
+  const { setFirstName, setLastName, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setFeedbackText, handleSendFeedback, setSelectedTheme, toggleThemeDropdown, handleNotificationToggle, sendTestNotification } = handlers;
 
   // Handle which section is active and render appropriate content
   switch (activeSection) {
@@ -241,6 +241,7 @@ const SectionContent = ({ activeSection, state, handlers }: {
         </View>
       );
 
+
     // ================= DEFAULT CASE (if no section selected) =================
     default:
       return null;
@@ -253,8 +254,7 @@ export default function SettingsPage() {
   const { selectedTheme, setTheme } = useTheme();
   
   // --- NOTIFICATION CONTEXT ---
-  const notificationContext = useNotifications();
-  const { sendNotification, getUserPreferences, updateUserPreferences } = notificationContext || {};
+  const { sendNotification, getUserPreferences, updateUserPreferences, sendTestNotification } = useNotifications();
 
   // --- USE STATE ---
   const [userId, setUserId] = useState<string | null>(null);
@@ -522,7 +522,8 @@ export default function SettingsPage() {
     setNotificationsEnabled, setDarkModeEnabled, setFeedbackText, handleSendFeedback,
     setSelectedTheme: setTheme,
     toggleThemeDropdown,
-    handleNotificationToggle
+    handleNotificationToggle,
+    sendTestNotification
   };
 
   return (

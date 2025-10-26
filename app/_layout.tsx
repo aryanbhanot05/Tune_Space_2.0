@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import React from "react";
-import { NotificationProvider } from "../contexts/NotificationContext";
+import { NotificationProvider } from '../contexts/NotificationContext';
 import '../globals.js';
 
 export default function RootLayout() {
@@ -11,7 +11,7 @@ export default function RootLayout() {
         <Stack.Screen name="signin" options={{ headerShown: false }} />
         <Stack.Screen name="signin_followup" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="notifications" options={{ headerShown: false }} />
+
         {/* Define the capture screen as a full-screen modal */}
         <Stack.Screen 
           name="capture" 

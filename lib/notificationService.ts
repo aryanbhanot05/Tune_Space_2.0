@@ -30,9 +30,10 @@ class NotificationService {
   private static instance: NotificationService;
   private notifications: AppNotification[] = [];
   private pushToken: string | null = null;
+  private isInitialized: boolean = false;
 
   private constructor() {
-    this.initialize();
+    // Don't auto-initialize in constructor to prevent loops
   }
 
   public static getInstance(): NotificationService {
@@ -48,6 +49,11 @@ class NotificationService {
    * @returns Promise<void>
    */
   public async initialize(): Promise<void> {
+    if (this.isInitialized) {
+      console.log('Notification service already initialized, skipping...');
+      return;
+    }
+
     try {
       // Configure notification behavior
       Notifications.setNotificationHandler({
@@ -68,7 +74,7 @@ class NotificationService {
 
       // Load saved notifications
       await this.loadNotifications();
-
+      this.isInitialized = true;
       console.log('✅ Notification service initialized successfully');
       console.log('📱 Local notifications: Available');
       console.log('🔔 Media controls: Available');
@@ -175,6 +181,22 @@ class NotificationService {
         data: { ...data, type },
         sound: true,
         categoryIdentifier: type.toUpperCase(),
+        // Add app icon for notifications
+        ...(Platform.OS === 'android' && {
+          android: {
+            channelId,
+            smallIcon: 'ic_launcher',
+            largeIcon: require('../assets/images/Emotify.png'),
+            color: '#1DB954',
+          },
+        }),
+        ...(Platform.OS === 'ios' && {
+          ios: {
+            sound: 'default',
+            badge: 1,
+            _displayInForeground: true,
+          },
+        }),
       },
       trigger: null,
     });
@@ -238,12 +260,13 @@ class NotificationService {
             channelId: 'now_playing',
             showTimestamp: false,
             color: '#1DB954',
-            largeIcon: track.imageUrl,
+            smallIcon: 'ic_launcher',
+            largeIcon: track.imageUrl || require('../assets/images/Emotify.png'),
             style: {
               type: 'media' as any,
               title: track.title,
               body: track.artist,
-              picture: track.imageUrl,
+              picture: track.imageUrl || require('../assets/images/Emotify.png'),
             },
             actions: [
               {
@@ -314,12 +337,13 @@ class NotificationService {
             channelId: 'now_playing',
             showTimestamp: false,
             color: '#1DB954',
-            largeIcon: track.imageUrl,
+            smallIcon: 'ic_launcher',
+            largeIcon: track.imageUrl || require('../assets/images/Emotify.png'),
             style: {
               type: 'media' as any,
               title: track.title,
               body: track.artist,
-              picture: track.imageUrl,
+              picture: track.imageUrl || require('../assets/images/Emotify.png'),
             },
             actions: [
               {
@@ -427,6 +451,23 @@ class NotificationService {
   // Add notification response listener
   public addNotificationResponseListener(listener: (response: Notifications.NotificationResponse) => void) {
     return Notifications.addNotificationResponseReceivedListener(listener);
+  }
+
+  // Test notification with app icon
+  public async sendTestNotification(): Promise<string> {
+    return await this.sendLocalNotification(
+      '🎵 TuneSpace Test',
+      'This is a test notification to verify the app icon is displayed correctly!',
+      { type: 'test', timestamp: Date.now() },
+      'system'
+    );
+  }
+
+  /**
+   * Reset initialization state (for testing or manual reinitialization)
+   */
+  public resetInitialization(): void {
+    this.isInitialized = false;
   }
 }
 

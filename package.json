@@ -59,6 +59,7 @@
     "@types/react": "^19.1.13",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
+    "metro-react-native-babel-preset": "^0.77.0",
     "supabase": "^2.48.3",
     "typescript": "~5.8.3"
   },

@@ -1,5 +1,7 @@
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import DeezerNotificationService, { DeezerNotificationData, DeezerNotificationTemplate } from '../lib/deezerNotificationService';
 import NotificationService, { AppNotification, NowPlayingNotification } from '../lib/notificationService';
+import ReminderService, { ReminderSettings } from '../lib/reminderService';
 import { supabaseNotificationService } from '../lib/supabaseNotifications';
 
 interface NotificationContextType {
@@ -18,9 +20,66 @@ interface NotificationContextType {
   sendTemplateNotification: (templateName: string, templateData?: Record<string, any>) => Promise<boolean>;
   getUserPreferences: () => Promise<any>;
   updateUserPreferences: (preferences: any) => Promise<boolean>;
+  // Reminder methods
+  getReminderSettings: () => Promise<ReminderSettings>;
+  updateReminderSettings: (settings: Partial<ReminderSettings>) => Promise<boolean>;
+  scheduleReminders: () => Promise<void>;
+  sendImmediateReminder: () => Promise<string>;
+  cancelAllReminders: () => Promise<void>;
+  getReminderStats: () => Promise<any>;
+  // Deezer notification methods
+  sendDeezerNotification: (templateId: string, trackData: DeezerNotificationData, customTitle?: string, customBody?: string) => Promise<string>;
+  sendTrendingNotification: (trackData: DeezerNotificationData, position?: number) => Promise<string>;
+  sendNewReleaseNotification: (trackData: DeezerNotificationData) => Promise<string>;
+  sendDiscoveryNotification: (trackData: DeezerNotificationData) => Promise<string>;
+  sendPlaylistSuggestionNotification: (trackData: DeezerNotificationData) => Promise<string>;
+  sendArtistFollowNotification: (trackData: DeezerNotificationData) => Promise<string>;
+  sendDeezerNowPlayingNotification: (trackData: DeezerNotificationData) => Promise<string>;
+  searchAndNotify: (query: string, limit?: number, templateId?: string) => Promise<string[]>;
+  getTrendingAndNotify: (limit?: number) => Promise<string[]>;
+  getDeezerTemplates: () => DeezerNotificationTemplate[];
+  getDeezerTemplate: (templateId: string) => DeezerNotificationTemplate | undefined;
+  // Test notification method
+  sendTestNotification: () => Promise<string>;
 }
 
-const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+// Create a default context value to avoid undefined issues
+const defaultContextValue: NotificationContextType = {
+  notifications: [],
+  unreadCount: 0,
+  sendNotification: async () => '',
+  sendNowPlayingNotification: async () => '',
+  updateNowPlayingNotification: async () => {},
+  markAsRead: async () => {},
+  markAllAsRead: async () => {},
+  clearAllNotifications: async () => {},
+  cancelNotification: async () => {},
+  refreshNotifications: () => {},
+  syncWithBackend: async () => {},
+  sendTemplateNotification: async () => false,
+  getUserPreferences: async () => ({}),
+  updateUserPreferences: async () => false,
+  getReminderSettings: async () => ({ enabled: false, frequency: 'daily', time: '20:00', days: [1, 2, 3, 4, 5, 6, 7], reminderCount: 0 }),
+  updateReminderSettings: async () => false,
+  scheduleReminders: async () => {},
+  sendImmediateReminder: async () => '',
+  cancelAllReminders: async () => {},
+  getReminderStats: async () => ({ totalSent: 0, lastSent: null, nextReminderScheduled: Date.now() }),
+  sendDeezerNotification: async () => '',
+  sendTrendingNotification: async () => '',
+  sendNewReleaseNotification: async () => '',
+  sendDiscoveryNotification: async () => '',
+  sendPlaylistSuggestionNotification: async () => '',
+  sendArtistFollowNotification: async () => '',
+  sendDeezerNowPlayingNotification: async () => '',
+  searchAndNotify: async () => [],
+  getTrendingAndNotify: async () => [],
+  getDeezerTemplates: () => [],
+  getDeezerTemplate: () => undefined,
+  sendTestNotification: async () => ''
+};
+
+const NotificationContext = createContext<NotificationContextType>(defaultContextValue);
 
 interface NotificationProviderProps {
   children: ReactNode;
@@ -29,6 +88,8 @@ interface NotificationProviderProps {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  
   const [notificationService] = useState(() => {
     try {
       return NotificationService.getInstance();
@@ -36,6 +97,58 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       console.error('Failed to create NotificationService:', error);
       return null;
     }
+  });
+  const [reminderService] = useState(() => {
+    try {
+      return ReminderService.getInstance();
+    } catch (error) {
+      console.error('Failed to create ReminderService:', error);
+      return null;
+    }
+  });
+  const [deezerNotificationService] = useState(() => {
+    try {
+      return DeezerNotificationService.getInstance();
+    } catch (error) {
+      console.error('Failed to create DeezerNotificationService:', error);
+      return null;
+    }
+  });
+
+  // Create a fallback context value if services fail to initialize
+  const createFallbackContext = (): NotificationContextType => ({
+    notifications: [],
+    unreadCount: 0,
+    sendNotification: async () => '',
+    sendNowPlayingNotification: async () => '',
+    updateNowPlayingNotification: async () => {},
+    markAsRead: async () => {},
+    markAllAsRead: async () => {},
+    clearAllNotifications: async () => {},
+    cancelNotification: async () => {},
+    refreshNotifications: () => {},
+    syncWithBackend: async () => {},
+    sendTemplateNotification: async () => false,
+    getUserPreferences: async () => ({}),
+    updateUserPreferences: async () => false,
+    getReminderSettings: async () => ({ enabled: false, frequency: 'daily', time: '20:00', days: [1, 2, 3, 4, 5, 6, 7], reminderCount: 0 }),
+    updateReminderSettings: async () => false,
+    scheduleReminders: async () => {},
+    sendImmediateReminder: async () => '',
+    cancelAllReminders: async () => {},
+    getReminderStats: async () => ({ totalSent: 0, lastSent: null, nextReminderScheduled: Date.now() }),
+    sendDeezerNotification: async () => '',
+    sendTrendingNotification: async () => '',
+    sendNewReleaseNotification: async () => '',
+    sendDiscoveryNotification: async () => '',
+    sendPlaylistSuggestionNotification: async () => '',
+    sendArtistFollowNotification: async () => '',
+    sendDeezerNowPlayingNotification: async () => '',
+    searchAndNotify: async () => [],
+    getTrendingAndNotify: async () => [],
+    getDeezerTemplates: () => [],
+    getDeezerTemplate: () => undefined,
+    sendTestNotification: async () => ''
   });
 
   // Initialize notification service
@@ -47,9 +160,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
     const initializeNotifications = async () => {
       try {
-        await notificationService.initialize();
-        await syncWithBackend();
-        refreshNotifications();
+        if (notificationService) {
+          await notificationService.initialize();
+          await syncWithBackend();
+          refreshNotifications();
+        }
+        if (reminderService) {
+          await reminderService.scheduleReminders();
+        }
+        setIsInitialized(true);
       } catch (error) {
         console.error('Failed to initialize notifications:', error);
         // Log more specific error information for debugging
@@ -60,11 +179,32 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
             name: error.name
           });
         }
+        // Still mark as initialized even if services fail
+        setIsInitialized(true);
       }
     };
 
     initializeNotifications();
-  }, [notificationService]);
+  }, [notificationService, reminderService]);
+
+  // Initialize reminder service
+  useEffect(() => {
+    if (!reminderService) {
+      console.warn('ReminderService not available');
+      return;
+    }
+
+    const initializeReminders = async () => {
+      try {
+        await reminderService.createReminderChannels();
+        await reminderService.scheduleReminders();
+      } catch (error) {
+        console.error('Failed to initialize reminders:', error);
+      }
+    };
+
+    initializeReminders();
+  }, [reminderService]);
 
   // Set up notification listeners
   useEffect(() => {
@@ -275,8 +415,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Get user preferences
   const getUserPreferences = async (): Promise<any> => {
+    console.log('getUserPreferences called');
     try {
-      return await supabaseNotificationService.getUserPreferences();
+      const result = await supabaseNotificationService.getUserPreferences();
+      console.log('getUserPreferences result:', result);
+      return result;
     } catch (error) {
       console.error('Error getting user preferences:', error);
       return null;
@@ -285,8 +428,10 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   // Update user preferences
   const updateUserPreferences = async (preferences: any): Promise<boolean> => {
+    console.log('updateUserPreferences called with:', preferences);
     try {
       const result = await supabaseNotificationService.updateUserPreferences(preferences);
+      console.log('updateUserPreferences result:', result);
       return !!result;
     } catch (error) {
       console.error('Error updating user preferences:', error);
@@ -294,23 +439,180 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   };
 
+  // Reminder methods
+  const getReminderSettings = async (): Promise<ReminderSettings> => {
+    if (!reminderService) {
+      throw new Error('Reminder service not available');
+    }
+    return await reminderService.getReminderSettings();
+  };
+
+  const updateReminderSettings = async (settings: Partial<ReminderSettings>): Promise<boolean> => {
+    if (!reminderService) {
+      throw new Error('Reminder service not available');
+    }
+    return await reminderService.updateReminderSettings(settings);
+  };
+
+  const scheduleReminders = async (): Promise<void> => {
+    if (!reminderService) {
+      throw new Error('Reminder service not available');
+    }
+    return await reminderService.scheduleReminders();
+  };
+
+  const sendImmediateReminder = async (): Promise<string> => {
+    if (!reminderService) {
+      throw new Error('Reminder service not available');
+    }
+    return await reminderService.sendImmediateReminder();
+  };
+
+  const cancelAllReminders = async (): Promise<void> => {
+    if (!reminderService) {
+      throw new Error('Reminder service not available');
+    }
+    return await reminderService.cancelAllReminders();
+  };
+
+  const getReminderStats = async (): Promise<any> => {
+    if (!reminderService) {
+      throw new Error('Reminder service not available');
+    }
+    return await reminderService.getReminderStats();
+  };
+
+  // Deezer notification methods
+  const sendDeezerNotification = async (
+    templateId: string,
+    trackData: DeezerNotificationData,
+    customTitle?: string,
+    customBody?: string
+  ): Promise<string> => {
+    if (!deezerNotificationService) {
+      throw new Error('Deezer notification service not available');
+    }
+    return await deezerNotificationService.sendTrackNotification(templateId, trackData, customTitle, customBody);
+  };
+
+  const sendTrendingNotification = async (trackData: DeezerNotificationData, position?: number): Promise<string> => {
+    if (!deezerNotificationService) {
+      throw new Error('Deezer notification service not available');
+    }
+    return await deezerNotificationService.sendTrendingNotification(trackData, position);
+  };
+
+  const sendNewReleaseNotification = async (trackData: DeezerNotificationData): Promise<string> => {
+    if (!deezerNotificationService) {
+      throw new Error('Deezer notification service not available');
+    }
+    return await deezerNotificationService.sendNewReleaseNotification(trackData);
+  };
+
+  const sendDiscoveryNotification = async (trackData: DeezerNotificationData): Promise<string> => {
+    if (!deezerNotificationService) {
+      throw new Error('Deezer notification service not available');
+    }
+    return await deezerNotificationService.sendDiscoveryNotification(trackData);
+  };
+
+  const sendPlaylistSuggestionNotification = async (trackData: DeezerNotificationData): Promise<string> => {
+    if (!deezerNotificationService) {
+      throw new Error('Deezer notification service not available');
+    }
+    return await deezerNotificationService.sendPlaylistSuggestionNotification(trackData);
+  };
+
+  const sendArtistFollowNotification = async (trackData: DeezerNotificationData): Promise<string> => {
+    if (!deezerNotificationService) {
+      throw new Error('Deezer notification service not available');
+    }
+    return await deezerNotificationService.sendArtistFollowNotification(trackData);
+  };
+
+  const sendDeezerNowPlayingNotification = async (trackData: DeezerNotificationData): Promise<string> => {
+    if (!deezerNotificationService) {
+      throw new Error('Deezer notification service not available');
+    }
+    return await deezerNotificationService.sendNowPlayingNotification(trackData);
+  };
+
+  const searchAndNotify = async (query: string, limit?: number, templateId?: string): Promise<string[]> => {
+    if (!deezerNotificationService) {
+      throw new Error('Deezer notification service not available');
+    }
+    return await deezerNotificationService.searchAndNotify(query, limit, templateId);
+  };
+
+  const getTrendingAndNotify = async (limit?: number): Promise<string[]> => {
+    if (!deezerNotificationService) {
+      throw new Error('Deezer notification service not available');
+    }
+    return await deezerNotificationService.getTrendingAndNotify(limit);
+  };
+
+  const getDeezerTemplates = (): DeezerNotificationTemplate[] => {
+    if (!deezerNotificationService) {
+      return [];
+    }
+    return deezerNotificationService.getTemplates();
+  };
+
+  const getDeezerTemplate = (templateId: string): DeezerNotificationTemplate | undefined => {
+    if (!deezerNotificationService) {
+      return undefined;
+    }
+    return deezerNotificationService.getTemplate(templateId);
+  };
+
+  // Test notification method
+  const sendTestNotification = async (): Promise<string> => {
+    if (!notificationService) {
+      throw new Error('Notification service not available');
+    }
+    return await notificationService.sendTestNotification();
+  };
+
+  // Create a robust context value that handles service failures gracefully
   const contextValue: NotificationContextType = {
     notifications,
     unreadCount,
-    sendNotification: sendNotification || (() => Promise.reject(new Error('Notification service not available'))),
-    sendNowPlayingNotification: sendNowPlayingNotification || (() => Promise.reject(new Error('Notification service not available'))),
-    updateNowPlayingNotification: updateNowPlayingNotification || (() => Promise.reject(new Error('Notification service not available'))),
-    markAsRead: markAsRead || (() => Promise.reject(new Error('Notification service not available'))),
-    markAllAsRead: markAllAsRead || (() => Promise.reject(new Error('Notification service not available'))),
-    clearAllNotifications: clearAllNotifications || (() => Promise.reject(new Error('Notification service not available'))),
-    cancelNotification: cancelNotification || (() => Promise.reject(new Error('Notification service not available'))),
+    sendNotification: sendNotification || (() => Promise.resolve('')),
+    sendNowPlayingNotification: sendNowPlayingNotification || (() => Promise.resolve('')),
+    updateNowPlayingNotification: updateNowPlayingNotification || (() => Promise.resolve()),
+    markAsRead: markAsRead || (() => Promise.resolve()),
+    markAllAsRead: markAllAsRead || (() => Promise.resolve()),
+    clearAllNotifications: clearAllNotifications || (() => Promise.resolve()),
+    cancelNotification: cancelNotification || (() => Promise.resolve()),
     refreshNotifications: refreshNotifications || (() => { }),
     syncWithBackend: syncWithBackend || (() => Promise.resolve()),
     sendTemplateNotification: sendTemplateNotification || (() => Promise.resolve(false)),
-    getUserPreferences: getUserPreferences || (() => Promise.resolve(null)),
+    getUserPreferences: getUserPreferences || (() => Promise.resolve({})),
     updateUserPreferences: updateUserPreferences || (() => Promise.resolve(false)),
+    // Reminder methods
+    getReminderSettings: getReminderSettings || (() => Promise.resolve({ enabled: false, frequency: 'daily', time: '20:00', days: [1, 2, 3, 4, 5, 6, 7], reminderCount: 0 })),
+    updateReminderSettings: updateReminderSettings || (() => Promise.resolve(false)),
+    scheduleReminders: scheduleReminders || (() => Promise.resolve()),
+    sendImmediateReminder: sendImmediateReminder || (() => Promise.resolve('')),
+    cancelAllReminders: cancelAllReminders || (() => Promise.resolve()),
+    getReminderStats: getReminderStats || (() => Promise.resolve({ totalSent: 0, lastSent: null, nextReminderScheduled: Date.now() })),
+    // Deezer notification methods
+    sendDeezerNotification: sendDeezerNotification || (() => Promise.resolve('')),
+    sendTrendingNotification: sendTrendingNotification || (() => Promise.resolve('')),
+    sendNewReleaseNotification: sendNewReleaseNotification || (() => Promise.resolve('')),
+    sendDiscoveryNotification: sendDiscoveryNotification || (() => Promise.resolve('')),
+    sendPlaylistSuggestionNotification: sendPlaylistSuggestionNotification || (() => Promise.resolve('')),
+    sendArtistFollowNotification: sendArtistFollowNotification || (() => Promise.resolve('')),
+    sendDeezerNowPlayingNotification: sendDeezerNowPlayingNotification || (() => Promise.resolve('')),
+    searchAndNotify: searchAndNotify || (() => Promise.resolve([])),
+    getTrendingAndNotify: getTrendingAndNotify || (() => Promise.resolve([])),
+    getDeezerTemplates: getDeezerTemplates || (() => []),
+    getDeezerTemplate: getDeezerTemplate || (() => undefined),
+    // Test notification method
+    sendTestNotification: sendTestNotification || (() => Promise.resolve('')),
   };
 
+  // Always render children, even if services fail to initialize
   return (
     <NotificationContext.Provider value={contextValue}>
       {children}
@@ -320,8 +622,5 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
 export const useNotifications = (): NotificationContextType => {
   const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
-  }
   return context;
 };

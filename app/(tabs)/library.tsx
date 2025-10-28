@@ -2,7 +2,7 @@ import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Image,
   Platform,
@@ -14,13 +14,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { usePlaylistStore } from "@/hooks/playlist";
+
+
 
 type LibraryItem = {
   id: string;
   title: string;
   subtitle?: string;
   cover?: string; // uri
-  downloaded?: boolean;
   type: "playlist" | "album" | "artist" | "podcast" | "audiobook";
 };
 
@@ -29,74 +31,10 @@ type SectionT = {
   data: LibraryItem[];
 };
 
-const MOCK: SectionT[] = [
-  {
-    title: "Playlists",
-    data: [
-      {
-        id: "pl-liked",
-        title: "Liked Songs",
-        subtitle: "487 songs",
-        type: "playlist",
-        downloaded: true,
-        cover: undefined,
-      },
-      {
-        id: "pl-gym",
-        title: "Gym Hits",
-        subtitle: "by You • 64 songs",
-        type: "playlist",
-        cover: "https://picsum.photos/seed/gym/200",
-      },
-      {
-        id: "pl-focus",
-        title: "Deep Focus",
-        subtitle: "by TuneSpace",
-        type: "playlist",
-        cover: "https://picsum.photos/seed/focus/200",
-      },
-    ],
-  },
-  {
-    title: "Albums",
-    data: [
-      {
-        id: "al-Doo-Wops & Hooligans",
-        title: "Doo-Wops & Hooligans",
-        subtitle: "Bruno Mars",
-        type: "album",
-        cover: "https://picsum.photos/seed/doo-wops-hooligans/200",
-      },
-      {
-        id: "al-utopia",
-        title: "UTOPIA",
-        subtitle: "Travis Scott",
-        type: "album",
-        cover: "https://picsum.photos/seed/utopia/200",
-      },
-    ],
-  },
-  {
-    title: "Artists",
-    data: [
-      {
-        id: "ar-drake",
-        title: "Drake",
-        type: "artist",
-        cover: "https://picsum.photos/seed/drake/200",
-      },
-      {
-        id: "ar-weeknd",
-        title: "The Weeknd",
-        type: "artist",
-        cover: "https://picsum.photos/seed/weeknd/200",
-      },
-    ],
-  },
-];
 
-const FILTERS = ["Playlists", "Albums", "Artists", "Downloaded"] as const;
+const FILTERS = ["Playlists", "Albums", "Artists"] as const;
 type FilterKey = (typeof FILTERS)[number];
+
 
 export default function LibraryScreen() {
   const router = useRouter();
@@ -104,33 +42,53 @@ export default function LibraryScreen() {
   const [active, setActive] = useState<FilterKey | null>(null);
   const [sort, setSort] = useState<"recent" | "alpha">("recent");
 
-  const sections = useMemo(() => {
-    // filter -> flatten -> filter by q -> regroup by title in same order
+  // from your store
+  const playlistsMap = usePlaylistStore((s) => s.playlists);
+  const ensurePlaylist = usePlaylistStore((s) => s.ensurePlaylist);
+
+  useEffect(() => {
+    ensurePlaylist("pl-liked", "Liked Songs");
+  }, [ensurePlaylist]);
+
+const sections = useMemo(() => {
+    // Convert store playlists -> LibraryItem[]
+    let items: LibraryItem[] = Object.values(playlistsMap).map((p) => ({
+      id: p.id,
+      title: p.title,
+      subtitle: `${p.tracks.length} ${p.tracks.length === 1 ? "song" : "songs"}`,
+      type: "playlist",
+      cover: p.cover,
+    }));
+
+    // ---- filters (keep your existing behavior) ----
     const match = (it: LibraryItem) => {
-      if (active === "Downloaded" && !it.downloaded) return false;
       if (active === "Playlists" && it.type !== "playlist") return false;
-      if (active === "Albums" && it.type !== "album") return false;
-      if (active === "Artists" && it.type !== "artist") return false;
+      if (active === "Albums" && it.type !== "album") return false;   // will yield empty for now (no albums source)
+      if (active === "Artists" && it.type !== "artist") return false; // will yield empty for now (no artists source)
       if (!q.trim()) return true;
       const s = `${it.title} ${it.subtitle ?? ""}`.toLowerCase();
       return s.includes(q.toLowerCase());
     };
 
-    const clone = MOCK.map((s) => ({
-      ...s,
-      data: [...s.data].filter(match),
-    })).filter((s) => s.data.length);
+    items = items.filter(match);
 
-    // sorting inside each section
-    clone.forEach((s) => {
-      s.data.sort((a, b) => {
-        if (sort === "alpha") return a.title.localeCompare(b.title);
-        return b.id.localeCompare(a.id);
-      });
+    // ---- sort ----
+    items.sort((a, b) => {
+      if (sort === "alpha") return a.title.localeCompare(b.title);
+      // “recent” fallback -> keep deterministic order by id
+      return b.id.localeCompare(a.id);
     });
 
-    return clone;
-  }, [q, active, sort]);
+    // Single section for now (Playlists). You can add Albums/Artists later.
+    const result: SectionT[] = [];
+    if (items.length) {
+      result.push({ title: "Playlists", data: items });
+    } else {
+      // still show an empty "Playlists" section to keep header/UX consistent
+      result.push({ title: "Playlists", data: [] });
+    }
+    return result;
+  }, [playlistsMap, q, active, sort]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -291,9 +249,6 @@ function Row({ item, onPress }: { item: LibraryItem; onPress: () => void }) {
           </Text>
         )}
       </View>
-      {!!item.downloaded && (
-        <Ionicons name="download-outline" size={18} color="#9aa0a6" />
-      )}
       <View style={{ width: 8 }} />
       <Ionicons name="ellipsis-vertical" size={16} color="#9aa0a6" />
     </Pressable>

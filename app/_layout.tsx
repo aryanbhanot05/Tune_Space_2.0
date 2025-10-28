@@ -13,12 +13,12 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
         {/* Define the capture screen as a full-screen modal */}
-        <Stack.Screen 
-          name="capture" 
-          options={{ 
-            headerShown: false, 
-            presentation: 'fullScreenModal' 
-          }} 
+        <Stack.Screen
+          name="capture"
+          options={{
+            headerShown: false,
+            presentation: 'fullScreenModal'
+          }}
         />
       </Stack>
     </NotificationProvider>

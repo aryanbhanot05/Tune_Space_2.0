@@ -50,7 +50,7 @@ export default function CaptureScreen() {
             if (!picture || !picture.uri) {
                 throw new Error("Failed to save picture, URI is missing.");
             }
-            
+
             setIsAnalyzing(true);
 
             const base64 = await FileSystem.readAsStringAsync(picture.uri, {
@@ -58,7 +58,7 @@ export default function CaptureScreen() {
             });
 
             if (!base64) {
-                 throw new Error("Failed to get base64 data from file system.");
+                throw new Error("Failed to get base64 data from file system.");
             }
 
             const emotion = await analyzeImageForEmotion(base64);
@@ -72,7 +72,7 @@ export default function CaptureScreen() {
             setIsAnalyzing(false);
         }
     };
-    
+
     if (isAnalyzing) {
         return (
             <View style={styles.analyzingContainer}>
@@ -84,9 +84,9 @@ export default function CaptureScreen() {
 
     return (
         <View style={styles.container}>
-            <CameraView 
-                style={styles.camera} 
-                facing={facing} 
+            <CameraView
+                style={styles.camera}
+                facing={facing}
                 ref={cameraRef}
                 onCameraReady={() => setIsCameraReady(true)}
                 active={isFocused}
@@ -96,15 +96,15 @@ export default function CaptureScreen() {
                         <Image style={styles.flipImage} source={require('../assets/images/CameraFlip.png')} />
                     </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        style={[styles.captureButton, !isCameraReady && { opacity: 0.5 }]} 
+                    <TouchableOpacity
+                        style={[styles.captureButton, !isCameraReady && { opacity: 0.5 }]}
                         onPress={takePictureAndAnalyze}
                         disabled={!isCameraReady || isAnalyzing}
                     >
                         <View style={styles.captureButtonInner} />
                     </TouchableOpacity>
-                    
-                    <View style={styles.flipButton} /> 
+
+                    <View style={styles.flipButton} />
                 </View>
             </CameraView>
         </View>
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
         width: '90%',
         height: '90%',
         resizeMode: 'contain',
-        tintColor: 'white', 
+        tintColor: 'white',
     },
     captureButton: {
         width: 70,
@@ -163,8 +163,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#11161a',
     },
     permissionText: {
-        color: 'white', 
-        fontSize: 18, 
+        color: 'white',
+        fontSize: 18,
         marginBottom: 12,
         textAlign: 'center',
         paddingHorizontal: 20,

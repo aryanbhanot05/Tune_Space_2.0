@@ -63,8 +63,6 @@ const sections = useMemo(() => {
     // ---- filters (keep your existing behavior) ----
     const match = (it: LibraryItem) => {
       if (active === "Playlists" && it.type !== "playlist") return false;
-      if (active === "Albums" && it.type !== "album") return false;   // will yield empty for now (no albums source)
-      if (active === "Artists" && it.type !== "artist") return false; // will yield empty for now (no artists source)
       if (!q.trim()) return true;
       const s = `${it.title} ${it.subtitle ?? ""}`.toLowerCase();
       return s.includes(q.toLowerCase());
@@ -79,12 +77,11 @@ const sections = useMemo(() => {
       return b.id.localeCompare(a.id);
     });
 
-    // Single section for now (Playlists). You can add Albums/Artists later.
     const result: SectionT[] = [];
     if (items.length) {
       result.push({ title: "Playlists", data: items });
     } else {
-      // still show an empty "Playlists" section to keep header/UX consistent
+
       result.push({ title: "Playlists", data: [] });
     }
     return result;
@@ -121,7 +118,7 @@ const sections = useMemo(() => {
           </View>
         )}
         renderItem={({ item }) => (
-          <Row item={item} onPress={() => router.push(`/(tabs)/main`)} />
+          <Row item={item} onPress={() => router.push(`/(tabs)/library`)} />
         )}
         ListHeaderComponent={<AddPlaylistTile />}
       />

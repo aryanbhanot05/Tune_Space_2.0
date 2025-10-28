@@ -180,10 +180,10 @@ const SectionContent = ({ activeSection, state, handlers }: {
           <View style={[styles.field, { marginTop: 15 }]}>
             <View style={styles.row}>
               <Text style={styles.label}>Notifications</Text>
-              <Switch 
-                value={notificationsEnabled} 
-                onValueChange={handleNotificationToggle || (() => console.warn('handleNotificationToggle not available'))} 
-                trackColor={{ false: '#888', true: '#1DB954' }} 
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={handleNotificationToggle || (() => console.warn('handleNotificationToggle not available'))}
+                trackColor={{ false: '#888', true: '#1DB954' }}
               />
             </View>
           </View>
@@ -252,7 +252,7 @@ export default function SettingsPage() {
 
   // --- THEME CONTEXT ---
   const { selectedTheme, setTheme } = useTheme();
-  
+
   // --- NOTIFICATION CONTEXT ---
   const { sendNotification, getUserPreferences, updateUserPreferences, sendTestNotification } = useNotifications();
 
@@ -304,12 +304,12 @@ export default function SettingsPage() {
       const loadNotificationPreferences = async () => {
         try {
           let preferences = null;
-          
+
           // Try to get from Supabase first
           if (getUserPreferences) {
             preferences = await getUserPreferences();
           }
-          
+
           // If Supabase fails, try local storage
           if (!preferences) {
             try {
@@ -322,7 +322,7 @@ export default function SettingsPage() {
               console.warn('Failed to load from local storage:', storageError);
             }
           }
-          
+
           if (preferences) {
             setNotificationPreferences(preferences);
             setNotificationsEnabled(preferences.system_enabled || false);
@@ -450,14 +450,14 @@ export default function SettingsPage() {
   // NOTIFICATION TOGGLE HANDLER
   const handleNotificationToggle = async (enabled: boolean) => {
     setNotificationsEnabled(enabled);
-    
+
     // Check if notification functions are available
     if (!sendNotification) {
       console.warn('Notification functions not available');
       Alert.alert('Info', 'Notification service not available. Using local settings only.');
       return;
     }
-    
+
     try {
       // Try to update preferences in Supabase if available
       if (updateUserPreferences) {
@@ -466,12 +466,12 @@ export default function SettingsPage() {
           music_enabled: enabled,
           push_enabled: enabled,
         });
-        
+
         if (!success) {
           console.warn('Failed to update Supabase preferences, using local storage');
         }
       }
-      
+
       // Store preferences locally as fallback
       try {
         const AsyncStorage = require('@react-native-async-storage/async-storage').default;
@@ -484,7 +484,7 @@ export default function SettingsPage() {
       } catch (storageError) {
         console.warn('Failed to save to local storage:', storageError);
       }
-      
+
       // Send a test notification if enabled
       if (enabled) {
         await sendNotification(
@@ -494,7 +494,7 @@ export default function SettingsPage() {
           'system'
         );
       }
-      
+
     } catch (error) {
       console.error('Error updating notification preferences:', error);
       setNotificationsEnabled(!enabled);

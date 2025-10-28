@@ -22,18 +22,18 @@ const FUNCTIONS_BASE = process.env.EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL || "";
 
 async function searchDeezerTracks(q: string, limit = 15) {
   if (!q) return { data: [] };
-  
+
   const searchQuery = encodeURIComponent(q);
-  
+
   // Try direct track search first
   try {
     const url = `https://api.deezer.com/search/track?q=${searchQuery}&limit=${limit}`;
-    const res = await fetch(url, { 
+    const res = await fetch(url, {
       headers: { 'Accept': 'application/json' },
       method: 'GET',
       mode: 'cors'
     });
-    
+
     if (res.ok) {
       const data = await res.json();
       if (data.data && Array.isArray(data.data) && data.data.length > 0) {
@@ -43,27 +43,27 @@ async function searchDeezerTracks(q: string, limit = 15) {
   } catch (error) {
     console.log('Direct search failed, trying alternatives...');
   }
-  
+
   // Try album search as fallback
   try {
     const albumUrl = `https://api.deezer.com/search/album?q=${searchQuery}&limit=3`;
-    const albumRes = await fetch(albumUrl, { 
+    const albumRes = await fetch(albumUrl, {
       headers: { 'Accept': 'application/json' },
       method: 'GET',
       mode: 'cors'
     });
-    
+
     if (albumRes.ok) {
       const albumData = await albumRes.json();
       if (albumData.data && albumData.data.length > 0) {
         const albumId = albumData.data[0].id;
         const tracksUrl = `https://api.deezer.com/album/${albumId}/tracks`;
-        const tracksRes = await fetch(tracksUrl, { 
+        const tracksRes = await fetch(tracksUrl, {
           headers: { 'Accept': 'application/json' },
           method: 'GET',
           mode: 'cors'
         });
-        
+
         if (tracksRes.ok) {
           const tracksData = await tracksRes.json();
           if (tracksData.data && tracksData.data.length > 0) {
@@ -75,7 +75,7 @@ async function searchDeezerTracks(q: string, limit = 15) {
   } catch (error) {
     console.log('Album search failed, using mock data...');
   }
-  
+
   // Fallback: return mock data
   return {
     data: [
@@ -250,7 +250,7 @@ export default function HomePage() {
   // cleanup native sound on unmount
   useEffect(() => {
     return () => {
-      if (soundRef.current) soundRef.current.unloadAsync().catch(() => {});
+      if (soundRef.current) soundRef.current.unloadAsync().catch(() => { });
     };
   }, []);
 
@@ -275,7 +275,7 @@ export default function HomePage() {
       sound.setOnPlaybackStatusUpdate((st: any) => {
         if (st.didJustFinish || st.isLoaded === false) {
           setPlayingId(null);
-          sound.unloadAsync().catch(() => {});
+          sound.unloadAsync().catch(() => { });
           soundRef.current = null;
         }
       });
@@ -349,9 +349,9 @@ export default function HomePage() {
       {/* Show search results if there's a search query */}
       {searchText.trim() ? (
         <FlatList
-            data={results}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={({ item }) => {
+          data={results}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => {
             const artUri = item?.album?.cover_medium || item?.album?.cover || undefined;
             const preview = item?.preview as string | undefined;
             const idStr = String(item.id);
@@ -422,7 +422,7 @@ export default function HomePage() {
         />
       ) : (
         /* Show recommendations when no search query */
-        <ScrollView 
+        <ScrollView
           style={styles.recommendationsContainer}
           contentContainerStyle={styles.recommendationsContent}
           showsVerticalScrollIndicator={false}
@@ -451,7 +451,7 @@ export default function HomePage() {
                           previewUrl: track.preview,
                           duration: track.duration
                         };
-                        await sendDeezerNotification('trending_track', trackData, 
+                        await sendDeezerNotification('trending_track', trackData,
                           `🔥 #${index + 1} Trending: ${track.title}`,
                           `${track.artist?.name} • ${track.album?.title || 'Single'}`
                         );

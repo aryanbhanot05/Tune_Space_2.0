@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const SCHEME = "tunespace20";  
+const SCHEME = "tunespace20";
 const CALLBACK_PATH = "auth/callback";
 const SCOPES = "user-read-email user-read-private streaming";
 

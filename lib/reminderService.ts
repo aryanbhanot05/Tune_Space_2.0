@@ -91,7 +91,7 @@ class ReminderService {
       if (stored) {
         return JSON.parse(stored);
       }
-      
+
       // Default settings - automatic reminders every 2 hours
       const defaultSettings: ReminderSettings = {
         enabled: true,
@@ -100,7 +100,7 @@ class ReminderService {
         days: [1, 2, 3, 4, 5, 6, 7], // Every day
         reminderCount: 0
       };
-      
+
       await this.saveReminderSettings(defaultSettings);
       return defaultSettings;
     } catch (error) {
@@ -123,12 +123,12 @@ class ReminderService {
       const currentSettings = await this.getReminderSettings();
       const updatedSettings = { ...currentSettings, ...settings };
       await this.saveReminderSettings(updatedSettings);
-      
+
       // Reschedule reminders if settings changed
       if (settings.enabled !== undefined || settings.frequency || settings.time || settings.days) {
         await this.scheduleReminders();
       }
-      
+
       return true;
     } catch (error) {
       console.error('Error updating reminder settings:', error);
@@ -159,7 +159,7 @@ class ReminderService {
     try {
       // Cancel existing reminders
       await this.cancelAllReminders();
-      
+
       // Schedule automatic reminders every 2 hours
       await this.scheduleAutomaticReminders();
 
@@ -299,10 +299,10 @@ class ReminderService {
     try {
       // Get all scheduled notifications
       const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-      
+
       // Cancel reminder notifications
       const reminderIds = scheduledNotifications
-        .filter(notification => 
+        .filter(notification =>
           notification.identifier?.startsWith('reminder_') ||
           notification.content.data?.type === 'reminder'
         )
@@ -329,7 +329,7 @@ class ReminderService {
     try {
       const settings = await this.getReminderSettings();
       const scheduledNotifications = await Notifications.getAllScheduledNotificationsAsync();
-      
+
       const reminderNotifications = scheduledNotifications.filter(
         notification => notification.identifier?.startsWith('reminder_')
       );
@@ -337,8 +337,8 @@ class ReminderService {
       return {
         totalReminders: settings.reminderCount,
         lastReminderSent: settings.lastReminderSent,
-        nextReminderScheduled: reminderNotifications.length > 0 
-          ? Date.now() 
+        nextReminderScheduled: reminderNotifications.length > 0
+          ? Date.now()
           : undefined
       };
     } catch (error) {

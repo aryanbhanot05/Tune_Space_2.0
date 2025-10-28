@@ -144,10 +144,10 @@ class DeezerNotificationService {
     trackData: DeezerNotificationData,
     position?: number
   ): Promise<string> {
-    const title = position 
+    const title = position
       ? `🔥 #${position} Trending: ${trackData.title}`
       : `🔥 Trending: ${trackData.title}`;
-    
+
     const body = `${trackData.artist} • ${trackData.album || 'Single'}`;
 
     return await this.sendTrackNotification('trending_track', trackData, title, body);
@@ -216,9 +216,9 @@ class DeezerNotificationService {
     try {
       const searchResults = await searchTracks(query, limit);
       const tracks = searchResults?.data || [];
-      
+
       const notificationIds: string[] = [];
-      
+
       for (const track of tracks.slice(0, 3)) { // Limit to 3 notifications
         const trackData: DeezerNotificationData = {
           trackId: String(track.id),
@@ -255,7 +255,7 @@ class DeezerNotificationService {
       // For now, we'll search for popular terms
       const popularTerms = ['pop', 'rock', 'hip hop', 'electronic', 'jazz'];
       const randomTerm = popularTerms[Math.floor(Math.random() * popularTerms.length)];
-      
+
       return await this.searchAndNotify(randomTerm, limit, 'trending_track');
     } catch (error) {
       console.error('Error getting trending and notifying:', error);
@@ -316,12 +316,12 @@ class DeezerNotificationService {
     delayMs: number = 1000
   ): Promise<string[]> {
     const notificationIds: string[] = [];
-    
+
     for (let i = 0; i < tracks.length; i++) {
       try {
         const notificationId = await this.sendTrackNotification(templateId, tracks[i]);
         notificationIds.push(notificationId);
-        
+
         // Add delay between notifications to avoid spam
         if (i < tracks.length - 1) {
           await new Promise(resolve => setTimeout(resolve, delayMs));

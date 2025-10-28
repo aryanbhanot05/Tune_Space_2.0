@@ -16,13 +16,13 @@ import { AppNotification } from '../lib/notificationService';
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { 
-    notifications, 
-    unreadCount, 
-    markAsRead, 
-    markAllAsRead, 
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
     clearAllNotifications,
-    refreshNotifications 
+    refreshNotifications
   } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -58,7 +58,7 @@ export default function NotificationsScreen() {
     if (!notification.read) {
       await markAsRead(notification.id);
     }
-    
+
     // Handle navigation based on notification type and data
     if (notification.data?.type === 'now_playing') {
       // Navigate to now playing screen
@@ -106,7 +106,7 @@ export default function NotificationsScreen() {
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
-    
+
     return new Date(timestamp).toLocaleDateString();
   };
 
@@ -126,7 +126,7 @@ export default function NotificationsScreen() {
             color={getNotificationColor(item.type)}
           />
         </View>
-        
+
         <View style={styles.textContainer}>
           <Text style={[styles.title, !item.read && styles.unreadText]}>
             {item.title}
@@ -159,9 +159,9 @@ export default function NotificationsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#ffffff" />
         </TouchableOpacity>
-        
+
         <Text style={styles.headerTitle}>Notifications</Text>
-        
+
         <View style={styles.headerActions}>
           {notifications.length > 0 && (
             <>

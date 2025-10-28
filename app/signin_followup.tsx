@@ -174,7 +174,7 @@ export default function SignIn_Actual() {
             <TouchableOpacity
                 style={styles.googleButton}
                 // Placeholder for Google Auth logic
-                onPress={() => {}}
+                onPress={() => { }}
             >
                 <FontAwesome size={20} name="google" color="#11161a" />
                 <Text style={styles.googleButtonText}>

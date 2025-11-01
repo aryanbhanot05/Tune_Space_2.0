@@ -1,3 +1,5 @@
+// [CODE FOR: lib/googleTTS.ts]
+
 import { googleCloudConfig } from './config';
 
 const API_KEY = googleCloudConfig.apiKey;
@@ -9,14 +11,6 @@ const TTS_API_URL = `https://texttospeech.googleapis.com/v1/text:synthesize?key=
  * @returns A promise that resolves with the base64-encoded audio string, or null if an error occurs.
  */
 export async function fetchAudioFromText(text: string): Promise<string | null> {
-  // A quick teaching moment:
-  // This is the main API call. We send a 'fetch' request to Google's endpoint.
-  // The 'body' of the request is a JSON object that tells Google exactly
-  // what we want:
-  // - input: { text: text } -> The text to speak.
-  // - voice: { ... } -> The voice to use. I've picked a standard, neutral one.
-  // - audioConfig: { audioEncoding: 'MP3' } -> We want the audio back as an MP3.
-  
   try {
     const response = await fetch(TTS_API_URL, {
       method: 'POST',
@@ -27,10 +21,13 @@ export async function fetchAudioFromText(text: string): Promise<string | null> {
         input: {
           text: text,
         },
+        // --- THIS IS THE VOICE UPGRADE ---
+        // 'Journey' voices are Google's newest, most expressive models,
+        // built on the same Chirp/Gemini tech. They sound far
+        // more natural and cheerful than WaveNet or Standard.
         voice: {
           languageCode: 'en-US',
-          ssmlGender: 'NEUTRAL',
-          name: 'en-US-Standard-C' // This is a good, clear voice.
+          name: 'en-US-Journey-F', // A friendly, "cheerful" female voice
         },
         audioConfig: {
           audioEncoding: 'MP3',
@@ -39,7 +36,6 @@ export async function fetchAudioFromText(text: string): Promise<string | null> {
     });
 
     if (!response.ok) {
-      // If Google sends back an error, we'll log it.
       const errorData = await response.json();
       console.error('Google TTS API Error:', errorData.error.message);
       throw new Error(`Google TTS API request failed: ${response.statusText}`);
@@ -47,9 +43,6 @@ export async function fetchAudioFromText(text: string): Promise<string | null> {
 
     const data = await response.json();
     
-    // The API returns a JSON object. The audio data is inside
-    // a property called 'audioContent'. It's already in base64 format,
-    // which is exactly what we need for the next step.
     if (data.audioContent) {
       return data.audioContent;
     } else {

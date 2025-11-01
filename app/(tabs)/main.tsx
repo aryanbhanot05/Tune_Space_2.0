@@ -1,293 +1,234 @@
-import { NotificationBell } from "@/components/NotificationBell";
-import { VideoBackground } from "@/components/VideoBackground";
-import { useNotifications } from "@/contexts/NotificationContext";
-import { ensureSpotifySignedIn, getAvailableDevices, playTrack, SimpleTrack } from "@/lib/spotify";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { NotificationBell } from '@/components/NotificationBell';
+import { BlurView } from 'expo-blur';
+import { useFonts } from 'expo-font';
+import { useLocalSearchParams, useRouter } from 'expo-router'; // NEW: Import useLocalSearchParams
+import * as SplashScreen from 'expo-splash-screen';
+import React, { useEffect, useRef, useState } from 'react';
+import { Dimensions, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function WelcomeScreen() {
-    const router = useRouter();
-    const { emotion } = useLocalSearchParams<{ emotion?: string }>();
-    const [tracks, setTracks] = useState<SimpleTrack[]>([]);
-    const [currentEmotion, setCurrentEmotion] = useState<string | null>(null);
-    const notificationContext = useNotifications();
-    const { sendNotification } = notificationContext || {};
+// --- NEW AUDIO IMPORTS ---
+import { getRandomEmotionSentence } from '@/lib/emotionSentences';
+import { fetchAudioFromText } from '@/lib/googleTTS';
+import { Audio } from 'expo-av';
+// --- END NEW AUDIO IMPORTS ---
 
-    // Debug log
-    console.log('Notification context available:', !!notificationContext);
-    console.log('Send notification function available:', !!sendNotification);
+SplashScreen.preventAutoHideAsync();
 
-    useEffect(() => {
-        if (emotion) {
-            handleEmotion(emotion);
-        }
-    }, [emotion]);
+const { width } = Dimensions.get('window');
 
+// Sample data for the carousels
+const forYouData = [
+  // ... (your existing data)
+  { id: '1', title: 'Daily Mix 1', image: require('@/assets/images/search_images/blinding.png') },
+  { id: '2', title: 'Daily Mix 2', image: require('@/assets/images/search_images/levitating.png') },
+  { id: '3', title: 'Daily Mix 3', image: require('@/assets/images/search_images/shape.png') },
+  { id: '4', title: 'Daily Mix 4', image: require('@/assets/images/search_images/someone.png') },
+];
 
-    const handleEmotion = async (detectedEmotion: string) => {
-        setCurrentEmotion(detectedEmotion);
-        let searchQuery = "popular happy songs"; // Default search
-        let musicSuggestion = "some bump up music";
+const popularData = [
+  // ... (your existing data)
+  { id: '1', title: 'Top Hits', image: require('@/assets/images/search_images/shape.png') },
+  { id: '2', title: 'Global Top 50', image: require('@/assets/images/search_images/someone.png') },
+  { id: '3', title: 'Viral Hits', image: require('@/assets/images/search_images/blinding.png') },
+  { id: '4', title: 'Trending', image: require('@/assets/images/search_images/levitating.png') },
+];
 
-        // Map Rekognition emotions to Spotify search queries and alert messages
-        switch (detectedEmotion.toUpperCase()) {
-            case 'HAPPY':
-                searchQuery = "happy upbeat pop";
-                musicSuggestion = "something upbeat";
-                break;
-            case 'SAD':
-                searchQuery = "sad emotional ballads";
-                musicSuggestion = "some emotional ballads";
-                break;
-            case 'ANGRY':
-                searchQuery = "angry rock metal";
-                musicSuggestion = "some rock music";
-                break;
-            case 'SURPRISED':
-                searchQuery = "energetic electronic dance";
-                musicSuggestion = "some energetic dance music";
-                break;
-            case 'CALM':
-                searchQuery = "calm relaxing instrumental";
-                musicSuggestion = "Calm music";
-                break;
-            case 'FEAR':
-                searchQuery = "dark ambient music";
-                musicSuggestion = "some dark ambient music";
-                break;
-            case 'DISGUST':
-                searchQuery = "heavy industrial music";
-                musicSuggestion = "some heavy industrial music";
-                break;
-            default:
-                searchQuery = "top global hits"; // Fallback for 'DEFAULT' or other emotions
-                musicSuggestion = "some of the top global hits";
-                break;
-        }
+export default function MainScreen() {
+  const router = useRouter();
+  const [alertShown, setAlertShown] = useState(false);
+  // NEW: Get route params
+  const params = useLocalSearchParams();
+  const emotionParam = params.emotion;
 
+  // NEW: Ref to hold the sound object
+  const sound = useRef<Audio.Sound | null>(null);
 
-        Alert.alert(
-            "Mood Detected!",
-            `Hey You, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
-        );
+  const [fontsLoaded] = useFonts({
+    'Retro-Vintage': require('@/assets/fonts/Retro Vintage.ttf'),
+  });
 
-        // **THE FIX**: Comment out the Spotify logic to be used later.
-        /*
-        try {
-            await ensureSpotifySignedIn();
-            const searchResults = await searchTracks(searchQuery, 10);
-            setTracks(searchResults);
-        } catch (error) {
-            console.error("Error searching tracks:", error);
-            Alert.alert("Error", "Could not fetch songs from Spotify.");
-        }
-        */
+  // --- NEW: Audio and Speech Logic ---
+
+  // Helper function to unload sound from memory
+  const unloadSound = async () => {
+    if (sound.current) {
+      console.log('Unloading sound...');
+      await sound.current.unloadAsync();
+      sound.current = null;
+    }
+  };
+
+  // Helper function to play audio from a base64 string
+  const playAudio = async (base64Audio: string) => {
+    await unloadSound(); // Unload any previous sound
+    try {
+      console.log('Loading new sound...');
+      const { sound: newSound } = await Audio.Sound.createAsync(
+        { uri: `data:audio/mp3;base64,${base64Audio}` },
+        { shouldPlay: true } // Play immediately
+      );
+      sound.current = newSound;
+    } catch (error) {
+      console.error('Failed to load or play audio:', error);
+    }
+  };
+
+  // This function gets the emotion and triggers the speech
+  const handleEmotionSpeech = async () => {
+    if (typeof emotionParam === 'string' && emotionParam) {
+      console.log(`Emotion param received: ${emotionParam}`);
+      // 1. Get the random sentence
+      const sentence = getRandomEmotionSentence(emotionParam);
+      // 2. Fetch the audio for that sentence
+      const base64Audio = await fetchAudioFromText(sentence);
+      // 3. Play the audio
+      if (base64Audio) {
+        await playAudio(base64Audio);
+      } else {
+        console.error('Failed to get audio, cannot play speech.');
+      }
+    }
+  };
+
+  // This is the main useEffect that runs when the screen loads
+  useEffect(() => {
+    // Set up the audio mode for iOS (allows playing in silent mode)
+    Audio.setAudioModeAsync({
+      allowsRecordingIOS: false,
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+      shouldDuckAndroid: false,
+    });
+
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+      
+      // We only run this logic ONCE when the screen loads
+      if (!alertShown) {
+        
+        // --- REQUEST 2: ALERT REMOVED ---
+        // The line below has been removed.
+        // alert('Welcome to your space'); 
+        
+        // --- REQUEST 1: SPEECH ADDED ---
+        // Instead, we check for an emotion param and play speech.
+        handleEmotionSpeech();
+        
+        // We still set this to true to prevent this block
+        // from running on every re-render.
+        setAlertShown(true);
+      }
+    }
+
+    // NEW: Cleanup function
+    // This runs when the component unmounts (e.g., user changes tabs)
+    // It unloads the sound from memory to prevent leaks.
+    return () => {
+      unloadSound();
     };
+  }, [fontsLoaded, alertShown, emotionParam]); // We run this when params change
 
-    const handlePlayTrack = async (trackUri: string) => {
-        try {
-            await ensureSpotifySignedIn();
-            const devices = await getAvailableDevices();
-            if (devices.length === 0) {
-                Alert.alert("No Active Devices", "Please open Spotify on one of your devices and try again.");
-                return;
-            }
+  // --- END of new audio logic ---
 
-            const activeDevice = devices.find(d => d.is_active);
-            const deviceId = activeDevice?.id ?? devices[0]?.id ?? undefined;
+  if (!fontsLoaded) {
+    return null;
+  }
 
-            if (!deviceId) {
-                Alert.alert("No Devices Found", "Could not find a device to play on.");
-                return;
-            }
+  const renderCarouselItem = ({ item }: { item: { id: string, title: string, image: any } }) => (
+    <TouchableOpacity style={styles.carouselItem} onPress={() => console.log('Tapped on', item.title)}>
+      <Image source={item.image} style={styles.carouselImage} />
+      <Text style={styles.carouselTitle}>{item.title}</Text>
+    </TouchableOpacity>
+  );
 
-            await playTrack(trackUri, deviceId);
-            Alert.alert("Playback Started", "Check your Spotify device!");
-        } catch (error) {
-            console.error("Playback error:", error);
-            Alert.alert("Error", "Could not start playback. " + (error as Error).message);
-        }
-    };
+  return (
+    <View style={styles.container}>
+      <BlurView intensity={90} tint="dark" style={styles.blurContainer}>
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>TuneSpace</Text>
+            <NotificationBell />
+          </View>
 
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>For You</Text>
+            <FlatList
+              data={forYouData}
+              renderItem={renderCarouselItem}
+              keyExtractor={item => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContainer}
+            />
+          </View>
 
-    const HandleAnalyzeMood = () => {
-        setTracks([]);
-        setCurrentEmotion(null);
-        router.push('/capture');
-    };
-
-    const handleTestNotification = async () => {
-        if (!sendNotification) {
-            Alert.alert('Error', 'Notification service not available');
-            return;
-        }
-
-        try {
-            await sendNotification(
-                'Test Notification',
-                'This is a test notification from Emotify! 🎵',
-                { type: 'system', test: true },
-                'system'
-            );
-            Alert.alert('Success', 'Test notification sent!');
-        } catch (error) {
-            console.error('Error sending test notification:', error);
-            Alert.alert('Error', 'Failed to send test notification');
-        }
-    };
-
-    const renderTrackItem = ({ item }: { item: SimpleTrack }) => (
-        <TouchableOpacity style={styles.trackItem} onPress={() => handlePlayTrack(item.uri)}>
-            <Image source={{ uri: item.image || 'https://placehold.co/64' }} style={styles.trackImage} />
-            <View style={styles.trackInfo}>
-                <Text style={styles.trackName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.trackArtist} numberOfLines={1}>{item.artists}</Text>
-            </View>
-        </TouchableOpacity>
-    );
-
-    return (
-        <View style={styles.container}>
-            <VideoBackground />
-
-            {/* Notification Bell */}
-            <View style={styles.notificationContainer}>
-                <NotificationBell size={28} color="#ffffff" />
-            </View>
-
-            {tracks.length === 0 ? (
-                <>
-                    <TouchableOpacity style={styles.logoContainer} onPress={HandleAnalyzeMood}>
-                        <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
-                    </TouchableOpacity>
-                    <Text style={styles.promptText}>Press the button above to start.</Text>
-
-                    {/* Test Notification Button */}
-                    <TouchableOpacity style={styles.testButton} onPress={handleTestNotification}>
-                        <Text style={styles.testButtonText}>Test Notification</Text>
-                    </TouchableOpacity>
-                </>
-            ) : (
-                <View style={styles.resultsContainer}>
-                    <Text style={styles.emotionText}> you look {currentEmotion?.toLowerCase()}:</Text>
-                    <FlatList
-                        data={tracks}
-                        renderItem={renderTrackItem}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={{ paddingBottom: 20 }}
-                    />
-                    <TouchableOpacity style={styles.retryButton} onPress={HandleAnalyzeMood}>
-                        <Text style={styles.retryButtonText}>Analyze Again</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-        </View>
-    );
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Popular</Text>
+            <FlatList
+              data={popularData}
+              renderItem={renderCarouselItem}
+              keyExtractor={item => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContainer}
+            />
+          </View>
+        </ScrollView>
+      </BlurView>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'transparent',
-        paddingTop: 100,
-        gap: 40
-    },
-    notificationContainer: {
-        position: 'absolute',
-        top: 50,
-        right: 20,
-        zIndex: 10,
-    },
-    welcomeText: {
-        color: 'white',
-        fontSize: 28,
-        fontWeight: 'bold',
-        position: 'absolute',
-        top: 80,
-    },
-    logoContainer: {
-        width: '50%',
-        aspectRatio: 1,
-        marginBottom: 20,
-    },
-    logo: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'contain',
-    },
-    promptText: {
-        color: 'white',
-        fontSize: 25,
-        textAlign: 'center',
-    },
-    resultsContainer: {
-        flex: 1,
-        width: '90%',
-        marginTop: 20,
-    },
-    emotionText: {
-        color: 'white',
-        fontSize: 20,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 15,
-    },
-    trackItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 10,
-    },
-    trackImage: {
-        width: 50,
-        height: 50,
-        borderRadius: 4,
-        marginRight: 10,
-    },
-    trackInfo: {
-        flex: 1,
-    },
-    trackName: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    trackArtist: {
-        color: '#ccc',
-        fontSize: 14,
-    },
-    retryButton: {
-        backgroundColor: '#1DB954',
-        borderRadius: 25,
-        paddingVertical: 15,
-        alignItems: 'center',
-        marginTop: 20,
-        marginBottom: 120,
-    },
-    retryButtonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    testButton: {
-        backgroundColor: '#195829ff',
-        borderRadius: 25,
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        alignItems: 'center',
-        marginTop: 20,
-    },
-    testButtonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-    }
+  container: {
+    flex: 1,
+  },
+  blurContainer: {
+    flex: 1,
+  },
+  scrollView: {
+    flex: 1,
+    paddingTop: 60, // Added padding for status bar
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  headerTitle: {
+    fontFamily: 'Retro-Vintage',
+    fontSize: 36,
+    color: '#fff',
+  },
+  section: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginLeft: 20,
+    marginBottom: 15,
+  },
+  carouselContainer: {
+    paddingLeft: 20,
+  },
+  carouselItem: {
+    marginRight: 15,
+    width: width * 0.4,
+  },
+  carouselImage: {
+    width: '100%',
+    height: width * 0.4,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  carouselTitle: {
+    fontSize: 16,
+    color: '#fff',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
 });
-
-// sections of this code is provided from AI
-// type AI used Gemini 2.5 pro

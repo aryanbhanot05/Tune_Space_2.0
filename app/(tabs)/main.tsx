@@ -1,10 +1,20 @@
+// [CODE FOR: app/index.tsx]
+
 import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { ensureSpotifySignedIn, getAvailableDevices, playTrack, SimpleTrack } from "@/lib/spotify";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+// MODIFIED: Added 'useRef' to manage the sound object
+import React, { useEffect, useRef, useState } from "react";
 import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+// --- NEW IMPORTS ---
+// Add the imports for Audio, our TTS function, and our sentence generator
+import { getRandomEmotionSentence } from '@/lib/emotionSentences';
+import { fetchAudioFromText } from '@/lib/googleTTS';
+import { Audio } from 'expo-av';
+// --- END NEW IMPORTS ---
 
 export default function WelcomeScreen() {
     const router = useRouter();
@@ -14,23 +24,75 @@ export default function WelcomeScreen() {
     const notificationContext = useNotifications();
     const { sendNotification } = notificationContext || {};
 
+    // --- NEW: Ref to hold the sound object ---
+    const sound = useRef<Audio.Sound | null>(null);
+
     // Debug log
     console.log('Notification context available:', !!notificationContext);
     console.log('Send notification function available:', !!sendNotification);
 
+    // This is your existing useEffect, it is correct.
     useEffect(() => {
         if (emotion) {
             handleEmotion(emotion);
         }
     }, [emotion]);
 
+    // --- NEW: useEffect for Audio Setup & Cleanup ---
+    // This runs once when the screen loads to set up the audio service
+    // and returns a cleanup function to unload sound when the screen is left.
+    useEffect(() => {
+        // Set up audio mode for iOS (allows playing in silent mode)
+        Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: false,
+            shouldDuckAndroid: false,
+        });
 
+        // Return a cleanup function
+        return () => {
+            unloadSound();
+        };
+    }, []); // Empty array means this runs only on mount and unmount
+
+    // --- NEW: Audio Helper Functions ---
+
+    // Unloads the current sound from memory
+    const unloadSound = async () => {
+        if (sound.current) {
+            console.log('Unloading sound...');
+            await sound.current.unloadAsync();
+            sound.current = null;
+        }
+    };
+
+    // Creates and plays a new sound from a base64 string
+    const playAudio = async (base64Audio: string) => {
+        await unloadSound(); // Unload any previous sound
+        try {
+            console.log('Loading new sound...');
+            const { sound: newSound } = await Audio.Sound.createAsync(
+                { uri: `data:audio/mp3;base64,${base64Audio}` },
+                { shouldPlay: true } // Play immediately
+            );
+            sound.current = newSound; // Store the new sound in our ref
+        } catch (error) {
+            console.error('Failed to load or play audio:', error);
+        }
+    };
+
+    // --- END: Audio Helper Functions ---
+
+
+    // MODIFIED: This function now plays speech instead of an alert.
     const handleEmotion = async (detectedEmotion: string) => {
         setCurrentEmotion(detectedEmotion);
         let searchQuery = "popular happy songs"; // Default search
         let musicSuggestion = "some bump up music";
 
         // Map Rekognition emotions to Spotify search queries and alert messages
+        // This logic is unchanged.
         switch (detectedEmotion.toUpperCase()) {
             case 'HAPPY':
                 searchQuery = "happy upbeat pop";
@@ -66,13 +128,32 @@ export default function WelcomeScreen() {
                 break;
         }
 
+        // --- MODIFICATION: Replaced Alert with Speech ---
 
-        Alert.alert(
-            "Mood Detected!",
-            `Hey You, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
-        );
+        // This is the OLD alert, now removed:
+        // Alert.alert(
+        //     "Mood Detected!",
+        //     `Hey You, you seem to be ${detectedEmotion.toLowerCase()}. Let's play ${musicSuggestion}!`
+        // );
+
+        // This is the NEW speech logic:
+        try {
+            const sentence = getRandomEmotionSentence(detectedEmotion);
+            const base64Audio = await fetchAudioFromText(sentence);
+            if (base64Audio) {
+                await playAudio(base64Audio);
+            } else {
+                console.error('Failed to get audio, cannot play speech.');
+            }
+        } catch (error) {
+            console.error('Error in speech playback:', error);
+        }
+
+        // --- END OF MODIFICATION ---
+
 
         // **THE FIX**: Comment out the Spotify logic to be used later.
+        // This is unchanged from your code.
         /*
         try {
             await ensureSpotifySignedIn();
@@ -85,6 +166,7 @@ export default function WelcomeScreen() {
         */
     };
 
+    // This function is unchanged.
     const handlePlayTrack = async (trackUri: string) => {
         try {
             await ensureSpotifySignedIn();
@@ -111,18 +193,20 @@ export default function WelcomeScreen() {
     };
 
 
+    // This function is unchanged.
     const HandleAnalyzeMood = () => {
         setTracks([]);
         setCurrentEmotion(null);
         router.push('/capture');
     };
 
+    // This function is unchanged.
     const handleTestNotification = async () => {
         if (!sendNotification) {
             Alert.alert('Error', 'Notification service not available');
             return;
         }
-               try {
+        try {
             await sendNotification(
                 'Test Notification',
                 'This is a test notification from Emotify! 🎵',
@@ -135,6 +219,8 @@ export default function WelcomeScreen() {
             Alert.alert('Error', 'Failed to send test notification');
         }
     };
+
+    // This function is unchanged.
     const renderTrackItem = ({ item }: { item: SimpleTrack }) => (
         <TouchableOpacity style={styles.trackItem} onPress={() => handlePlayTrack(item.uri)}>
             <Image source={{ uri: item.image || 'https://placehold.co/64' }} style={styles.trackImage} />
@@ -145,6 +231,7 @@ export default function WelcomeScreen() {
         </TouchableOpacity>
     );
 
+    // Your styles are unchanged.
     const styles = StyleSheet.create({
         container: {
             flex: 1,
@@ -248,6 +335,7 @@ export default function WelcomeScreen() {
         }
     });
 
+    // Your UI is unchanged.
     return (
         <View style={styles.container}>
             <VideoBackground />
@@ -286,6 +374,3 @@ export default function WelcomeScreen() {
         </View>
     );
 }
-
-// sections of this code is provided from AI
-// type AI used Gemini 2.5 pro

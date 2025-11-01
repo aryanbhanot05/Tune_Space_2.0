@@ -27,7 +27,7 @@ export async function fetchAudioFromText(text: string): Promise<string | null> {
         // more natural and cheerful than WaveNet or Standard.
         voice: {
           languageCode: 'en-US',
-          name: 'en-US-Journey-F', // A friendly, "cheerful" female voice
+          name: 'en-US-Journey-D', // A friendly, "cheerful" female voice
         },
         audioConfig: {
           audioEncoding: 'MP3',

@@ -20,5 +20,9 @@ export const spotifyConfig = {
   clientId: getExtraVar<string>('EXPO_PUBLIC_SPOTIFY_CLIENT_ID'),
 };
 
+export const googleCloudConfig = {
+  apiKey: getExtraVar<string>('googleTTSApiKey'),
+};
+
 // This code is provided from AI
 // type AI used Gemini 2.5 pro

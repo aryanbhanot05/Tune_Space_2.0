@@ -40,6 +40,18 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "YOUR_PROJECT_ID_HERE"
+      },
+      "EXPO_PUBLIC_SPOTIFY_CLIENT_ID": "7590363d9b444af48a54fe6970a58aed",
+      "EXPO_PUBLIC_AWS_ACCESS_KEY_ID": "AKIA26APMNYRE6UCAOUZ",
+      "EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY": "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",
+      "googleTTSApiKey": "AIzaSyC7TfbpQoQ1soFGyOMnJkxenGngGod6mfs"
     }
   }
 }

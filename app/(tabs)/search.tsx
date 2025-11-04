@@ -1,6 +1,9 @@
 import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
+import { useAuthBridge } from "@/contexts/AuthBridge";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useLibraryIds } from "@/hooks/useLibraryIds";
+import { addToLibrary, deezerToTrack } from "@/lib/libraryService";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -15,25 +18,28 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { asDeezerId } from "@/lib/id";
+
+
 
 // ---- tiny Deezer search helper (uses proxy on web if provided) ----
 const FUNCTIONS_BASE = process.env.EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL || "";
 
 async function searchDeezerTracks(q: string, limit = 15) {
   if (!q) return { data: [] };
-  
+
   const searchQuery = encodeURIComponent(q);
-  
+
   // Try direct track search first
   try {
     const url = `https://api.deezer.com/search/track?q=${searchQuery}&limit=${limit}`;
-    const res = await fetch(url, { 
-      headers: { 'Accept': 'application/json' },
-      method: 'GET',
-      mode: 'cors'
+    const res = await fetch(url, {
+      headers: { Accept: "application/json" },
+      method: "GET",
+      mode: "cors",
     });
-    
+
     if (res.ok) {
       const data = await res.json();
       if (data.data && Array.isArray(data.data) && data.data.length > 0) {
@@ -41,29 +47,29 @@ async function searchDeezerTracks(q: string, limit = 15) {
       }
     }
   } catch (error) {
-    console.log('Direct search failed, trying alternatives...');
+    console.log("Direct search failed, trying alternatives...");
   }
-  
+
   // Try album search as fallback
   try {
     const albumUrl = `https://api.deezer.com/search/album?q=${searchQuery}&limit=3`;
-    const albumRes = await fetch(albumUrl, { 
-      headers: { 'Accept': 'application/json' },
-      method: 'GET',
-      mode: 'cors'
+    const albumRes = await fetch(albumUrl, {
+      headers: { Accept: "application/json" },
+      method: "GET",
+      mode: "cors",
     });
-    
+
     if (albumRes.ok) {
       const albumData = await albumRes.json();
       if (albumData.data && albumData.data.length > 0) {
         const albumId = albumData.data[0].id;
         const tracksUrl = `https://api.deezer.com/album/${albumId}/tracks`;
-        const tracksRes = await fetch(tracksUrl, { 
-          headers: { 'Accept': 'application/json' },
-          method: 'GET',
-          mode: 'cors'
+        const tracksRes = await fetch(tracksUrl, {
+          headers: { Accept: "application/json" },
+          method: "GET",
+          mode: "cors",
         });
-        
+
         if (tracksRes.ok) {
           const tracksData = await tracksRes.json();
           if (tracksData.data && tracksData.data.length > 0) {
@@ -73,53 +79,73 @@ async function searchDeezerTracks(q: string, limit = 15) {
       }
     }
   } catch (error) {
-    console.log('Album search failed, using mock data...');
+    console.log("Album search failed, using mock data...");
   }
-  
+
   // Fallback: return mock data
   return {
     data: [
       {
         id: 1,
         title: `Best of ${q}`,
-        artist: { name: 'Popular Artist' },
-        album: { title: `${q} Hits`, cover_medium: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=🎵' },
+        artist: { name: "Popular Artist" },
+        album: {
+          title: `${q} Hits`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/1DB954/FFFFFF?text=🎵",
+        },
         preview: null,
-        duration: 180
+        duration: 180,
       },
       {
         id: 2,
         title: `${q} Anthem`,
-        artist: { name: 'Chart Topper' },
-        album: { title: `${q} Collection`, cover_medium: 'https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=🔥' },
+        artist: { name: "Chart Topper" },
+        album: {
+          title: `${q} Collection`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=🔥",
+        },
         preview: null,
-        duration: 200
+        duration: 200,
       },
       {
         id: 3,
         title: `${q} Vibes`,
-        artist: { name: 'Rising Star' },
-        album: { title: `${q} Mix`, cover_medium: 'https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=✨' },
+        artist: { name: "Rising Star" },
+        album: {
+          title: `${q} Mix`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=✨",
+        },
         preview: null,
-        duration: 220
+        duration: 220,
       },
       {
         id: 4,
         title: `${q} Classic`,
-        artist: { name: 'Legend' },
-        album: { title: `${q} Essentials`, cover_medium: 'https://via.placeholder.com/300x300/45B7D1/FFFFFF?text=⭐' },
+        artist: { name: "Legend" },
+        album: {
+          title: `${q} Essentials`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/45B7D1/FFFFFF?text=⭐",
+        },
         preview: null,
-        duration: 195
+        duration: 195,
       },
       {
         id: 5,
         title: `${q} Remix`,
-        artist: { name: 'DJ Master' },
-        album: { title: `${q} Remixes`, cover_medium: 'https://via.placeholder.com/300x300/96CEB4/FFFFFF?text=🎧' },
+        artist: { name: "DJ Master" },
+        album: {
+          title: `${q} Remixes`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/96CEB4/FFFFFF?text=🎧",
+        },
         preview: null,
-        duration: 210
-      }
-    ]
+        duration: 210,
+      },
+    ],
   };
 }
 
@@ -174,6 +200,9 @@ export default function HomePage() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { userId, saveGuest } = useAuthBridge();
+  const { has, addLocal } = useLibraryIds(userId);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   // Recommendation states
   const [trendingTracks, setTrendingTracks] = useState<any[]>([]);
@@ -189,7 +218,11 @@ export default function HomePage() {
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   // Notification context
-  const { sendDeezerNotification, sendDiscoveryNotification, sendPlaylistSuggestionNotification } = useNotifications();
+  const {
+    sendDeezerNotification,
+    sendDiscoveryNotification,
+    sendPlaylistSuggestionNotification,
+  } = useNotifications();
 
   // Safe area insets for proper positioning on iPhone
   const insets = useSafeAreaInsets();
@@ -209,7 +242,7 @@ export default function HomePage() {
         const data = await searchDeezerTracks(q, 15);
         setResults(data?.data ?? []);
       } catch (e: any) {
-        console.error('Search error:', e);
+        console.error("Search error:", e);
         setError(e?.message ?? "Search failed");
       } finally {
         setLoading(false);
@@ -233,12 +266,16 @@ export default function HomePage() {
 
         // Load genre recommendations (Rock, Pop, Hip-Hop, Electronic)
         const genres = [113, 132, 116, 106]; // Rock, Pop, Hip-Hop, Electronic
-        const genrePromises = genres.map(genreId => getGenreRecommendations(genreId, 3));
+        const genrePromises = genres.map((genreId) =>
+          getGenreRecommendations(genreId, 3)
+        );
         const genreResults = await Promise.all(genrePromises);
-        const allGenreArtists = genreResults.flatMap(result => result?.data || []);
+        const allGenreArtists = genreResults.flatMap(
+          (result) => result?.data || []
+        );
         setGenreRecommendations(allGenreArtists.slice(0, 12));
       } catch (error) {
-        console.error('Failed to load recommendations:', error);
+        console.error("Failed to load recommendations:", error);
       } finally {
         setRecommendationsLoading(false);
       }
@@ -286,34 +323,61 @@ export default function HomePage() {
 
   // --- Add to playlist handler ---
   const addToPlaylist = async (track: any) => {
-    setPlaylist((prev) => {
-      const exists = prev.some((t) => String(t?.id) === String(track?.id));
-      if (exists) {
-        Alert.alert("Already added", `"${track?.title}" is already in your playlist.`);
-        return prev;
-      }
-      const next = [...prev, track];
-      Alert.alert("Added to Playlist", `"${track?.title}" by ${track?.artist?.name}`);
-      return next;
-    });
+  const normId = asDeezerId(track.id);
 
-    // Send Deezer notification for playlist addition
-    try {
-      const trackData = {
-        trackId: String(track.id),
-        title: track.title,
-        artist: track.artist?.name || 'Unknown Artist',
-        album: track.album?.title,
-        imageUrl: track.album?.cover_medium || track.album?.cover,
-        previewUrl: track.preview,
-        duration: track.duration
-      };
+  if (has(normId)) {
+    Alert.alert("Already saved", `"${track?.title}" is already in your library.`);
+    return;
+  }
 
-      await sendPlaylistSuggestionNotification(trackData);
-    } catch (error) {
-      console.error('Failed to send playlist notification:', error);
-    }
+  setSavingId(normId);
+
+  // optimistic toast
+  setPlaylist((prev) => {
+    const exists = prev.some((t) => asDeezerId(t?.id) === normId);
+    if (exists) return prev;
+    Alert.alert("Added to Playlist", `"${track?.title}" by ${track?.artist?.name}`);
+    return [...prev, track];
+  });
+
+  try {
+    const dto = deezerToTrack(track); // already normalized id
+    if (userId) {
+      await addToLibrary(userId, dto);
+    } else {
+      const sanitized = {
+    ...dto,
+    album: dto.album ?? undefined,
+    imageUrl: dto.imageUrl ?? undefined,
+    previewUrl: dto.previewUrl ?? undefined,
+    duration: dto.duration ?? undefined,
   };
+  await saveGuest(sanitized); // ✅ matches TrackLike
+    }
+    addLocal(normId); // update button state instantly
+  } catch (e) {
+    console.error("Save like failed", e);
+    Alert.alert("Error", "Could not save to your library.");
+  } finally {
+    setSavingId(null);
+  }
+
+  // optional single notification
+  try {
+    const trackData = {
+      trackId: normId,
+      title: track.title,
+      artist: track.artist?.name || "Unknown Artist",
+      album: track.album?.title,
+      imageUrl: track.album?.cover_medium || track.album?.cover,
+      previewUrl: track.preview,
+      duration: track.duration,
+    };
+    await sendPlaylistSuggestionNotification?.(trackData);
+  } catch (err) {
+    console.log("notify failed", err);
+  }
+};
 
   return (
     <View style={styles.container}>
@@ -339,7 +403,6 @@ export default function HomePage() {
         autoCapitalize="none"
       />
 
-
       {loading ? (
         <Text style={{ color: "#ccc", marginBottom: 8 }}>Searching…</Text>
       ) : error ? (
@@ -349,72 +412,83 @@ export default function HomePage() {
       {/* Show search results if there's a search query */}
       {searchText.trim() ? (
         <FlatList
-            data={results}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={({ item }) => {
-            const artUri = item?.album?.cover_medium || item?.album?.cover || undefined;
-            const preview = item?.preview as string | undefined;
-            const idStr = String(item.id);
+          data={results}
+          keyExtractor={(item) => String(item.id)}
+renderItem={({ item }) => {
+  const artUri = item?.album?.cover_medium || item?.album?.cover || undefined;
+  const preview = item?.preview as string | undefined;
+  const idNorm = asDeezerId(item.id);
 
-            return (
-              <View style={styles.songCard1}>
-                {artUri ? (
-                  <Image source={{ uri: artUri }} style={styles.songArt} />
-                ) : (
-                  <View style={[styles.songArt, { backgroundColor: "#101010" }]} />
-                )}
+  return (
+    <View style={styles.songCard1}>
+      {artUri ? (
+        <Image source={{ uri: artUri }} style={styles.songArt} />
+      ) : (
+        <View style={[styles.songArt, { backgroundColor: "#101010" }]} />
+      )}
 
-                <View style={{ marginLeft: 10, flex: 1 }}>
-                  <Text style={{ color: "white", fontSize: 16 }} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  <Text style={{ color: "#aaa", fontSize: 14 }} numberOfLines={1}>
-                    {item.artist?.name} • {item.album?.title}
-                  </Text>
+      <View style={{ marginLeft: 10, flex: 1 }}>
+        <Text style={{ color: "white", fontSize: 16 }} numberOfLines={1}>
+          {item.title}
+        </Text>
+        <Text style={{ color: "#aaa", fontSize: 14 }} numberOfLines={1}>
+          {item.artist?.name} • {item.album?.title}
+        </Text>
 
-                  {/* Preview controls */}
-                  {preview ? (
-                    Platform.OS === "web" ? (
-                      <audio controls src={preview} preload="none" style={{ marginTop: 6, width: "100%" }} />
-                    ) : Audio ? (
-                      <TouchableOpacity
-                        onPress={() => togglePlayNative(preview, idStr)}
-                        style={styles.previewBtn}
-                      >
-                        <Text style={{ color: "white" }}>
-                          {playingId === idStr ? "Pause" : "Play"}
-                        </Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <Text style={{ color: "#ccc", marginTop: 6 }}>
-                        Install expo-av for previews on mobile:{" "}
-                        <Text style={{ fontStyle: "italic" }}>npx expo install expo-av</Text>
-                      </Text>
-                    )
-                  ) : (
-                    <Text style={{ color: "#888", marginTop: 6 }}>No preview available</Text>
-                  )}
-                </View>
+        {preview ? (
+          Platform.OS === "web" ? (
+            <audio
+              controls
+              src={preview}
+              preload="none"
+              style={{ marginTop: 6, width: "100%" }}
+            />
+          ) : Audio ? (
+            <TouchableOpacity
+              onPress={() => togglePlayNative(preview, idNorm)}
+              style={styles.previewBtn}
+            >
+              <Text style={{ color: "white" }}>
+                {playingId === idNorm ? "Pause" : "Play"}
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <Text style={{ color: "#ccc", marginTop: 6 }}>
+              Install expo-av for previews on mobile:{" "}
+              <Text style={{ fontStyle: "italic" }}>npx expo install expo-av</Text>
+            </Text>
+          )
+        ) : (
+          <Text style={{ color: "#888", marginTop: 6 }}>No preview available</Text>
+        )}
+      </View>
 
-                {/* --- Add-to-Playlist button (right side) --- */}
-                <TouchableOpacity
-                  onPress={() => addToPlaylist(item)}
-                  style={styles.addBtn}
-                  accessibilityLabel="Add to playlist"
-                  accessibilityHint={`Add ${item?.title} to your playlist`}
-                >
-                  <Ionicons name="add-circle-outline" size={26} color="#ffffff" />
-                </TouchableOpacity>
-              </View>
-            );
-          }}
+      <TouchableOpacity
+        onPress={() => addToPlaylist(item)}
+        disabled={has(idNorm) || savingId === idNorm}
+        style={styles.addBtn}
+      >
+        {has(idNorm) ? (
+          <Ionicons name="checkmark-circle" size={26} color="#1DB954" />
+        ) : savingId === idNorm ? (
+          <Ionicons name="time-outline" size={26} color="#cccccc" />
+        ) : (
+          <Ionicons name="add-circle-outline" size={26} color="#ffffff" />
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+}}
+
           style={styles.resultsList}
           nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
-            <View style={{ padding: 20, alignItems: 'center' }}>
-              <Text style={{ color: '#888', fontSize: 16 }}>No results found</Text>
-              <Text style={{ color: '#666', fontSize: 14, marginTop: 4 }}>
+            <View style={{ padding: 20, alignItems: "center" }}>
+              <Text style={{ color: "#888", fontSize: 16 }}>
+                No results found
+              </Text>
+              <Text style={{ color: "#666", fontSize: 14, marginTop: 4 }}>
                 Try searching for a different song, artist, or album
               </Text>
             </View>
@@ -422,7 +496,7 @@ export default function HomePage() {
         />
       ) : (
         /* Show recommendations when no search query */
-        <ScrollView 
+        <ScrollView
           style={styles.recommendationsContainer}
           contentContainerStyle={styles.recommendationsContent}
           showsVerticalScrollIndicator={false}
@@ -433,7 +507,11 @@ export default function HomePage() {
             {recommendationsLoading ? (
               <Text style={styles.loadingText}>Loading trending tracks...</Text>
             ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.horizontalScroll}
+              >
                 {trendingTracks.map((track, index) => (
                   <TouchableOpacity
                     key={track.id}
@@ -445,23 +523,33 @@ export default function HomePage() {
                         const trackData = {
                           trackId: String(track.id),
                           title: track.title,
-                          artist: track.artist?.name || 'Unknown Artist',
+                          artist: track.artist?.name || "Unknown Artist",
                           album: track.album?.title,
-                          imageUrl: track.album?.cover_medium || track.album?.cover,
+                          imageUrl:
+                            track.album?.cover_medium || track.album?.cover,
                           previewUrl: track.preview,
-                          duration: track.duration
+                          duration: track.duration,
                         };
-                        await sendDeezerNotification('trending_track', trackData, 
+                        await sendDeezerNotification(
+                          "trending_track",
+                          trackData,
                           `🔥 #${index + 1} Trending: ${track.title}`,
-                          `${track.artist?.name} • ${track.album?.title || 'Single'}`
+                          `${track.artist?.name} • ${
+                            track.album?.title || "Single"
+                          }`
                         );
                       } catch (error) {
-                        console.error('Failed to send trending notification:', error);
+                        console.error(
+                          "Failed to send trending notification:",
+                          error
+                        );
                       }
                     }}
                   >
                     <Image
-                      source={{ uri: track.album?.cover_medium || track.album?.cover }}
+                      source={{
+                        uri: track.album?.cover_medium || track.album?.cover,
+                      }}
                       style={styles.trendingImage}
                     />
                     <Text style={styles.trendingTitle} numberOfLines={1}>
@@ -482,7 +570,11 @@ export default function HomePage() {
             {recommendationsLoading ? (
               <Text style={styles.loadingText}>Loading popular artists...</Text>
             ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.horizontalScroll}
+              >
                 {popularArtists.map((artist) => (
                   <TouchableOpacity
                     key={artist.id}
@@ -506,7 +598,9 @@ export default function HomePage() {
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>🎵 Discover by Genre</Text>
             {recommendationsLoading ? (
-              <Text style={styles.loadingText}>Loading genre recommendations...</Text>
+              <Text style={styles.loadingText}>
+                Loading genre recommendations...
+              </Text>
             ) : (
               <View style={styles.genreGrid}>
                 {genreRecommendations.slice(0, 8).map((artist) => (
@@ -532,7 +626,14 @@ export default function HomePage() {
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>🔍 Quick Search</Text>
             <View style={styles.quickSearchContainer}>
-              {['Rock', 'Pop', 'Hip Hop', 'Electronic', 'Jazz', 'Classical'].map((genre) => (
+              {[
+                "Rock",
+                "Pop",
+                "Hip Hop",
+                "Electronic",
+                "Jazz",
+                "Classical",
+              ].map((genre) => (
                 <TouchableOpacity
                   key={genre}
                   style={styles.quickSearchChip}

@@ -1,7 +1,7 @@
+import React, { useEffect, useState, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useTheme } from '@/lib/themeContext';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
 
 export const VIDEO_SOURCE_MAP = {
   bg1: require('../assets/videos/bg1.mp4'),
@@ -21,20 +21,30 @@ type VideoThemeKey = keyof typeof VIDEO_SOURCE_MAP;
 export function VideoBackground() {
   const { selectedTheme } = useTheme();
   const themeKey = selectedTheme || 'bg1';
-  const finalSource = VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1;
+  const [isReady, setIsReady] = useState(false);
+
+  const finalSource = useMemo(() => VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1, [themeKey]);
 
   const player = useVideoPlayer(finalSource, (player) => {
     player.loop = true;
     player.muted = true;
-    player.play();
   });
 
   useEffect(() => {
-    player.replaceAsync(finalSource).catch((error) => {
-      console.error('Failed to replace video source:', error);
-    });
-    player.play();
+    setIsReady(false);
+    player.replaceAsync(finalSource)
+      .then(() => {
+        setIsReady(true);
+        return player.play();
+      })
+      .catch((error) => {
+        console.error('Failed to replace or play video:', error);
+      });
   }, [finalSource, player]);
+
+  if (!isReady) {
+    return <View style={[styles.container, { backgroundColor: '#000' }]} />;
+  }
 
   return (
     <View style={styles.container}>
@@ -63,5 +73,3 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 });
-
-// all the video assets have been taken from https://pixabay.com/users/3092371/?tab=videos&order=latest&pagi=1

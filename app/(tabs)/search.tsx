@@ -23,6 +23,7 @@ import { asDeezerId } from "@/lib/id";
 
 
 
+
 // ---- tiny Deezer search helper (uses proxy on web if provided) ----
 const FUNCTIONS_BASE = process.env.EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL || "";
 
@@ -195,6 +196,8 @@ if (Platform.OS !== "web") {
   }
 }
 
+
+
 export default function HomePage() {
   const [searchText, setSearchText] = useState("");
   const [results, setResults] = useState<any[]>([]);
@@ -226,6 +229,24 @@ export default function HomePage() {
 
   // Safe area insets for proper positioning on iPhone
   const insets = useSafeAreaInsets();
+
+  async function onAdd(item: any) {
+  const dto = deezerToTrack(item);
+  if (userId) {
+    await addToLibrary(userId, dto);
+  } else {
+    await saveGuest({
+      id: dto.id,
+      title: dto.title,
+      artist: dto.artist,
+      album: dto.album ?? undefined,
+      imageUrl: dto.imageUrl ?? undefined,
+      previewUrl: dto.previewUrl ?? undefined,
+      duration: dto.duration ?? undefined,
+    });
+  }
+  Alert.alert("Saved", `"${dto.title}" added to your library`);
+}
 
   // debounce the input slightly (protects Deezer 50 req / 5s quota)
   useEffect(() => {

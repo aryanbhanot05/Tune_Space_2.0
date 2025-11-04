@@ -75,19 +75,23 @@ export async function getLibraryTracks(userId: string | null): Promise<TrackDto[
     const raw = await AsyncStorage.getItem(GUEST_KEY);
     return raw ? JSON.parse(raw) : [];
   }
+
   const { data, error } = await supabase
     .from("library_tracks")
-    .select("*")
+    .select("id,title,artist,album,image_url,preview_url,duration,created_at")
+    .eq("user_id", userId)                    // <-- REQUIRED
     .order("created_at", { ascending: false });
+
   if (error) throw error;
+
   return (data ?? []).map((r: any) => ({
     id: r.id,
     title: r.title,
     artist: r.artist,
-    album: r.album,
-    imageUrl: r.image_url,
-    previewUrl: r.preview_url,
-    duration: r.duration,
+    album: r.album ?? null,
+    imageUrl: r.image_url ?? null,
+    previewUrl: r.preview_url ?? null,
+    duration: r.duration ?? null,
   }));
 }
 

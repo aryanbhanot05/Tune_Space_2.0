@@ -387,7 +387,7 @@ export default function HomePage() {
   // cleanup native sound on unmount
   useEffect(() => {
     return () => {
-      if (soundRef.current) soundRef.current.unloadAsync().catch(() => {});
+      if (soundRef.current) soundRef.current.unloadAsync().catch(() => { });
     };
   }, []);
 
@@ -426,7 +426,7 @@ export default function HomePage() {
       sound.setOnPlaybackStatusUpdate((st: any) => {
         if (st.didJustFinish || st.isLoaded === false) {
           setPlayingId(null);
-          sound.unloadAsync().catch(() => {});
+          sound.unloadAsync().catch(() => { });
           soundRef.current = null;
         }
       });
@@ -437,7 +437,7 @@ export default function HomePage() {
 
   const closePlayer = async () => {
     if (soundRef.current) {
-      await soundRef.current.unloadAsync().catch(() => {});
+      await soundRef.current.unloadAsync().catch(() => { });
       soundRef.current = null;
     }
     setPlayingId(null);
@@ -647,8 +647,7 @@ export default function HomePage() {
                           "trending_track",
                           trackData,
                           `🔥 #${index + 1} Trending: ${track.title}`,
-                          `${track.artist?.name} • ${
-                            track.album?.title || "Single"
+                          `${track.artist?.name} • ${track.album?.title || "Single"
                           }`
                         );
                       } catch (error) {

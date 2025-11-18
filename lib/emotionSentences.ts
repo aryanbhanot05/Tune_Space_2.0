@@ -69,9 +69,9 @@ const emotionResponses: Record<string, string[]> = {
 export function getRandomEmotionSentence(emotion: string): string {
   const normalizedEmotion = emotion.toUpperCase();
   const responses = emotionResponses[normalizedEmotion] || emotionResponses['DEFAULT'];
-  
+
   // Pick a random index from the array
   const randomIndex = Math.floor(Math.random() * responses.length);
-  
+
   return responses[randomIndex];
 }

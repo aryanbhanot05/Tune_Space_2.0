@@ -57,7 +57,7 @@ export default function CaptureScreen() {
                 throw new Error("Failed to save picture, URI is missing.");
             }
 
-            setIsAnalyzing(true); 
+            setIsAnalyzing(true);
 
             const base64 = await FileSystem.readAsStringAsync(picture.uri, {
                 encoding: 'base64',
@@ -81,7 +81,7 @@ export default function CaptureScreen() {
             router.replace({ pathname: '/(tabs)/main', params: { emotion: 'DEFAULT' } });
         } finally {
             // Ensure the spinner stops, though navigation will hide it anyway
-            setIsAnalyzing(false); 
+            setIsAnalyzing(false);
         }
     };
 

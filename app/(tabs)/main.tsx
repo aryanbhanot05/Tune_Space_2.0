@@ -159,7 +159,6 @@ export default function WelcomeScreen() {
             { cancelable: true }
         );
 
-        
         // --- MODIFICATION: Replaced Alert with Speech ---
 
         // This is the OLD alert, now removed:

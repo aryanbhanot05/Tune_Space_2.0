@@ -42,7 +42,7 @@ export async function fetchAudioFromText(text: string): Promise<string | null> {
     }
 
     const data = await response.json();
-    
+
     if (data.audioContent) {
       return data.audioContent;
     } else {

@@ -496,15 +496,30 @@ export default function HomePage() {
         <Text style={styles.title}>Search</Text>
       </View>
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search by song, artist, or album…"
-        placeholderTextColor="#888"
-        value={searchText}
-        onChangeText={setSearchText}
-        autoCorrect={false}
-        autoCapitalize="none"
-      />
+      <View style={styles.searchWrapper}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by song, artist, or album…"
+          placeholderTextColor="#888"
+          value={searchText}
+          onChangeText={setSearchText}
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+
+        {searchText.length > 0 && (
+          <TouchableOpacity
+            onPress={() => {
+              setSearchText("");
+              setError(null);
+              setResults([]);
+            }}
+            style={styles.clearButton}
+          >
+            <Ionicons name="close-circle" size={20} color="#bbb" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       {loading ? (
         <Text style={{ color: "#ccc", marginBottom: 8 }}>Searching…</Text>
@@ -841,14 +856,13 @@ const styles = StyleSheet.create({
   searchInput: {
     backgroundColor: "#191c24",
     color: "#fff",
-    padding: 10,
+    paddingVertical: 10,
+    paddingLeft: 10,
+    paddingRight: 36, // extra space so text doesn't go under the X
     borderRadius: 10,
-    marginHorizontal: 16,
-    marginBottom: 10,
-    marginTop: 20,
     borderColor: "#444",
     borderWidth: 1,
-    width: "90%",
+    width: "100%",
   },
   resultsList: {
     maxHeight: 300,
@@ -1084,5 +1098,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
     marginLeft: 6,
+  },
+  searchWrapper: {
+    position: "relative",
+    width: "90%",
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+
+  clearButton: {
+    position: "absolute",
+    right: 12,
+    top: "40%",
+    transform: [{ translateY: -10 }],
+    padding: 4,
   },
 });

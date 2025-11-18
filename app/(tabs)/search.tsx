@@ -207,6 +207,8 @@ export default function HomePage() {
   // native playback state
   const soundRef = useRef<SoundRef>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [currentTrack, setCurrentTrack] = useState<any | null>(null);
+
 
   // Notification context
   const {
@@ -282,35 +284,40 @@ export default function HomePage() {
     };
   }, []);
 
-  const togglePlayNative = async (previewUrl: string, id: string) => {
-    if (!Audio) return; // expo-av not installed
-    try {
-      // stop previous
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
+const togglePlayNative = async (previewUrl: string, id: string, track?: any) => {
+  if (!Audio) return; // expo-av not installed
+  try {
+    // stop previous
+    if (soundRef.current) {
+      await soundRef.current.unloadAsync();
+      soundRef.current = null;
+    }
+    // if tapping the same item, just stop
+    if (playingId === id) {
+      setPlayingId(null);
+      setCurrentTrack(null);   // 🔹 clear banner when stopping same track
+      return;
+    }
+    // create & play new
+    const { sound } = await Audio.Sound.createAsync({ uri: previewUrl });
+    soundRef.current = sound;
+    setPlayingId(id);
+    if (track) setCurrentTrack(track);  // 🔹 set banner to this track
+    await sound.playAsync();
+    sound.setOnPlaybackStatusUpdate((st: any) => {
+      if (st.didJustFinish || st.isLoaded === false) {
+        setPlayingId(null);
+        setCurrentTrack(null); // 🔹 clear banner when playback ends
+        sound.unloadAsync().catch(() => {});
         soundRef.current = null;
       }
-      // if tapping the same item, just stop
-      if (playingId === id) {
-        setPlayingId(null);
-        return;
-      }
-      // create & play new
-      const { sound } = await Audio.Sound.createAsync({ uri: previewUrl });
-      soundRef.current = sound;
-      setPlayingId(id);
-      await sound.playAsync();
-      sound.setOnPlaybackStatusUpdate((st: any) => {
-        if (st.didJustFinish || st.isLoaded === false) {
-          setPlayingId(null);
-          sound.unloadAsync().catch(() => {});
-          soundRef.current = null;
-        }
-      });
-    } catch {
-      setPlayingId(null);
-    }
-  };
+    });
+  } catch {
+    setPlayingId(null);
+    setCurrentTrack(null);
+  }
+};
+
 
   // --- Add to playlist handler ---
   const addToPlaylist = async (track: any) => {
@@ -359,7 +366,6 @@ export default function HomePage() {
       </View>
 
       <View style={styles.top}>
-        <Text style={styles.title}>Hi, User</Text>
         <Text style={styles.title}>Search</Text>
       </View>
 
@@ -440,7 +446,7 @@ export default function HomePage() {
                       />
                     ) : Audio ? (
                       <TouchableOpacity
-                        onPress={() => togglePlayNative(preview, idStr)}
+                        onPress={() => togglePlayNative(preview, idStr, item)}
                         style={styles.previewBtn}
                       >
                         <Text style={{ color: "white" }}>
@@ -644,19 +650,64 @@ export default function HomePage() {
           </View>
         </ScrollView>
       )}
+
+{currentTrack && (
+  <View style={[styles.nowPlayingBar, { paddingBottom: insets.bottom + 8 }]}>
+    <Image
+      source={{
+        uri:
+          currentTrack.album?.cover_medium ||
+          currentTrack.album?.cover ||
+          "https://via.placeholder.com/60",
+      }}
+      style={styles.nowPlayingArt}
+    />
+
+    <View style={{ flex: 1, marginHorizontal: 10 }}>
+      <Text style={styles.nowPlayingTitle} numberOfLines={1}>
+        {currentTrack.title}
+      </Text>
+      <Text style={styles.nowPlayingArtist} numberOfLines={1}>
+        {currentTrack.artist?.name} • {currentTrack.album?.title}
+      </Text>
+    </View>
+
+    {Platform.OS !== "web" && currentTrack.preview && Audio && (
+      <TouchableOpacity
+        onPress={() =>
+          togglePlayNative(
+            currentTrack.preview,
+            String(currentTrack.id),
+            currentTrack
+          )
+        }
+        style={styles.nowPlayingPlayBtn}
+      >
+        <Ionicons
+          name={playingId === String(currentTrack.id) ? "pause" : "play"}
+          size={22}
+          color="#fff"
+        />
+      </TouchableOpacity>
+    )}
+  </View>
+)}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "transparent",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    position: "relative",
-    paddingTop: 70,
-  },
+container: {
+  flex: 1,
+  backgroundColor: "transparent",
+  alignItems: "center",
+  justifyContent: "flex-start",
+  position: "relative",
+  paddingTop: 70,
+  paddingBottom: 90,
+  overflow: "visible",
+},
+
   notificationContainer: {
     position: "absolute",
     right: 20,
@@ -742,7 +793,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   recommendationsContent: {
-    paddingBottom: 100, // Add bottom padding to prevent navigation bar overlap
+    paddingBottom: 140, // Add bottom padding to prevent navigation bar overlap
   },
   sectionContainer: {
     marginBottom: 24,
@@ -855,4 +906,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+nowPlayingBar: {
+  position: "absolute",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  flexDirection: "row",
+  alignItems: "center",
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  backgroundColor: "#111827ee",
+  borderTopWidth: 1,
+  borderTopColor: "#374151",
+  zIndex: 9999,      // 👈 SUPER IMPORTANT
+  elevation: 9999,   // 👈 Android
+},
+
+nowPlayingArt: {
+  width: 44,
+  height: 44,
+  borderRadius: 6,
+  backgroundColor: "#101010",
+},
+
+nowPlayingTitle: {
+  color: "#ffffff",
+  fontSize: 14,
+  fontWeight: "600",
+},
+
+nowPlayingArtist: {
+  color: "#9ca3af",
+  fontSize: 12,
+  marginTop: 2,
+},
+
+nowPlayingPlayBtn: {
+  paddingHorizontal: 10,
+  paddingVertical: 8,
+  justifyContent: "center",
+  alignItems: "center",
+},
 });

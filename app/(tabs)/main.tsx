@@ -13,6 +13,7 @@ import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from
 // Add the imports for Audio, our TTS function, and our sentence generator
 import { getRandomEmotionSentence } from '@/lib/emotionSentences';
 import { fetchAudioFromText } from '@/lib/googleTTS';
+import { useTheme } from '@/lib/themeContext';
 import { Audio } from 'expo-av';
 // --- END NEW IMPORTS ---
 
@@ -23,9 +24,12 @@ export default function WelcomeScreen() {
     const [currentEmotion, setCurrentEmotion] = useState<string | null>(null);
     const notificationContext = useNotifications();
     const { sendNotification } = notificationContext || {};
+    const { setTheme } = useTheme();
 
     // --- NEW: Ref to hold the sound object ---
     const sound = useRef<Audio.Sound | null>(null);
+
+
 
     // Debug log
     console.log('Notification context available:', !!notificationContext);
@@ -127,6 +131,33 @@ export default function WelcomeScreen() {
                 musicSuggestion = "some of the top global hits";
                 break;
         }
+
+        const emotionToThemeMap: Record<string, string> = {
+            'HAPPY': 'bg3',    // e.g., A bright, energetic theme
+            'CALM': 'bg1',     // e.g., The default, tranquil theme
+            'SAD': 'bg8',      // e.g., A darker, muted theme
+            'ANGRY': 'bg10',   // e.g., A harsh, aggressive theme
+            'SURPRISED': 'bg7',// e.g., A vibrant, unexpected theme
+            'FEAR': 'bg9',     // e.g., A tense, dark theme
+            'DISGUST': 'bg5',  // (You can adjust these mappings)
+        };
+        const themeKey = emotionToThemeMap[detectedEmotion.toUpperCase()] || 'bg1';
+
+        Alert.alert(
+            'Apply Theme?',
+            `Your mood is ${detectedEmotion.toLowerCase()}. Would you like to apply the corresponding theme?`,
+            [
+                { text: 'No', style: 'cancel' },
+                {
+                    text: 'Yes',
+                    onPress: () => {
+                        console.log(`Setting theme to: ${themeKey}`);
+                        setTheme(themeKey);
+                    },
+                },
+            ],
+            { cancelable: true }
+        );
 
         // --- MODIFICATION: Replaced Alert with Speech ---
 
@@ -351,6 +382,7 @@ export default function WelcomeScreen() {
                         <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
                     </TouchableOpacity>
                     <Text style={styles.promptText}>Press the button above to start.</Text>
+
 
                     {/* Test Notification Button */}
                     <TouchableOpacity style={styles.testButton} onPress={handleTestNotification}>

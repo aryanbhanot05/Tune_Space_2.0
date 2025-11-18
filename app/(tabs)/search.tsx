@@ -14,6 +14,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -208,7 +209,7 @@ export default function HomePage() {
   const soundRef = useRef<SoundRef>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [currentTrack, setCurrentTrack] = useState<any | null>(null);
-
+  const [isPlayerVisible, setIsPlayerVisible] = useState(false);
 
   // Notification context
   const {
@@ -284,40 +285,60 @@ export default function HomePage() {
     };
   }, []);
 
-const togglePlayNative = async (previewUrl: string, id: string, track?: any) => {
-  if (!Audio) return; // expo-av not installed
-  try {
-    // stop previous
-    if (soundRef.current) {
-      await soundRef.current.unloadAsync();
-      soundRef.current = null;
-    }
-    // if tapping the same item, just stop
-    if (playingId === id) {
-      setPlayingId(null);
-      setCurrentTrack(null);   // 🔹 clear banner when stopping same track
-      return;
-    }
-    // create & play new
-    const { sound } = await Audio.Sound.createAsync({ uri: previewUrl });
-    soundRef.current = sound;
-    setPlayingId(id);
-    if (track) setCurrentTrack(track);  // 🔹 set banner to this track
-    await sound.playAsync();
-    sound.setOnPlaybackStatusUpdate((st: any) => {
-      if (st.didJustFinish || st.isLoaded === false) {
+  const togglePlayNative = async (
+    previewUrl: string,
+    id: string,
+    track?: any
+  ) => {
+    if (!Audio) return; // expo-av not installed
+    try {
+      // If tapping same item while playing → stop audio but keep card open
+      if (playingId === id && soundRef.current) {
+        await soundRef.current.unloadAsync();
+        soundRef.current = null;
         setPlayingId(null);
-        setCurrentTrack(null); // 🔹 clear banner when playback ends
-        sound.unloadAsync().catch(() => {});
+        return;
+      }
+
+      // Stop any previous sound
+      if (soundRef.current) {
+        await soundRef.current.unloadAsync();
         soundRef.current = null;
       }
-    });
-  } catch {
+
+      // Create & play new
+      const { sound } = await Audio.Sound.createAsync({ uri: previewUrl });
+      soundRef.current = sound;
+      setPlayingId(id);
+
+      if (track) {
+        setCurrentTrack(track);
+        setIsPlayerVisible(true); // show the player card
+      }
+
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate((st: any) => {
+        if (st.didJustFinish || st.isLoaded === false) {
+          setPlayingId(null);
+          sound.unloadAsync().catch(() => {});
+          soundRef.current = null;
+          // keep the card visible so user can hit play again
+        }
+      });
+    } catch {
+      setPlayingId(null);
+    }
+  };
+
+  const closePlayer = async () => {
+    if (soundRef.current) {
+      await soundRef.current.unloadAsync().catch(() => {});
+      soundRef.current = null;
+    }
     setPlayingId(null);
     setCurrentTrack(null);
-  }
-};
-
+    setIsPlayerVisible(false);
+  };
 
   // --- Add to playlist handler ---
   const addToPlaylist = async (track: any) => {
@@ -412,7 +433,20 @@ const togglePlayNative = async (previewUrl: string, id: string, track?: any) => 
             const idStr = String(item.id);
 
             return (
-              <View style={styles.songCard1}>
+              <TouchableOpacity
+                style={styles.songCard1}
+                activeOpacity={0.85}
+                onPress={() => {
+                  if (preview) {
+                    // tap row → open card and start playing
+                    togglePlayNative(preview, idStr, item);
+                  } else {
+                    // no preview, just show info card
+                    setCurrentTrack(item);
+                    setIsPlayerVisible(true);
+                  }
+                }}
+              >
                 {artUri ? (
                   <Image source={{ uri: artUri }} style={styles.songArt} />
                 ) : (
@@ -435,7 +469,7 @@ const togglePlayNative = async (previewUrl: string, id: string, track?: any) => 
                     {item.artist?.name} • {item.album?.title}
                   </Text>
 
-                  {/* Preview controls */}
+                  {/* Preview controls (still available) */}
                   {preview ? (
                     Platform.OS === "web" ? (
                       <audio
@@ -446,7 +480,9 @@ const togglePlayNative = async (previewUrl: string, id: string, track?: any) => 
                       />
                     ) : Audio ? (
                       <TouchableOpacity
-                        onPress={() => togglePlayNative(preview, idStr, item)}
+                        onPress={() =>
+                          togglePlayNative(preview, idStr, item)
+                        }
                         style={styles.previewBtn}
                       >
                         <Text style={{ color: "white" }}>
@@ -481,7 +517,7 @@ const togglePlayNative = async (previewUrl: string, id: string, track?: any) => 
                     color="#ffffff"
                   />
                 </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             );
           }}
           style={styles.resultsList}
@@ -630,84 +666,96 @@ const togglePlayNative = async (previewUrl: string, id: string, track?: any) => 
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>🔍 Quick Search</Text>
             <View style={styles.quickSearchContainer}>
-              {[
-                "Rock",
-                "Pop",
-                "Hip Hop",
-                "Electronic",
-                "Jazz",
-                "Classical",
-              ].map((genre) => (
-                <TouchableOpacity
-                  key={genre}
-                  style={styles.quickSearchChip}
-                  onPress={() => setSearchText(genre)}
-                >
-                  <Text style={styles.quickSearchText}>{genre}</Text>
-                </TouchableOpacity>
-              ))}
+              {["Rock", "Pop", "Hip Hop", "Electronic", "Jazz", "Classical"].map(
+                (genre) => (
+                  <TouchableOpacity
+                    key={genre}
+                    style={styles.quickSearchChip}
+                    onPress={() => setSearchText(genre)}
+                  >
+                    <Text style={styles.quickSearchText}>{genre}</Text>
+                  </TouchableOpacity>
+                )
+              )}
             </View>
           </View>
         </ScrollView>
       )}
 
-{currentTrack && (
-  <View style={[styles.nowPlayingBar, { paddingBottom: insets.bottom + 8 }]}>
-    <Image
-      source={{
-        uri:
-          currentTrack.album?.cover_medium ||
-          currentTrack.album?.cover ||
-          "https://via.placeholder.com/60",
-      }}
-      style={styles.nowPlayingArt}
-    />
+      {/* Player card modal */}
+      {currentTrack && (
+        <Modal
+          visible={isPlayerVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={closePlayer}
+        >
+          <View style={styles.playerBackdrop}>
+            <View style={styles.playerCard}>
+              <TouchableOpacity
+                style={styles.playerClose}
+                onPress={closePlayer}
+              >
+                <Ionicons name="close" size={22} color="#ffffff" />
+              </TouchableOpacity>
 
-    <View style={{ flex: 1, marginHorizontal: 10 }}>
-      <Text style={styles.nowPlayingTitle} numberOfLines={1}>
-        {currentTrack.title}
-      </Text>
-      <Text style={styles.nowPlayingArtist} numberOfLines={1}>
-        {currentTrack.artist?.name} • {currentTrack.album?.title}
-      </Text>
-    </View>
+              <Image
+                source={{
+                  uri:
+                    currentTrack.album?.cover_medium ||
+                    currentTrack.album?.cover ||
+                    "https://via.placeholder.com/300",
+                }}
+                style={styles.playerArt}
+              />
 
-    {Platform.OS !== "web" && currentTrack.preview && Audio && (
-      <TouchableOpacity
-        onPress={() =>
-          togglePlayNative(
-            currentTrack.preview,
-            String(currentTrack.id),
-            currentTrack
-          )
-        }
-        style={styles.nowPlayingPlayBtn}
-      >
-        <Ionicons
-          name={playingId === String(currentTrack.id) ? "pause" : "play"}
-          size={22}
-          color="#fff"
-        />
-      </TouchableOpacity>
-    )}
-  </View>
-)}
+              <Text style={styles.playerTitle} numberOfLines={1}>
+                {currentTrack.title}
+              </Text>
+              <Text style={styles.playerArtist} numberOfLines={1}>
+                {currentTrack.artist?.name} • {currentTrack.album?.title}
+              </Text>
+
+              {currentTrack.preview && Audio && (
+                <TouchableOpacity
+                  style={styles.playerPlayBtn}
+                  onPress={() =>
+                    togglePlayNative(
+                      currentTrack.preview,
+                      String(currentTrack.id),
+                      currentTrack
+                    )
+                  }
+                >
+                  <Ionicons
+                    name={
+                      playingId === String(currentTrack.id) ? "pause" : "play"
+                    }
+                    size={26}
+                    color="#ffffff"
+                  />
+                  <Text style={styles.playerPlayText}>
+                    {playingId === String(currentTrack.id) ? "Pause" : "Play"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-container: {
-  flex: 1,
-  backgroundColor: "transparent",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  position: "relative",
-  paddingTop: 70,
-  paddingBottom: 90,
-  overflow: "visible",
-},
-
+  container: {
+    flex: 1,
+    backgroundColor: "transparent",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    position: "relative",
+    paddingTop: 70,
+  },
   notificationContainer: {
     position: "absolute",
     right: 20,
@@ -726,10 +774,10 @@ container: {
   },
   searchInput: {
     width: "100%",
-    color: "#fff", // <-- ensures white text
+    color: "#fff",
     paddingVertical: 12,
     paddingLeft: 12,
-    paddingRight: 36, // <-- space so text doesn't go under the X
+    paddingRight: 36,
     fontSize: 16,
   },
   clearButton: {
@@ -793,7 +841,7 @@ container: {
     marginHorizontal: 16,
   },
   recommendationsContent: {
-    paddingBottom: 140, // Add bottom padding to prevent navigation bar overlap
+    paddingBottom: 140,
   },
   sectionContainer: {
     marginBottom: 24,
@@ -906,45 +954,59 @@ container: {
     fontSize: 14,
     fontWeight: "500",
   },
-nowPlayingBar: {
-  position: "absolute",
-  left: 0,
-  right: 0,
-  bottom: 0,
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: 16,
-  paddingVertical: 12,
-  backgroundColor: "#111827ee",
-  borderTopWidth: 1,
-  borderTopColor: "#374151",
-  zIndex: 9999,      // 👈 SUPER IMPORTANT
-  elevation: 9999,   // 👈 Android
-},
-
-nowPlayingArt: {
-  width: 44,
-  height: 44,
-  borderRadius: 6,
-  backgroundColor: "#101010",
-},
-
-nowPlayingTitle: {
-  color: "#ffffff",
-  fontSize: 14,
-  fontWeight: "600",
-},
-
-nowPlayingArtist: {
-  color: "#9ca3af",
-  fontSize: 12,
-  marginTop: 2,
-},
-
-nowPlayingPlayBtn: {
-  paddingHorizontal: 10,
-  paddingVertical: 8,
-  justifyContent: "center",
-  alignItems: "center",
-},
+  // Player modal styles
+  playerBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  playerCard: {
+    width: "85%",
+    borderRadius: 20,
+    padding: 20,
+    backgroundColor: "#1f2933",
+    alignItems: "center",
+  },
+  playerClose: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    padding: 4,
+  },
+  playerArt: {
+    width: 200,
+    height: 200,
+    borderRadius: 16,
+    marginBottom: 16,
+    backgroundColor: "#101010",
+  },
+  playerTitle: {
+    color: "#ffffff",
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  playerArtist: {
+    color: "#9ca3af",
+    fontSize: 14,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  playerPlayBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: "#1DB954",
+  },
+  playerPlayText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
 });

@@ -185,7 +185,6 @@ if (Platform.OS !== "web") {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     Audio = require("expo-av").Audio;
   } catch {
-    // expo-av not installed; previews on native will be disabled
     Audio = null;
   }
 }
@@ -218,10 +217,9 @@ export default function HomePage() {
     sendPlaylistSuggestionNotification,
   } = useNotifications();
 
-  // Safe area insets for proper positioning on iPhone
   const insets = useSafeAreaInsets();
 
-  // debounce the input slightly (protects Deezer 50 req / 5s quota)
+  // debounce the input slightly
   useEffect(() => {
     const id = setTimeout(async () => {
       const q = searchText.trim();
@@ -250,15 +248,12 @@ export default function HomePage() {
     const loadRecommendations = async () => {
       setRecommendationsLoading(true);
       try {
-        // Load trending tracks
         const trendingData = await getTrendingTracks(10);
         setTrendingTracks(trendingData?.data || []);
 
-        // Load popular artists
         const artistsData = await getPopularArtists(8);
         setPopularArtists(artistsData?.data || []);
 
-        // Load genre recommendations (Rock, Pop, Hip-Hop, Electronic)
         const genres = [113, 132, 116, 106]; // Rock, Pop, Hip-Hop, Electronic
         const genrePromises = genres.map((genreId) =>
           getGenreRecommendations(genreId, 3)
@@ -290,7 +285,7 @@ export default function HomePage() {
     id: string,
     track?: any
   ) => {
-    if (!Audio) return; // expo-av not installed
+    if (!Audio) return;
     try {
       // If tapping same item while playing → stop audio but keep card open
       if (playingId === id && soundRef.current) {
@@ -306,14 +301,13 @@ export default function HomePage() {
         soundRef.current = null;
       }
 
-      // Create & play new
       const { sound } = await Audio.Sound.createAsync({ uri: previewUrl });
       soundRef.current = sound;
       setPlayingId(id);
 
       if (track) {
         setCurrentTrack(track);
-        setIsPlayerVisible(true); // show the player card
+        setIsPlayerVisible(true);
       }
 
       await sound.playAsync();
@@ -322,7 +316,6 @@ export default function HomePage() {
           setPlayingId(null);
           sound.unloadAsync().catch(() => {});
           soundRef.current = null;
-          // keep the card visible so user can hit play again
         }
       });
     } catch {
@@ -342,6 +335,8 @@ export default function HomePage() {
 
   // --- Add to playlist handler ---
   const addToPlaylist = async (track: any) => {
+    if (!track) return;
+
     setPlaylist((prev) => {
       const exists = prev.some((t) => String(t?.id) === String(track?.id));
       if (exists) {
@@ -359,7 +354,6 @@ export default function HomePage() {
       return next;
     });
 
-    // Send Deezer notification for playlist addition
     try {
       const trackData = {
         trackId: String(track.id),
@@ -437,11 +431,10 @@ export default function HomePage() {
                 style={styles.songCard1}
                 activeOpacity={0.85}
                 onPress={() => {
+                  // tap row → open card (and play if preview)
                   if (preview) {
-                    // tap row → open card and start playing
                     togglePlayNative(preview, idStr, item);
                   } else {
-                    // no preview, just show info card
                     setCurrentTrack(item);
                     setIsPlayerVisible(true);
                   }
@@ -468,43 +461,10 @@ export default function HomePage() {
                   >
                     {item.artist?.name} • {item.album?.title}
                   </Text>
-
-                  {/* Preview controls (still available) */}
-                  {preview ? (
-                    Platform.OS === "web" ? (
-                      <audio
-                        controls
-                        src={preview}
-                        preload="none"
-                        style={{ marginTop: 6, width: "100%" }}
-                      />
-                    ) : Audio ? (
-                      <TouchableOpacity
-                        onPress={() =>
-                          togglePlayNative(preview, idStr, item)
-                        }
-                        style={styles.previewBtn}
-                      >
-                        <Text style={{ color: "white" }}>
-                          {playingId === idStr ? "Pause" : "Play"}
-                        </Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <Text style={{ color: "#ccc", marginTop: 6 }}>
-                        Install expo-av for previews on mobile:{" "}
-                        <Text style={{ fontStyle: "italic" }}>
-                          npx expo install expo-av
-                        </Text>
-                      </Text>
-                    )
-                  ) : (
-                    <Text style={{ color: "#888", marginTop: 6 }}>
-                      No preview available
-                    </Text>
-                  )}
+                  {/* 👇 play/pause controls removed from search rows */}
                 </View>
 
-                {/* --- Add-to-Playlist button (right side) --- */}
+                {/* Add-to-Playlist button (right side) */}
                 <TouchableOpacity
                   onPress={() => addToPlaylist(item)}
                   style={styles.addBtn}
@@ -558,7 +518,6 @@ export default function HomePage() {
                     style={styles.trendingCard}
                     onPress={async () => {
                       await addToPlaylist(track);
-                      // Send trending notification
                       try {
                         const trackData = {
                           trackId: String(track.id),
@@ -716,29 +675,43 @@ export default function HomePage() {
                 {currentTrack.artist?.name} • {currentTrack.album?.title}
               </Text>
 
-              {currentTrack.preview && Audio && (
+              <View style={styles.playerActionsRow}>
+                {currentTrack.preview && Audio && (
+                  <TouchableOpacity
+                    style={styles.playerPlayBtn}
+                    onPress={() =>
+                      togglePlayNative(
+                        currentTrack.preview,
+                        String(currentTrack.id),
+                        currentTrack
+                      )
+                    }
+                  >
+                    <Ionicons
+                      name={
+                        playingId === String(currentTrack.id) ? "pause" : "play"
+                      }
+                      size={26}
+                      color="#ffffff"
+                    />
+                    <Text style={styles.playerPlayText}>
+                      {playingId === String(currentTrack.id) ? "Pause" : "Play"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
                 <TouchableOpacity
-                  style={styles.playerPlayBtn}
-                  onPress={() =>
-                    togglePlayNative(
-                      currentTrack.preview,
-                      String(currentTrack.id),
-                      currentTrack
-                    )
-                  }
+                  style={styles.playerAddBtn}
+                  onPress={() => addToPlaylist(currentTrack)}
                 >
                   <Ionicons
-                    name={
-                      playingId === String(currentTrack.id) ? "pause" : "play"
-                    }
-                    size={26}
+                    name="add-circle-outline"
+                    size={24}
                     color="#ffffff"
                   />
-                  <Text style={styles.playerPlayText}>
-                    {playingId === String(currentTrack.id) ? "Pause" : "Play"}
-                  </Text>
+                  <Text style={styles.playerAddText}>Add to playlist</Text>
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
           </View>
         </Modal>
@@ -820,21 +793,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#2a2f3a",
   },
-  previewBtn: {
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: "#2e3440",
-    borderRadius: 8,
-    alignSelf: "flex-start",
-  },
   addBtn: {
     marginLeft: 10,
     padding: 6,
     justifyContent: "center",
     alignItems: "center",
   },
-  // Recommendation styles
   recommendationsContainer: {
     flex: 1,
     width: "90%",
@@ -862,7 +826,6 @@ const styles = StyleSheet.create({
   horizontalScroll: {
     marginHorizontal: -4,
   },
-  // Trending tracks styles
   trendingCard: {
     width: 140,
     marginRight: 12,
@@ -890,7 +853,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: "center",
   },
-  // Popular artists styles
   artistCard: {
     width: 100,
     marginRight: 12,
@@ -909,7 +871,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
   },
-  // Genre recommendations styles
   genreGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -936,7 +897,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
   },
-  // Quick search styles
   quickSearchContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -994,10 +954,15 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: "center",
   },
-  playerPlayBtn: {
+  playerActionsRow: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 8,
+    gap: 12,
+  },
+  playerPlayBtn: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 999,
@@ -1008,5 +973,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
+  },
+  playerAddBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#4b5563",
+    backgroundColor: "#111827",
+  },
+  playerAddText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "500",
+    marginLeft: 6,
   },
 });

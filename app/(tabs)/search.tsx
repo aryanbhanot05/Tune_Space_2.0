@@ -15,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ---- tiny Deezer search helper (uses proxy on web if provided) ----
 const FUNCTIONS_BASE = process.env.EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL || "";
@@ -29,9 +29,9 @@ async function searchDeezerTracks(q: string, limit = 15) {
   try {
     const url = `https://api.deezer.com/search/track?q=${searchQuery}&limit=${limit}`;
     const res = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
-      method: 'GET',
-      mode: 'cors'
+      headers: { Accept: "application/json" },
+      method: "GET",
+      mode: "cors",
     });
 
     if (res.ok) {
@@ -41,16 +41,16 @@ async function searchDeezerTracks(q: string, limit = 15) {
       }
     }
   } catch (error) {
-    console.log('Direct search failed, trying alternatives...');
+    console.log("Direct search failed, trying alternatives...");
   }
 
   // Try album search as fallback
   try {
     const albumUrl = `https://api.deezer.com/search/album?q=${searchQuery}&limit=3`;
     const albumRes = await fetch(albumUrl, {
-      headers: { 'Accept': 'application/json' },
-      method: 'GET',
-      mode: 'cors'
+      headers: { Accept: "application/json" },
+      method: "GET",
+      mode: "cors",
     });
 
     if (albumRes.ok) {
@@ -59,9 +59,9 @@ async function searchDeezerTracks(q: string, limit = 15) {
         const albumId = albumData.data[0].id;
         const tracksUrl = `https://api.deezer.com/album/${albumId}/tracks`;
         const tracksRes = await fetch(tracksUrl, {
-          headers: { 'Accept': 'application/json' },
-          method: 'GET',
-          mode: 'cors'
+          headers: { Accept: "application/json" },
+          method: "GET",
+          mode: "cors",
         });
 
         if (tracksRes.ok) {
@@ -73,7 +73,7 @@ async function searchDeezerTracks(q: string, limit = 15) {
       }
     }
   } catch (error) {
-    console.log('Album search failed, using mock data...');
+    console.log("Album search failed, using mock data...");
   }
 
   // Fallback: return mock data
@@ -82,44 +82,64 @@ async function searchDeezerTracks(q: string, limit = 15) {
       {
         id: 1,
         title: `Best of ${q}`,
-        artist: { name: 'Popular Artist' },
-        album: { title: `${q} Hits`, cover_medium: 'https://via.placeholder.com/300x300/1DB954/FFFFFF?text=🎵' },
+        artist: { name: "Popular Artist" },
+        album: {
+          title: `${q} Hits`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/1DB954/FFFFFF?text=🎵",
+        },
         preview: null,
-        duration: 180
+        duration: 180,
       },
       {
         id: 2,
         title: `${q} Anthem`,
-        artist: { name: 'Chart Topper' },
-        album: { title: `${q} Collection`, cover_medium: 'https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=🔥' },
+        artist: { name: "Chart Topper" },
+        album: {
+          title: `${q} Collection`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/FF6B6B/FFFFFF?text=🔥",
+        },
         preview: null,
-        duration: 200
+        duration: 200,
       },
       {
         id: 3,
         title: `${q} Vibes`,
-        artist: { name: 'Rising Star' },
-        album: { title: `${q} Mix`, cover_medium: 'https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=✨' },
+        artist: { name: "Rising Star" },
+        album: {
+          title: `${q} Mix`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/4ECDC4/FFFFFF?text=✨",
+        },
         preview: null,
-        duration: 220
+        duration: 220,
       },
       {
         id: 4,
         title: `${q} Classic`,
-        artist: { name: 'Legend' },
-        album: { title: `${q} Essentials`, cover_medium: 'https://via.placeholder.com/300x300/45B7D1/FFFFFF?text=⭐' },
+        artist: { name: "Legend" },
+        album: {
+          title: `${q} Essentials`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/45B7D1/FFFFFF?text=⭐",
+        },
         preview: null,
-        duration: 195
+        duration: 195,
       },
       {
         id: 5,
         title: `${q} Remix`,
-        artist: { name: 'DJ Master' },
-        album: { title: `${q} Remixes`, cover_medium: 'https://via.placeholder.com/300x300/96CEB4/FFFFFF?text=🎧' },
+        artist: { name: "DJ Master" },
+        album: {
+          title: `${q} Remixes`,
+          cover_medium:
+            "https://via.placeholder.com/300x300/96CEB4/FFFFFF?text=🎧",
+        },
         preview: null,
-        duration: 210
-      }
-    ]
+        duration: 210,
+      },
+    ],
   };
 }
 
@@ -189,7 +209,11 @@ export default function HomePage() {
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   // Notification context
-  const { sendDeezerNotification, sendDiscoveryNotification, sendPlaylistSuggestionNotification } = useNotifications();
+  const {
+    sendDeezerNotification,
+    sendDiscoveryNotification,
+    sendPlaylistSuggestionNotification,
+  } = useNotifications();
 
   // Safe area insets for proper positioning on iPhone
   const insets = useSafeAreaInsets();
@@ -209,7 +233,7 @@ export default function HomePage() {
         const data = await searchDeezerTracks(q, 15);
         setResults(data?.data ?? []);
       } catch (e: any) {
-        console.error('Search error:', e);
+        console.error("Search error:", e);
         setError(e?.message ?? "Search failed");
       } finally {
         setLoading(false);
@@ -233,12 +257,16 @@ export default function HomePage() {
 
         // Load genre recommendations (Rock, Pop, Hip-Hop, Electronic)
         const genres = [113, 132, 116, 106]; // Rock, Pop, Hip-Hop, Electronic
-        const genrePromises = genres.map(genreId => getGenreRecommendations(genreId, 3));
+        const genrePromises = genres.map((genreId) =>
+          getGenreRecommendations(genreId, 3)
+        );
         const genreResults = await Promise.all(genrePromises);
-        const allGenreArtists = genreResults.flatMap(result => result?.data || []);
+        const allGenreArtists = genreResults.flatMap(
+          (result) => result?.data || []
+        );
         setGenreRecommendations(allGenreArtists.slice(0, 12));
       } catch (error) {
-        console.error('Failed to load recommendations:', error);
+        console.error("Failed to load recommendations:", error);
       } finally {
         setRecommendationsLoading(false);
       }
@@ -250,7 +278,7 @@ export default function HomePage() {
   // cleanup native sound on unmount
   useEffect(() => {
     return () => {
-      if (soundRef.current) soundRef.current.unloadAsync().catch(() => { });
+      if (soundRef.current) soundRef.current.unloadAsync().catch(() => {});
     };
   }, []);
 
@@ -275,7 +303,7 @@ export default function HomePage() {
       sound.setOnPlaybackStatusUpdate((st: any) => {
         if (st.didJustFinish || st.isLoaded === false) {
           setPlayingId(null);
-          sound.unloadAsync().catch(() => { });
+          sound.unloadAsync().catch(() => {});
           soundRef.current = null;
         }
       });
@@ -289,11 +317,17 @@ export default function HomePage() {
     setPlaylist((prev) => {
       const exists = prev.some((t) => String(t?.id) === String(track?.id));
       if (exists) {
-        Alert.alert("Already added", `"${track?.title}" is already in your playlist.`);
+        Alert.alert(
+          "Already added",
+          `"${track?.title}" is already in your playlist.`
+        );
         return prev;
       }
       const next = [...prev, track];
-      Alert.alert("Added to Playlist", `"${track?.title}" by ${track?.artist?.name}`);
+      Alert.alert(
+        "Added to Playlist",
+        `"${track?.title}" by ${track?.artist?.name}`
+      );
       return next;
     });
 
@@ -302,16 +336,16 @@ export default function HomePage() {
       const trackData = {
         trackId: String(track.id),
         title: track.title,
-        artist: track.artist?.name || 'Unknown Artist',
+        artist: track.artist?.name || "Unknown Artist",
         album: track.album?.title,
         imageUrl: track.album?.cover_medium || track.album?.cover,
         previewUrl: track.preview,
-        duration: track.duration
+        duration: track.duration,
       };
 
       await sendPlaylistSuggestionNotification(trackData);
     } catch (error) {
-      console.error('Failed to send playlist notification:', error);
+      console.error("Failed to send playlist notification:", error);
     }
   };
 
@@ -329,16 +363,30 @@ export default function HomePage() {
         <Text style={styles.title}>Search</Text>
       </View>
 
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search by song, artist, or album…"
-        placeholderTextColor="#888"
-        value={searchText}
-        onChangeText={setSearchText}
-        autoCorrect={false}
-        autoCapitalize="none"
-      />
+      <View style={styles.searchWrapper}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search by song, artist, or album…"
+          placeholderTextColor="#888"
+          value={searchText}
+          onChangeText={setSearchText}
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
 
+        {searchText.length > 0 && (
+          <TouchableOpacity
+            onPress={() => {
+              setSearchText("");
+              setError(null);
+              setResults([]);
+            }}
+            style={styles.clearButton}
+          >
+            <Ionicons name="close-circle" size={20} color="#bbb" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       {loading ? (
         <Text style={{ color: "#ccc", marginBottom: 8 }}>Searching…</Text>
@@ -352,7 +400,8 @@ export default function HomePage() {
           data={results}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => {
-            const artUri = item?.album?.cover_medium || item?.album?.cover || undefined;
+            const artUri =
+              item?.album?.cover_medium || item?.album?.cover || undefined;
             const preview = item?.preview as string | undefined;
             const idStr = String(item.id);
 
@@ -361,21 +410,34 @@ export default function HomePage() {
                 {artUri ? (
                   <Image source={{ uri: artUri }} style={styles.songArt} />
                 ) : (
-                  <View style={[styles.songArt, { backgroundColor: "#101010" }]} />
+                  <View
+                    style={[styles.songArt, { backgroundColor: "#101010" }]}
+                  />
                 )}
 
                 <View style={{ marginLeft: 10, flex: 1 }}>
-                  <Text style={{ color: "white", fontSize: 16 }} numberOfLines={1}>
+                  <Text
+                    style={{ color: "white", fontSize: 16 }}
+                    numberOfLines={1}
+                  >
                     {item.title}
                   </Text>
-                  <Text style={{ color: "#aaa", fontSize: 14 }} numberOfLines={1}>
+                  <Text
+                    style={{ color: "#aaa", fontSize: 14 }}
+                    numberOfLines={1}
+                  >
                     {item.artist?.name} • {item.album?.title}
                   </Text>
 
                   {/* Preview controls */}
                   {preview ? (
                     Platform.OS === "web" ? (
-                      <audio controls src={preview} preload="none" style={{ marginTop: 6, width: "100%" }} />
+                      <audio
+                        controls
+                        src={preview}
+                        preload="none"
+                        style={{ marginTop: 6, width: "100%" }}
+                      />
                     ) : Audio ? (
                       <TouchableOpacity
                         onPress={() => togglePlayNative(preview, idStr)}
@@ -388,11 +450,15 @@ export default function HomePage() {
                     ) : (
                       <Text style={{ color: "#ccc", marginTop: 6 }}>
                         Install expo-av for previews on mobile:{" "}
-                        <Text style={{ fontStyle: "italic" }}>npx expo install expo-av</Text>
+                        <Text style={{ fontStyle: "italic" }}>
+                          npx expo install expo-av
+                        </Text>
                       </Text>
                     )
                   ) : (
-                    <Text style={{ color: "#888", marginTop: 6 }}>No preview available</Text>
+                    <Text style={{ color: "#888", marginTop: 6 }}>
+                      No preview available
+                    </Text>
                   )}
                 </View>
 
@@ -403,7 +469,11 @@ export default function HomePage() {
                   accessibilityLabel="Add to playlist"
                   accessibilityHint={`Add ${item?.title} to your playlist`}
                 >
-                  <Ionicons name="add-circle-outline" size={26} color="#ffffff" />
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={26}
+                    color="#ffffff"
+                  />
                 </TouchableOpacity>
               </View>
             );
@@ -412,9 +482,11 @@ export default function HomePage() {
           nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
-            <View style={{ padding: 20, alignItems: 'center' }}>
-              <Text style={{ color: '#888', fontSize: 16 }}>No results found</Text>
-              <Text style={{ color: '#666', fontSize: 14, marginTop: 4 }}>
+            <View style={{ padding: 20, alignItems: "center" }}>
+              <Text style={{ color: "#888", fontSize: 16 }}>
+                No results found
+              </Text>
+              <Text style={{ color: "#666", fontSize: 14, marginTop: 4 }}>
                 Try searching for a different song, artist, or album
               </Text>
             </View>
@@ -433,7 +505,11 @@ export default function HomePage() {
             {recommendationsLoading ? (
               <Text style={styles.loadingText}>Loading trending tracks...</Text>
             ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.horizontalScroll}
+              >
                 {trendingTracks.map((track, index) => (
                   <TouchableOpacity
                     key={track.id}
@@ -445,23 +521,33 @@ export default function HomePage() {
                         const trackData = {
                           trackId: String(track.id),
                           title: track.title,
-                          artist: track.artist?.name || 'Unknown Artist',
+                          artist: track.artist?.name || "Unknown Artist",
                           album: track.album?.title,
-                          imageUrl: track.album?.cover_medium || track.album?.cover,
+                          imageUrl:
+                            track.album?.cover_medium || track.album?.cover,
                           previewUrl: track.preview,
-                          duration: track.duration
+                          duration: track.duration,
                         };
-                        await sendDeezerNotification('trending_track', trackData,
+                        await sendDeezerNotification(
+                          "trending_track",
+                          trackData,
                           `🔥 #${index + 1} Trending: ${track.title}`,
-                          `${track.artist?.name} • ${track.album?.title || 'Single'}`
+                          `${track.artist?.name} • ${
+                            track.album?.title || "Single"
+                          }`
                         );
                       } catch (error) {
-                        console.error('Failed to send trending notification:', error);
+                        console.error(
+                          "Failed to send trending notification:",
+                          error
+                        );
                       }
                     }}
                   >
                     <Image
-                      source={{ uri: track.album?.cover_medium || track.album?.cover }}
+                      source={{
+                        uri: track.album?.cover_medium || track.album?.cover,
+                      }}
                       style={styles.trendingImage}
                     />
                     <Text style={styles.trendingTitle} numberOfLines={1}>
@@ -482,7 +568,11 @@ export default function HomePage() {
             {recommendationsLoading ? (
               <Text style={styles.loadingText}>Loading popular artists...</Text>
             ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScroll}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.horizontalScroll}
+              >
                 {popularArtists.map((artist) => (
                   <TouchableOpacity
                     key={artist.id}
@@ -506,7 +596,9 @@ export default function HomePage() {
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>🎵 Discover by Genre</Text>
             {recommendationsLoading ? (
-              <Text style={styles.loadingText}>Loading genre recommendations...</Text>
+              <Text style={styles.loadingText}>
+                Loading genre recommendations...
+              </Text>
             ) : (
               <View style={styles.genreGrid}>
                 {genreRecommendations.slice(0, 8).map((artist) => (
@@ -532,7 +624,14 @@ export default function HomePage() {
           <View style={styles.sectionContainer}>
             <Text style={styles.sectionTitle}>🔍 Quick Search</Text>
             <View style={styles.quickSearchContainer}>
-              {['Rock', 'Pop', 'Hip Hop', 'Electronic', 'Jazz', 'Classical'].map((genre) => (
+              {[
+                "Rock",
+                "Pop",
+                "Hip Hop",
+                "Electronic",
+                "Jazz",
+                "Classical",
+              ].map((genre) => (
                 <TouchableOpacity
                   key={genre}
                   style={styles.quickSearchChip}
@@ -563,17 +662,31 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 10,
   },
-  searchInput: {
-    backgroundColor: "#191c24",
-    color: "#fff",
-    padding: 10,
-    borderRadius: 10,
-    marginHorizontal: 16,
-    marginBottom: 10,
-    marginTop: 20,
-    borderColor: "#444",
-    borderWidth: 1,
+  searchWrapper: {
+    position: "relative",
     width: "90%",
+    marginTop: 20,
+    marginBottom: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#444",
+    backgroundColor: "#191c24",
+    marginHorizontal: 16,
+  },
+  searchInput: {
+    width: "100%",
+    color: "#fff", // <-- ensures white text
+    paddingVertical: 12,
+    paddingLeft: 12,
+    paddingRight: 36, // <-- space so text doesn't go under the X
+    fontSize: 16,
+  },
+  clearButton: {
+    position: "absolute",
+    right: 10,
+    top: "50%",
+    transform: [{ translateY: -10 }],
+    padding: 1,
   },
   resultsList: {
     maxHeight: 300,

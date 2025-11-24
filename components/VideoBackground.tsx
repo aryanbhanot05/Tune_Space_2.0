@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
 import { useTheme } from '@/lib/themeContext';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import React, { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 export const VIDEO_SOURCE_MAP = {
   bg1: require('../assets/videos/bg1.mp4'),
@@ -21,30 +21,17 @@ type VideoThemeKey = keyof typeof VIDEO_SOURCE_MAP;
 export function VideoBackground() {
   const { selectedTheme } = useTheme();
   const themeKey = selectedTheme || 'bg1';
-  const [isReady, setIsReady] = useState(false);
 
+  // Memoize the source to ensure stable references
   const finalSource = useMemo(() => VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1, [themeKey]);
 
+  // useVideoPlayer handles the source lifecycle automatically.
+  // We play the video immediately in the setup callback.
   const player = useVideoPlayer(finalSource, (player) => {
     player.loop = true;
     player.muted = true;
+    player.play();
   });
-
-  useEffect(() => {
-    setIsReady(false);
-    player.replaceAsync(finalSource)
-      .then(() => {
-        setIsReady(true);
-        return player.play();
-      })
-      .catch((error) => {
-        console.error('Failed to replace or play video:', error);
-      });
-  }, [finalSource, player]);
-
-  if (!isReady) {
-    return <View style={[styles.container, { backgroundColor: '#000' }]} />;
-  }
 
   return (
     <View style={styles.container}>

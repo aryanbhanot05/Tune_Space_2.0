@@ -50,7 +50,10 @@ export default function WelcomeScreen() {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showPlayer, setShowPlayer] = useState(false); // Controls the full screen modal
+  const [showPlayer, setShowPlayer] = useState(false); 
+  
+  // Auto-Play State (Fix for Race Condition)
+  const [autoPlayPending, setAutoPlayPending] = useState(false);
 
   const notificationContext = useNotifications();
   const { setTheme } = useTheme();
@@ -64,7 +67,7 @@ export default function WelcomeScreen() {
     Audio.setAudioModeAsync({
       allowsRecordingIOS: false,
       playsInSilentModeIOS: true,
-      staysActiveInBackground: true, // Keep playing if they background the app
+      staysActiveInBackground: true,
       shouldDuckAndroid: true,
     });
 
@@ -80,6 +83,16 @@ export default function WelcomeScreen() {
       handleEmotion(emotion);
     }
   }, [emotion]);
+
+  // --- AUTO-PLAY EFFECT ---
+  // Watches for when tracks load. If voice finished earlier (pending), start music now.
+  useEffect(() => {
+    if (autoPlayPending && tracks.length > 0) {
+      console.log("Auto-playing music now that tracks are loaded...");
+      setAutoPlayPending(false); // Reset flag
+      playTrackAtIndex(0);
+    }
+  }, [tracks, autoPlayPending]);
 
   // --- Audio Cleanup Helpers ---
   const unloadVoice = async () => {
@@ -105,9 +118,6 @@ export default function WelcomeScreen() {
   // --- TTS Logic (Voice) ---
   const playVoice = async (base64Audio: string) => {
     await unloadVoice();
-    // Don't unload music here; we want voice -> music transition to be smooth
-    // actually, if music is playing, we might pause it. 
-    // But for the start flow, music hasn't started yet.
 
     try {
       const { sound: newSound } = await Audio.Sound.createAsync(
@@ -116,25 +126,31 @@ export default function WelcomeScreen() {
       );
       voiceSound.current = newSound;
 
-      // When voice finishes, start the music automatically!
       newSound.setOnPlaybackStatusUpdate((status) => {
         if (status.isLoaded && status.didJustFinish) {
-          // AUTO-PLAY: Start first song
-          playTrackAtIndex(0);
+          console.log("Voice finished. Attempting to start music...");
+          // If tracks are already here, play immediately.
+          if (tracks.length > 0) {
+            playTrackAtIndex(0);
+          } else {
+            // If tracks aren't here yet, set flag to play them when they arrive.
+            setAutoPlayPending(true);
+          }
         }
       });
 
     } catch (error) {
       console.error('Failed to load voice:', error);
-      // If voice fails, just start music immediately
-      playTrackAtIndex(0);
+      // If voice fails, just try to play music
+      setAutoPlayPending(true);
     }
   };
 
   // --- Music Player Logic ---
 
   const playTrackAtIndex = async (index: number) => {
-    if (index < 0 || index >= tracks.length) return;
+    // Safety check
+    if (!tracks || tracks.length === 0 || index < 0 || index >= tracks.length) return;
     
     // Stop previous music
     await unloadMusic();
@@ -143,8 +159,12 @@ export default function WelcomeScreen() {
     setCurrentIndex(index);
     setIsBuffering(true);
     setIsPlaying(true);
-    setShowPlayer(true); // Open the player modal automatically
-
+    
+    // NOTE: We do NOT auto-open the player on auto-play (optional choice), 
+    // but if user tapped it, we usually would. 
+    // For now, let's keep the player minimized on auto-start so it doesn't pop up abruptly.
+    // Use `setShowPlayer(true)` here if you WANT it to pop up.
+    
     try {
       const { sound: newSound } = await Audio.Sound.createAsync(
         { uri: track.previewUrl },
@@ -158,7 +178,6 @@ export default function WelcomeScreen() {
           setIsBuffering(status.isBuffering);
           setIsPlaying(status.isPlaying);
           if (status.didJustFinish) {
-             // Auto-play next song when this one finishes
              playNext();
           }
         }
@@ -187,7 +206,6 @@ export default function WelcomeScreen() {
     if (currentIndex !== null && currentIndex < tracks.length - 1) {
       playTrackAtIndex(currentIndex + 1);
     } else {
-      // Loop back to start? or stop
       playTrackAtIndex(0); 
     }
   };
@@ -202,12 +220,14 @@ export default function WelcomeScreen() {
   const handleEmotion = async (detectedEmotion: string) => {
     setCurrentEmotion(detectedEmotion);
     
-    // 1. Fetch Music First (so list populates)
-    // We pass a callback to know when tracks are ready if we wanted strict timing, 
-    // but the voice takes time anyway.
+    // Reset states
+    setAutoPlayPending(false);
+    setTracks([]);
+
+    // 1. Start Music Fetch
     fetchMusicForEmotion(detectedEmotion);
 
-    // 2. TTS Logic
+    // 2. Start TTS
     try {
       const sentence = getRandomEmotionSentence(detectedEmotion);
       fetchAudioFromText(sentence).then(base64 => {
@@ -215,8 +235,8 @@ export default function WelcomeScreen() {
       });
     } catch (error) {
       console.error('Error in speech playback:', error);
-      // If voice completely fails, try to play music after a short delay
-      setTimeout(() => playTrackAtIndex(0), 1000);
+      // Fallback: just play music pending
+      setAutoPlayPending(true);
     }
   };
 
@@ -227,27 +247,28 @@ export default function WelcomeScreen() {
         setCurrentIndex(null);
     }
 
-    // IMPROVED QUERIES: Using "hits", "charts", "best of" to get famous artists
+    // --- IMPROVED SEARCH QUERIES ---
     let query = "global top hits";
     switch (emotion.toUpperCase()) {
-      case 'HAPPY': query = "happy pop hits"; break;
+      // Changed to 'billboard hot 100 pop' for recognized hits
+      case 'HAPPY': query = "billboard hot 100 pop"; break; 
       case 'SAD': query = "sad emotional hits"; break;
       case 'ANGRY': query = "rock metal classics"; break;
       case 'SURPRISED': query = "viral hits"; break;
-      case 'CALM': query = "chill hits acoustic"; break;
+      case 'CALM': query = "chill lofi beats"; break;
       case 'FEAR': query = "dark soundtrack themes"; break;
       case 'DISGUST': query = "hard rock grunge"; break;
       default: query = "billboard hot 100"; break;
     }
 
     try {
-      const result = await searchTracks(query, 15); // Increased limit slightly
+      const result = await searchTracks(query, 15);
       if (result && result.data) {
         const mappedTracks: MusicTrack[] = result.data.map((t: any) => ({
           id: t.id.toString(),
           name: t.title,
           artist: t.artist.name,
-          image: t.album.cover_medium || t.album.cover_big, // Prefer bigger image if available
+          image: t.album.cover_medium || t.album.cover_big,
           previewUrl: t.preview
         }));
         setTracks(mappedTracks);
@@ -290,7 +311,10 @@ export default function WelcomeScreen() {
     return (
       <TouchableOpacity 
         style={[styles.trackItem, isActive && styles.trackItemActive]} 
-        onPress={() => playTrackAtIndex(index)} // Opens player
+        onPress={() => {
+            playTrackAtIndex(index);
+            setShowPlayer(true); // Open player on manual tap
+        }} 
       >
         <Image source={{ uri: item.image || 'https://placehold.co/64' }} style={styles.trackImage} />
         
@@ -312,7 +336,7 @@ export default function WelcomeScreen() {
     );
   };
 
-  // --- FULL PLAYER COMPONENT ---
+  // --- RENDER ---
   const currentTrack = currentIndex !== null ? tracks[currentIndex] : null;
 
   return (
@@ -322,7 +346,6 @@ export default function WelcomeScreen() {
         <NotificationBell size={28} color="#ffffff" />
       </View>
 
-      {/* Start Screen */}
       {!currentEmotion ? (
         <View style={styles.centerContent}>
           <TouchableOpacity style={styles.logoContainer} onPress={HandleAnalyzeMood}>
@@ -365,15 +388,16 @@ export default function WelcomeScreen() {
             <Text style={styles.retryButtonText}>Analyze Again</Text>
           </TouchableOpacity>
 
-          {/* Mini Player Bar (Optional: Tap to open full player) */}
+          {/* --- PERSISTENT MINI PLAYER --- */}
+          {/* Logic: Show if we have a track AND the full player is NOT open */}
           {currentTrack && !showPlayer && (
              <TouchableOpacity style={styles.miniPlayer} onPress={() => setShowPlayer(true)}>
                  <Image source={{ uri: currentTrack.image }} style={styles.miniImage} />
                  <View style={{flex:1}}>
                      <Text style={styles.miniTitle} numberOfLines={1}>{currentTrack.name}</Text>
-                     <Text style={styles.miniArtist}>{currentTrack.artist}</Text>
+                     <Text style={styles.miniArtist} numberOfLines={1}>{currentTrack.artist}</Text>
                  </View>
-                 <TouchableOpacity onPress={togglePlayPause}>
+                 <TouchableOpacity onPress={togglePlayPause} style={{padding: 8}}>
                      <Ionicons name={isPlaying ? "pause" : "play"} size={28} color="white" />
                  </TouchableOpacity>
              </TouchableOpacity>
@@ -389,7 +413,6 @@ export default function WelcomeScreen() {
         onRequestClose={() => setShowPlayer(false)}
       >
          <View style={styles.modalContainer}>
-            {/* Background Image with Blur */}
             {currentTrack && (
                 <Image source={{ uri: currentTrack.image }} style={StyleSheet.absoluteFillObject} blurRadius={30} />
             )}
@@ -399,20 +422,15 @@ export default function WelcomeScreen() {
                 style={StyleSheet.absoluteFillObject}
             />
 
-            {/* Modal Content */}
             <View style={styles.modalContent}>
-                {/* Header */}
                 <View style={styles.modalHeader}>
                     <TouchableOpacity onPress={() => setShowPlayer(false)}>
                         <Ionicons name="chevron-down" size={32} color="white" />
                     </TouchableOpacity>
                     <Text style={styles.modalHeaderText}>Now Playing</Text>
-                    <TouchableOpacity>
-                         <Ionicons name="ellipsis-horizontal" size={24} color="white" />
-                    </TouchableOpacity>
+                    <View style={{width: 32}} /> 
                 </View>
 
-                {/* Album Art */}
                 <View style={styles.artContainer}>
                     <Image 
                         source={{ uri: currentTrack?.image || 'https://placehold.co/300' }} 
@@ -420,22 +438,19 @@ export default function WelcomeScreen() {
                     />
                 </View>
 
-                {/* Info */}
                 <View style={styles.songMeta}>
-                    <Text style={styles.bigTitle}>{currentTrack?.name || "Unknown Song"}</Text>
-                    <Text style={styles.bigArtist}>{currentTrack?.artist || "Unknown Artist"}</Text>
+                    <Text style={styles.bigTitle} numberOfLines={1}>{currentTrack?.name || "Unknown Song"}</Text>
+                    <Text style={styles.bigArtist} numberOfLines={1}>{currentTrack?.artist || "Unknown Artist"}</Text>
                 </View>
 
-                {/* Progress Bar (Visual Only for Preview) */}
                 <View style={styles.progressBar}>
-                    <View style={styles.progressFill} />
+                    <View style={[styles.progressFill, { width: isPlaying ? '50%' : '0%' }]} />
                 </View>
                 <View style={styles.timeRow}>
-                    <Text style={styles.timeText}>0:00</Text>
+                    <Text style={styles.timeText}>Preview</Text>
                     <Text style={styles.timeText}>0:30</Text>
                 </View>
 
-                {/* Controls */}
                 <View style={styles.controlsRow}>
                     <TouchableOpacity onPress={playPrevious}>
                          <Ionicons name="play-skip-back" size={40} color="white" />
@@ -517,7 +532,7 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   listContent: {
-    paddingBottom: 100, // Space for mini player
+    paddingBottom: 160, // Increased to make room for mini player + nav bar
   },
   trackItem: {
     flexDirection: 'row',
@@ -566,7 +581,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginBottom: 10,
+    marginBottom: 80, 
   },
   retryButtonText: {
     color: 'white',
@@ -582,10 +597,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontStyle: 'italic',
   },
-  // --- MINI PLAYER ---
+  // --- MINI PLAYER STYLES ---
   miniPlayer: {
       position: 'absolute',
-      bottom: 10,
+      bottom: 90, // Adjusted to sit ABOVE the tab bar (standard tabs are ~50-80px)
       left: 10,
       right: 10,
       backgroundColor: '#1a1a1a',
@@ -600,6 +615,7 @@ const styles = StyleSheet.create({
       shadowOpacity: 0.5,
       shadowRadius: 10,
       elevation: 20,
+      zIndex: 100, // Ensure it sits on top of everything
   },
   miniImage: {
       width: 40,
@@ -677,7 +693,6 @@ const styles = StyleSheet.create({
   progressFill: {
       height: '100%',
       backgroundColor: 'white',
-      width: '30%', // Simulated progress
   },
   timeRow: {
       flexDirection: 'row',

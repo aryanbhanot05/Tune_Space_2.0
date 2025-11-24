@@ -336,7 +336,6 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'transparent',
     },
     centerContent: {
         flex: 1,
@@ -351,8 +350,8 @@ const styles = StyleSheet.create({
         zIndex: 10,
     },
     logoContainer: {
-        width: 250,
-        height: 250,
+        width: 300,
+        height: 300,
         justifyContent: 'center',
         alignItems: 'center',
     },

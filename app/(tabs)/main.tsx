@@ -52,7 +52,7 @@ export default function WelcomeScreen() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showPlayer, setShowPlayer] = useState(false); 
   
-  // Auto-Play State (Fix for Race Condition)
+  // Auto-Play State
   const [autoPlayPending, setAutoPlayPending] = useState(false);
 
   const notificationContext = useNotifications();
@@ -85,11 +85,10 @@ export default function WelcomeScreen() {
   }, [emotion]);
 
   // --- AUTO-PLAY EFFECT ---
-  // Watches for when tracks load. If voice finished earlier (pending), start music now.
   useEffect(() => {
     if (autoPlayPending && tracks.length > 0) {
       console.log("Auto-playing music now that tracks are loaded...");
-      setAutoPlayPending(false); // Reset flag
+      setAutoPlayPending(false); 
       playTrackAtIndex(0);
     }
   }, [tracks, autoPlayPending]);
@@ -129,11 +128,9 @@ export default function WelcomeScreen() {
       newSound.setOnPlaybackStatusUpdate((status) => {
         if (status.isLoaded && status.didJustFinish) {
           console.log("Voice finished. Attempting to start music...");
-          // If tracks are already here, play immediately.
           if (tracks.length > 0) {
             playTrackAtIndex(0);
           } else {
-            // If tracks aren't here yet, set flag to play them when they arrive.
             setAutoPlayPending(true);
           }
         }
@@ -141,7 +138,6 @@ export default function WelcomeScreen() {
 
     } catch (error) {
       console.error('Failed to load voice:', error);
-      // If voice fails, just try to play music
       setAutoPlayPending(true);
     }
   };
@@ -149,21 +145,14 @@ export default function WelcomeScreen() {
   // --- Music Player Logic ---
 
   const playTrackAtIndex = async (index: number) => {
-    // Safety check
     if (!tracks || tracks.length === 0 || index < 0 || index >= tracks.length) return;
     
-    // Stop previous music
     await unloadMusic();
 
     const track = tracks[index];
     setCurrentIndex(index);
     setIsBuffering(true);
     setIsPlaying(true);
-    
-    // NOTE: We do NOT auto-open the player on auto-play (optional choice), 
-    // but if user tapped it, we usually would. 
-    // For now, let's keep the player minimized on auto-start so it doesn't pop up abruptly.
-    // Use `setShowPlayer(true)` here if you WANT it to pop up.
     
     try {
       const { sound: newSound } = await Audio.Sound.createAsync(
@@ -220,7 +209,6 @@ export default function WelcomeScreen() {
   const handleEmotion = async (detectedEmotion: string) => {
     setCurrentEmotion(detectedEmotion);
     
-    // Reset states
     setAutoPlayPending(false);
     setTracks([]);
 
@@ -235,7 +223,6 @@ export default function WelcomeScreen() {
       });
     } catch (error) {
       console.error('Error in speech playback:', error);
-      // Fallback: just play music pending
       setAutoPlayPending(true);
     }
   };
@@ -250,8 +237,8 @@ export default function WelcomeScreen() {
     // --- IMPROVED SEARCH QUERIES ---
     let query = "global top hits";
     switch (emotion.toUpperCase()) {
-      // Changed to 'billboard hot 100 pop' for recognized hits
-      case 'HAPPY': query = "billboard hot 100 pop"; break; 
+      // FIX: Changed to "pop hits" for reliable known songs
+      case 'HAPPY': query = "pop hits"; break; 
       case 'SAD': query = "sad emotional hits"; break;
       case 'ANGRY': query = "rock metal classics"; break;
       case 'SURPRISED': query = "viral hits"; break;
@@ -282,6 +269,7 @@ export default function WelcomeScreen() {
   };
 
   const HandleAnalyzeMood = () => {
+    // Navigate to capture (used by the Logo Button)
     unloadVoice();
     unloadMusic();
     setTracks([]);
@@ -289,6 +277,18 @@ export default function WelcomeScreen() {
     setCurrentIndex(null);
     setShowPlayer(false);
     router.push('/capture');
+  };
+
+  // --- NEW: Back Handler ---
+  // Resets state to show the "Tap to Analyze" screen again
+  const handleBack = () => {
+    unloadVoice();
+    unloadMusic();
+    setTracks([]);
+    setCurrentEmotion(null);
+    setCurrentIndex(null);
+    setShowPlayer(false);
+    setAutoPlayPending(false);
   };
 
   // --- UI Helpers ---
@@ -313,7 +313,7 @@ export default function WelcomeScreen() {
         style={[styles.trackItem, isActive && styles.trackItemActive]} 
         onPress={() => {
             playTrackAtIndex(index);
-            setShowPlayer(true); // Open player on manual tap
+            setShowPlayer(true); 
         }} 
       >
         <Image source={{ uri: item.image || 'https://placehold.co/64' }} style={styles.trackImage} />
@@ -345,6 +345,14 @@ export default function WelcomeScreen() {
       <View style={styles.notificationContainer}>
         <NotificationBell size={28} color="#ffffff" />
       </View>
+
+      {/* --- BACK BUTTON --- */}
+      {/* Shows only when results are active */}
+      {currentEmotion && (
+        <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+          <Ionicons name="arrow-back" size={28} color="#ffffff" />
+        </TouchableOpacity>
+      )}
 
       {!currentEmotion ? (
         <View style={styles.centerContent}>
@@ -382,14 +390,10 @@ export default function WelcomeScreen() {
               </View>
             }
           />
-
-          <TouchableOpacity style={styles.retryButton} onPress={HandleAnalyzeMood}>
-            <Ionicons name="refresh" size={20} color="white" style={{marginRight: 8}} />
-            <Text style={styles.retryButtonText}>Analyze Again</Text>
-          </TouchableOpacity>
+          
+          {/* REMOVED: "Analyze Again" button from bottom */}
 
           {/* --- PERSISTENT MINI PLAYER --- */}
-          {/* Logic: Show if we have a track AND the full player is NOT open */}
           {currentTrack && !showPlayer && (
              <TouchableOpacity style={styles.miniPlayer} onPress={() => setShowPlayer(true)}>
                  <Image source={{ uri: currentTrack.image }} style={styles.miniImage} />
@@ -493,9 +497,17 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 10,
   },
+  // NEW: Back Button Style
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    zIndex: 10,
+    padding: 8,
+  },
   logoContainer: {
-    width: 150,
-    height: 150,
+    width: 300,
+    height: 300,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -532,7 +544,7 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   listContent: {
-    paddingBottom: 160, // Increased to make room for mini player + nav bar
+    paddingBottom: 160, 
   },
   trackItem: {
     flexDirection: 'row',
@@ -572,22 +584,6 @@ const styles = StyleSheet.create({
     color: '#4ADE80',
     fontWeight: '700',
   },
-  retryButton: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.2)', 
-    borderRadius: 30,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: 80, 
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   emptyState: {
     padding: 20,
     alignItems: 'center',
@@ -597,10 +593,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontStyle: 'italic',
   },
-  // --- MINI PLAYER STYLES ---
+  // --- MINI PLAYER ---
   miniPlayer: {
       position: 'absolute',
-      bottom: 90, // Adjusted to sit ABOVE the tab bar (standard tabs are ~50-80px)
+      bottom: 90,
       left: 10,
       right: 10,
       backgroundColor: '#1a1a1a',
@@ -615,7 +611,7 @@ const styles = StyleSheet.create({
       shadowOpacity: 0.5,
       shadowRadius: 10,
       elevation: 20,
-      zIndex: 100, // Ensure it sits on top of everything
+      zIndex: 100,
   },
   miniImage: {
       width: 40,

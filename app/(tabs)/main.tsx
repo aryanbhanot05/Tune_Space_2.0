@@ -1,8 +1,9 @@
 import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { SimpleTrack } from "@/lib/spotify";
-import { Ionicons } from "@expo/vector-icons"; // Added for UI icons
+// Replaced Spotify imports with Deezer
+import { searchTracks } from "@/lib/deezer";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -13,17 +14,27 @@ import { fetchAudioFromText } from '@/lib/googleTTS';
 import { useTheme } from '@/lib/themeContext';
 import { Audio } from 'expo-av';
 
+// Define a simple track interface for our UI
+interface MusicTrack {
+    id: string;
+    name: string;
+    artist: string;
+    image: string;
+    previewUrl: string; // The 30s audio clip
+}
+
 export default function WelcomeScreen() {
     const router = useRouter();
     const { emotion } = useLocalSearchParams<{ emotion?: string }>();
-    const [tracks, setTracks] = useState<SimpleTrack[]>([]);
+    const [tracks, setTracks] = useState<MusicTrack[]>([]);
     const [currentEmotion, setCurrentEmotion] = useState<string | null>(null);
+    const [isLoadingMusic, setIsLoadingMusic] = useState(false);
+    
     const notificationContext = useNotifications();
-    const { sendNotification } = notificationContext || {};
     const { setTheme } = useTheme();
 
-    // Ref to hold the sound object
-    const sound = useRef<Audio.Sound | null>(null);
+    // Ref to hold the sound object for TTS (Voice)
+    const voiceSound = useRef<Audio.Sound | null>(null);
 
     // Audio Setup & Cleanup
     useEffect(() => {
@@ -31,10 +42,10 @@ export default function WelcomeScreen() {
             allowsRecordingIOS: false,
             playsInSilentModeIOS: true,
             staysActiveInBackground: false,
-            shouldDuckAndroid: false,
+            shouldDuckAndroid: true,
         });
         return () => {
-            unloadSound();
+            unloadVoice();
         };
     }, []);
 
@@ -45,28 +56,28 @@ export default function WelcomeScreen() {
         }
     }, [emotion]);
 
-    // --- Audio Helper Functions ---
-    const unloadSound = async () => {
-        if (sound.current) {
+    // --- Audio Helper Functions (Voice) ---
+    const unloadVoice = async () => {
+        if (voiceSound.current) {
             try {
-                await sound.current.unloadAsync();
-                sound.current = null;
+                await voiceSound.current.unloadAsync();
+                voiceSound.current = null;
             } catch (error) {
-                console.log('Error unloading sound', error);
+                console.log('Error unloading voice', error);
             }
         }
     };
 
-    const playAudio = async (base64Audio: string) => {
-        await unloadSound();
+    const playVoice = async (base64Audio: string) => {
+        await unloadVoice();
         try {
             const { sound: newSound } = await Audio.Sound.createAsync(
                 { uri: `data:audio/mp3;base64,${base64Audio}` },
                 { shouldPlay: true }
             );
-            sound.current = newSound;
+            voiceSound.current = newSound;
         } catch (error) {
-            console.error('Failed to load or play audio:', error);
+            console.error('Failed to load or play voice:', error);
         }
     };
 
@@ -74,40 +85,70 @@ export default function WelcomeScreen() {
     const handleEmotion = async (detectedEmotion: string) => {
         setCurrentEmotion(detectedEmotion);
         
-        // Theme Logic
+        // 1. Theme Logic
         const emotionToThemeMap: Record<string, string> = {
-            'HAPPY': 'bg3',
-            'CALM': 'bg1',
-            'SAD': 'bg8',
-            'ANGRY': 'bg10',
-            'SURPRISED': 'bg7',
-            'FEAR': 'bg9',
-            'DISGUST': 'bg5',
+            'HAPPY': 'bg3', 'CALM': 'bg1', 'SAD': 'bg8',
+            'ANGRY': 'bg10', 'SURPRISED': 'bg7', 'FEAR': 'bg9', 'DISGUST': 'bg5',
         };
         const themeKey = emotionToThemeMap[detectedEmotion.toUpperCase()] || 'bg1';
-        
-        // Optional: Automatically set theme or keep the alert prompt if you prefer
-        // For smoother UI, you might want to just set it automatically:
-        // setTheme(themeKey); 
+        // setTheme(themeKey); // Uncomment to auto-apply theme
 
-        // TTS Logic
+        // 2. TTS Logic (Speak the phrase)
         try {
             const sentence = getRandomEmotionSentence(detectedEmotion);
-            const base64Audio = await fetchAudioFromText(sentence);
-            if (base64Audio) {
-                await playAudio(base64Audio);
-            }
+            fetchAudioFromText(sentence).then(base64 => {
+                if (base64) playVoice(base64);
+            });
         } catch (error) {
             console.error('Error in speech playback:', error);
         }
 
-        // TODO: Music Fetching Logic will be implemented in the next step
-        // For now, we are focusing on the UI layout.
+        // 3. Music Fetching Logic
+        fetchMusicForEmotion(detectedEmotion);
     };
 
-    const handlePlayTrack = async (trackUri: string) => {
-        // Placeholder for player logic
-        Alert.alert("Play", "Player integration coming in the next update!");
+    const fetchMusicForEmotion = async (emotion: string) => {
+        setIsLoadingMusic(true);
+        let query = "top hits";
+
+        switch (emotion.toUpperCase()) {
+            case 'HAPPY': query = "happy energetic pop"; break;
+            case 'SAD': query = "sad acoustic ballad"; break;
+            case 'ANGRY': query = "rock metal intense"; break;
+            case 'SURPRISED': query = "electronic dance party"; break;
+            case 'CALM': query = "lofi chill relax"; break;
+            case 'FEAR': query = "cinematic dark ambient"; break;
+            case 'DISGUST': query = "industrial grunge"; break;
+            default: query = "global top 50"; break;
+        }
+
+        try {
+            console.log(`Searching Deezer for: ${query}`);
+            const result = await searchTracks(query, 10);
+            
+            // Transform Deezer API result to our interface
+            if (result && result.data) {
+                const mappedTracks: MusicTrack[] = result.data.map((t: any) => ({
+                    id: t.id.toString(),
+                    name: t.title,
+                    artist: t.artist.name,
+                    image: t.album.cover_medium,
+                    previewUrl: t.preview
+                }));
+                setTracks(mappedTracks);
+            }
+        } catch (error) {
+            console.error("Failed to fetch music:", error);
+            Alert.alert("Music Error", "Could not load playlist at this time.");
+        } finally {
+            setIsLoadingMusic(false);
+        }
+    };
+
+    const handlePlayTrack = async (track: MusicTrack) => {
+        // Placeholder for the next step (Player Integration)
+        console.log("Selected track:", track.name, track.previewUrl);
+        Alert.alert("Selected", `Ready to play: ${track.name}`);
     };
 
     const HandleAnalyzeMood = () => {
@@ -130,12 +171,12 @@ export default function WelcomeScreen() {
         }
     };
 
-    const renderTrackItem = ({ item }: { item: SimpleTrack }) => (
-        <TouchableOpacity style={styles.trackItem} onPress={() => handlePlayTrack(item.uri)}>
+    const renderTrackItem = ({ item }: { item: MusicTrack }) => (
+        <TouchableOpacity style={styles.trackItem} onPress={() => handlePlayTrack(item)}>
             <Image source={{ uri: item.image || 'https://placehold.co/64' }} style={styles.trackImage} />
             <View style={styles.trackInfo}>
                 <Text style={styles.trackName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.trackArtist} numberOfLines={1}>{item.artists}</Text>
+                <Text style={styles.trackArtist} numberOfLines={1}>{item.artist}</Text>
             </View>
             <Ionicons name="play-circle" size={32} color="rgba(255,255,255,0.8)" />
         </TouchableOpacity>
@@ -149,7 +190,7 @@ export default function WelcomeScreen() {
                 <NotificationBell size={28} color="#ffffff" />
             </View>
 
-            {/* If no emotion is detected yet (or tracks empty and no emotion set), show start screen */}
+            {/* Start Screen */}
             {!currentEmotion ? (
                 <View style={styles.centerContent}>
                     <TouchableOpacity style={styles.logoContainer} onPress={HandleAnalyzeMood}>
@@ -167,15 +208,18 @@ export default function WelcomeScreen() {
                         </Text>
                     </View>
 
-                    {/* Track List (Currently empty until we hook up the backend) */}
+                    {/* Track List */}
                     <FlatList
                         data={tracks}
                         renderItem={renderTrackItem}
                         keyExtractor={(item) => item.id}
                         contentContainerStyle={styles.listContent}
+                        style={{ flex: 1, width: '100%' }}
                         ListEmptyComponent={
                             <View style={styles.emptyState}>
-                                <Text style={styles.emptyStateText}>Fetching your playlist...</Text>
+                                <Text style={styles.emptyStateText}>
+                                    {isLoadingMusic ? "Curating your playlist..." : "No songs found."}
+                                </Text>
                             </View>
                         }
                     />
@@ -227,12 +271,12 @@ const styles = StyleSheet.create({
     resultsContainer: {
         flex: 1,
         paddingHorizontal: 20,
-        paddingTop: 100,
-        paddingBottom: 150
+        paddingTop: 80,
+        paddingBottom: 20,
     },
     moodHeader: {
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: 20,
     },
     emotionText: {
         color: 'white',
@@ -242,7 +286,7 @@ const styles = StyleSheet.create({
     },
     emotionHighlight: {
         fontWeight: 'bold',
-        color: '#4ADE80', // A nice green/accent color
+        color: '#4ADE80', 
         textTransform: 'capitalize',
     },
     listContent: {
@@ -251,7 +295,7 @@ const styles = StyleSheet.create({
     trackItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)', // Glassmorphism
+        backgroundColor: 'rgba(255, 255, 255, 0.1)', 
         padding: 12,
         borderRadius: 16,
         marginBottom: 12,
@@ -281,14 +325,14 @@ const styles = StyleSheet.create({
     },
     retryButton: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(29, 185, 84, 0.9)', // Spotify Green-ish
+        backgroundColor: 'rgba(29, 185, 84, 0.9)', 
         borderRadius: 30,
         paddingVertical: 16,
         paddingHorizontal: 32,
         alignItems: 'center',
         justifyContent: 'center',
         alignSelf: 'center',
-        marginBottom: 50,
+        marginBottom: 20,
         marginTop: 10,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 4 },

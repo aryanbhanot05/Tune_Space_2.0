@@ -32,11 +32,9 @@ export default function NotificationsScreen() {
     setRefreshing(false);
   };
 
-  // --- NEW: Test Notification Logic ---
   const handleTestNotification = async () => {
     try {
       await NotificationService.getInstance().sendTestNotification();
-      // Refresh immediately so the user sees it pop up in the list
       await refreshNotifications();
     } catch (error) {
       console.error("Failed to send test notification:", error);
@@ -71,7 +69,6 @@ export default function NotificationsScreen() {
       await markAsRead(notification.id);
     }
 
-    // Handle navigation based on notification type and data
     if (notification.data?.type === 'now_playing') {
       router.push('/(tabs)/main');
     } else if (notification.data?.route) {

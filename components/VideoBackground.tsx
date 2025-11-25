@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
 import { useTheme } from '@/lib/themeContext';
 import { VideoView, useVideoPlayer } from 'expo-video';
+import React, { useEffect, useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 export const VIDEO_SOURCE_MAP = {
   bg1: require('../assets/videos/bg1.mp4'),
@@ -21,30 +21,26 @@ type VideoThemeKey = keyof typeof VIDEO_SOURCE_MAP;
 export function VideoBackground() {
   const { selectedTheme } = useTheme();
   const themeKey = selectedTheme || 'bg1';
-  const [isReady, setIsReady] = useState(false);
 
-  const finalSource = useMemo(() => VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1, [themeKey]);
+  // Determine the current source based on the current theme
+  const targetSource = useMemo(() => VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1, [themeKey]);
 
-  const player = useVideoPlayer(finalSource, (player) => {
+  // Initialize the player with a static source (bg1) so the hook DOES NOT
+  // destroy/recreate the player on every render.
+  const player = useVideoPlayer(VIDEO_SOURCE_MAP.bg1, (player) => {
     player.loop = true;
     player.muted = true;
+    player.play();
   });
 
+  // Manually swap the source when the theme changes.
   useEffect(() => {
-    setIsReady(false);
-    player.replaceAsync(finalSource)
-      .then(() => {
-        setIsReady(true);
-        return player.play();
-      })
-      .catch((error) => {
-        console.error('Failed to replace or play video:', error);
+    if (player) {
+      player.replaceAsync(targetSource).catch((error) => {
+        console.log("Failed to switch background video:", error);
       });
-  }, [finalSource, player]);
-
-  if (!isReady) {
-    return <View style={[styles.container, { backgroundColor: '#000' }]} />;
-  }
+    }
+  }, [player, targetSource]);
 
   return (
     <View style={styles.container}>

@@ -23,7 +23,12 @@
       },
       "notification": {
         "icon": "./assets/images/Emotify.png"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": ""
     },
     "notification": {
       "icon": "./assets/images/Emotify.png"
@@ -50,12 +55,8 @@
         "origin": false
       },
       "eas": {
-        "projectId": "YOUR_PROJECT_ID_HERE"
-      },
-      "EXPO_PUBLIC_SPOTIFY_CLIENT_ID": "",
-      "EXPO_PUBLIC_AWS_ACCESS_KEY_ID": "",
-      "EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY": "",
-      "googleTTSApiKey": ""
+        "projectId": "31a8dc15-7667-4987-9569-0a31b97bf6e3"
+      }
     }
   }
 }

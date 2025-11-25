@@ -22,7 +22,7 @@ export default function TabsLayout() {
                         backgroundColor: 'transparent',
                         borderTopWidth: 1,
                         borderTopColor: '#ffffff3b',
-                        height: 100,
+                        height: 80,
                         paddingBottom: 5,
                         paddingTop: 5,
                         position: 'absolute',
@@ -32,8 +32,8 @@ export default function TabsLayout() {
                         elevation: 0,
                         zIndex: 10,
                     },
-                    tabBarLabelStyle: { fontSize: 13, marginVertical: 14 },
-                    tabBarItemStyle: { paddingVertical: 8 },
+                    tabBarLabelStyle: { fontSize: 12, marginVertical: 10 },
+                    tabBarItemStyle: { paddingVertical: 2 },
                 }}>
                     <Tabs.Screen
                         name="main"
@@ -88,6 +88,6 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 2,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        backgroundColor: 'transparent',
     }
 });

@@ -1,28 +1,22 @@
-import Constants from 'expo-constants';
-
-// A helper function to safely get variables from the app manifest (app.json).
-const getExtraVar = <T>(key: string): T => {
-  const value = Constants.expoConfig?.extra?.[key];
-  if (value === undefined || value === null) {
-    throw new Error(`The environment variable "${key}" is missing in app.json.`);
+// Helper to ensure the key exists to prevent runtime crashes
+function getEnvVar(key: string, value: string | undefined): string {
+  if (!value) {
+    throw new Error(`Missing environment variable: ${key}. Please check your .env file.`);
   }
-  return value as T;
-};
+  return value;
+}
 
-// Define and export your configuration variables.
+// Export configuration objects
 export const awsConfig = {
-  accessKeyId: getExtraVar<string>('EXPO_PUBLIC_AWS_ACCESS_KEY_ID'),
-  secretAccessKey: getExtraVar<string>('EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY'),
+  accessKeyId: getEnvVar('EXPO_PUBLIC_AWS_ACCESS_KEY_ID', process.env.EXPO_PUBLIC_AWS_ACCESS_KEY_ID),
+  secretAccessKey: getEnvVar('EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY', process.env.EXPO_PUBLIC_AWS_SECRET_ACCESS_KEY),
   region: 'us-east-2',
 };
 
 export const spotifyConfig = {
-  clientId: getExtraVar<string>('EXPO_PUBLIC_SPOTIFY_CLIENT_ID'),
+  clientId: getEnvVar('EXPO_PUBLIC_SPOTIFY_CLIENT_ID', process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID),
 };
 
 export const googleCloudConfig = {
-  apiKey: getExtraVar<string>('googleTTSApiKey'),
+  apiKey: getEnvVar('EXPO_PUBLIC_GOOGLE_TTS_API_KEY', process.env.EXPO_PUBLIC_GOOGLE_TTS_API_KEY),
 };
-
-// This code is provided from AI
-// type AI used Gemini 2.5 pro

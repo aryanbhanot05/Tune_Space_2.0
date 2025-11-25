@@ -17,7 +17,7 @@ export const useTheme = (): ThemeContextType => {
 };
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [selectedTheme, setSelectedTheme] = useState<string>('bg1');
+  const [selectedTheme, setSelectedTheme] = useState<string>('Blue Theme');
 
   useEffect(() => {
     const loadTheme = async () => {

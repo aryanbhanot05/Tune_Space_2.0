@@ -42,3 +42,58 @@ export async function searchTracks(q: string, limit = 12, index = 0) {
     return fetchJson(url);
   }
 }
+
+// Add these to the bottom of lib/deezer.ts
+
+export async function searchPlaylists(q: string, limit = 5, index = 0) {
+  const path = "search/playlist";
+  if (USE_PROXY) {
+    const url = buildUrl(`${FUNCTIONS_BASE}/deezer-proxy`, "", { path, q, limit, index });
+    return fetchJson(url);
+  } else {
+    const url = buildUrl(DEEZER_BASE, path, { q, limit, index });
+    return fetchJson(url);
+  }
+}
+
+export async function getPlaylistTracks(playlistId: string | number, limit = 25) {
+  const path = `playlist/${playlistId}/tracks`;
+  if (USE_PROXY) {
+    const url = buildUrl(`${FUNCTIONS_BASE}/deezer-proxy`, "", { path, limit });
+    return fetchJson(url);
+  } else {
+    const url = buildUrl(DEEZER_BASE, path, { limit });
+    return fetchJson(url);
+  }
+}
+export async function getCharts() {
+  const path = "chart";
+  if (USE_PROXY) {
+    const url = buildUrl(`${FUNCTIONS_BASE}/deezer-proxy`, "", { path });
+    return fetchJson(url);
+  } else {
+    const url = buildUrl(DEEZER_BASE, path);
+    return fetchJson(url);
+  }
+}
+export async function getAlbumTracks(albumId: string | number) {
+  const path = `album/${albumId}/tracks`;
+  if (USE_PROXY) {
+    const url = buildUrl(`${FUNCTIONS_BASE}/deezer-proxy`, "", { path });
+    return fetchJson(url);
+  } else {
+    const url = buildUrl(DEEZER_BASE, path);
+    return fetchJson(url);
+  }
+}
+
+export async function getArtistTopTracks(artistId: string | number) {
+  const path = `artist/${artistId}/top`;
+  if (USE_PROXY) {
+    const url = buildUrl(`${FUNCTIONS_BASE}/deezer-proxy`, "", { path, limit: 50 });
+    return fetchJson(url);
+  } else {
+    const url = buildUrl(DEEZER_BASE, path, { limit: 50 });
+    return fetchJson(url);
+  }
+}

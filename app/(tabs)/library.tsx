@@ -1,9 +1,11 @@
 import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
+import { getCharts } from "@/lib/deezer";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   Platform,
   Pressable,
@@ -19,9 +21,8 @@ type LibraryItem = {
   id: string;
   title: string;
   subtitle?: string;
-  cover?: string; // uri
-  downloaded?: boolean;
-  type: "playlist" | "album" | "artist" | "podcast" | "audiobook";
+  cover?: string;
+  type: "playlist" | "album" | "artist" | "podcast";
 };
 
 type SectionT = {
@@ -29,108 +30,108 @@ type SectionT = {
   data: LibraryItem[];
 };
 
-const MOCK: SectionT[] = [
-  {
-    title: "Playlists",
-    data: [
-      {
-        id: "pl-liked",
-        title: "Liked Songs",
-        subtitle: "487 songs",
-        type: "playlist",
-        downloaded: true,
-        cover: undefined,
-      },
-      {
-        id: "pl-gym",
-        title: "Gym Hits",
-        subtitle: "by You • 64 songs",
-        type: "playlist",
-        cover: "https://picsum.photos/seed/gym/200",
-      },
-      {
-        id: "pl-focus",
-        title: "Deep Focus",
-        subtitle: "by TuneSpace",
-        type: "playlist",
-        cover: "https://picsum.photos/seed/focus/200",
-      },
-    ],
-  },
-  {
-    title: "Albums",
-    data: [
-      {
-        id: "al-Doo-Wops & Hooligans",
-        title: "Doo-Wops & Hooligans",
-        subtitle: "Bruno Mars",
-        type: "album",
-        cover: "https://picsum.photos/seed/doo-wops-hooligans/200",
-      },
-      {
-        id: "al-utopia",
-        title: "UTOPIA",
-        subtitle: "Travis Scott",
-        type: "album",
-        cover: "https://picsum.photos/seed/utopia/200",
-      },
-    ],
-  },
-  {
-    title: "Artists",
-    data: [
-      {
-        id: "ar-drake",
-        title: "Drake",
-        type: "artist",
-        cover: "https://picsum.photos/seed/drake/200",
-      },
-      {
-        id: "ar-weeknd",
-        title: "The Weeknd",
-        type: "artist",
-        cover: "https://picsum.photos/seed/weeknd/200",
-      },
-    ],
-  },
-];
-
-const FILTERS = ["Playlists", "Albums", "Artists", "Downloaded"] as const;
+const FILTERS = ["Playlists", "Albums", "Artists"] as const;
 type FilterKey = (typeof FILTERS)[number];
 
 export default function LibraryScreen() {
   const router = useRouter();
   const [q, setQ] = useState("");
-  const [active, setActive] = useState<FilterKey | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [sort, setSort] = useState<"recent" | "alpha">("recent");
 
-  const sections = useMemo(() => {
-    // filter -> flatten -> filter by q -> regroup by title in same order
+  // Real Data State
+  const [rawSections, setRawSections] = useState<SectionT[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 1. Fetch Charts on Mount
+  useEffect(() => {
+    loadLibraryData();
+  }, []);
+
+  const loadLibraryData = async () => {
+    try {
+      setLoading(true);
+      const chartData = await getCharts();
+
+      // Transform Deezer Data into our Section format
+      const newSections: SectionT[] = [];
+
+      if (chartData.playlists && chartData.playlists.data) {
+        newSections.push({
+          title: "Trending Playlists",
+          data: chartData.playlists.data.map((p: any) => ({
+            id: p.id.toString(),
+            title: p.title,
+            subtitle: `${p.nb_tracks} tracks`,
+            cover: p.picture_medium,
+            type: "playlist"
+          }))
+        });
+      }
+
+      if (chartData.albums && chartData.albums.data) {
+        newSections.push({
+          title: "Top Albums",
+          data: chartData.albums.data.map((a: any) => ({
+            id: a.id.toString(),
+            title: a.title,
+            subtitle: a.artist.name,
+            cover: a.cover_medium,
+            type: "album"
+          }))
+        });
+      }
+
+      if (chartData.artists && chartData.artists.data) {
+        newSections.push({
+          title: "Popular Artists",
+          data: chartData.artists.data.map((a: any) => ({
+            id: a.id.toString(),
+            title: a.name,
+            subtitle: "Artist",
+            cover: a.picture_medium,
+            type: "artist"
+          }))
+        });
+      }
+
+      setRawSections(newSections);
+    } catch (error) {
+      console.error("Failed to load library charts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredSections = useMemo(() => {
     const match = (it: LibraryItem) => {
-      if (active === "Downloaded" && !it.downloaded) return false;
-      if (active === "Playlists" && it.type !== "playlist") return false;
-      if (active === "Albums" && it.type !== "album") return false;
-      if (active === "Artists" && it.type !== "artist") return false;
+      // Filter by Type Chip
+      if (activeFilter === "Playlists" && it.type !== "playlist") return false;
+      if (activeFilter === "Albums" && it.type !== "album") return false;
+      if (activeFilter === "Artists" && it.type !== "artist") return false;
+
+      // Search Text
       if (!q.trim()) return true;
       const s = `${it.title} ${it.subtitle ?? ""}`.toLowerCase();
       return s.includes(q.toLowerCase());
     };
 
-    const clone = MOCK.map((s) => ({
+    // Clone and Filter
+    const clone = rawSections.map((s) => ({
       ...s,
-      data: [...s.data].filter(match),
-    })).filter((s) => s.data.length);
+      data: s.data.filter(match),
+    })).filter((s) => s.data.length > 0);
 
-    // sorting inside each section
+    // Sort
     clone.forEach((s) => {
       s.data.sort((a, b) => {
         if (sort === "alpha") return a.title.localeCompare(b.title);
-        return b.id.localeCompare(a.id);
+        return 0; 
       });
     });
 
     return clone;
-  }, [q, active, sort]);
+  }, [q, activeFilter, sort, rawSections]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -141,50 +142,58 @@ export default function LibraryScreen() {
       <SearchRow
         value={q}
         onChangeText={setQ}
-        onSortToggle={() =>
-          setSort((s) => (s === "recent" ? "alpha" : "recent"))
-        }
+        onSortToggle={() => setSort((s) => (s === "recent" ? "alpha" : "recent"))}
         sort={sort}
       />
 
-      <FilterChips active={active} onToggle={setActive} />
+      <FilterChips active={activeFilter} onToggle={setActiveFilter} />
 
-      <SectionList
-        sections={sections}
-        keyExtractor={(item) => item.id}
-        stickySectionHeadersEnabled
-        contentContainerStyle={{ paddingBottom: 48 }}
-        renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            <Pressable onPress={() => { }} hitSlop={8} style={styles.seeAll}>
-              <Text style={styles.seeAllText}>See all</Text>
-            </Pressable>
-          </View>
-        )}
-        renderItem={({ item }) => (
-          <Row item={item} onPress={() => router.push(`/(tabs)/main`)} />
-        )}
-        ListHeaderComponent={<AddPlaylistTile />}
-      />
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#eaeaea" />
+        </View>
+      ) : (
+        <SectionList
+          sections={filteredSections}
+          keyExtractor={(item) => item.id}
+          stickySectionHeadersEnabled={false}
+          contentContainerStyle={{ paddingBottom: 80 }}
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+            </View>
+          )}
+          renderItem={({ item }) => (
+            <Row
+              item={item}
+              onPress={() => {
+                router.push({
+                  pathname: '/(tabs)/main',
+                  params: {
+                    type: item.type,
+                    id: item.id
+                  }
+                });
+              }}
+            />
+          )}
+        />
+      )}
     </SafeAreaView>
   );
 }
 
-/* ------------------------ UI pieces ------------------------ */
 
 function Header() {
   return (
     <View style={styles.header}>
-      <Text style={styles.title}>Your Library</Text>
+      <Text style={styles.title}>Charts & Library</Text>
       <View style={styles.headerActions}>
         <Pressable hitSlop={10}>
           <Ionicons name="search" size={22} color="#eaeaea" />
         </Pressable>
         <View style={{ width: 12 }} />
-        <Pressable hitSlop={10}>
-          <Ionicons name="add" size={26} color="#eaeaea" />
-        </Pressable>
+        <NotificationBell size={24} color="#eaeaea" />
       </View>
     </View>
   );
@@ -208,8 +217,8 @@ function SearchRow({
         <TextInput
           value={value}
           onChangeText={onChangeText}
-          placeholder="Search your library"
-          placeholderTextColor="#9aa0a6"
+          placeholder="Filter charts..."
+          placeholderTextColor="#1c1c1dff"
           style={styles.input}
           autoCapitalize="none"
         />
@@ -217,7 +226,7 @@ function SearchRow({
       <Pressable style={styles.sortButton} onPress={onSortToggle}>
         <MaterialCommunityIcons name="sort" size={18} color="#eaeaea" />
         <Text style={styles.sortText}>
-          {sort === "recent" ? "Recent" : "A–Z"}
+          {sort === "recent" ? "Rank" : "A–Z"}
         </Text>
       </Pressable>
     </View>
@@ -251,17 +260,6 @@ function FilterChips({
   );
 }
 
-function AddPlaylistTile() {
-  return (
-    <Pressable style={styles.addTile}>
-      <View style={styles.addIcon}>
-        <Ionicons name="add" size={20} color="#111" />
-      </View>
-      <Text style={styles.addText}>Add playlist</Text>
-    </Pressable>
-  );
-}
-
 function Row({ item, onPress }: { item: LibraryItem; onPress: () => void }) {
   const circle = item.type === "artist";
   const Cover = (
@@ -291,34 +289,24 @@ function Row({ item, onPress }: { item: LibraryItem; onPress: () => void }) {
           </Text>
         )}
       </View>
-      {!!item.downloaded && (
-        <Ionicons name="download-outline" size={18} color="#9aa0a6" />
-      )}
-      <View style={{ width: 8 }} />
-      <Ionicons name="ellipsis-vertical" size={16} color="#9aa0a6" />
+      <Ionicons name="play-circle-outline" size={24} color="#9aa0a6" />
     </Pressable>
   );
 }
 
-/* ------------------------ Styles ------------------------ */
 
 const BG = "transparent";
 const FG = "#eaeaea";
 const MUTED = "#9aa0a6";
-const CARD = "#1f1f1f";
+const CARD = "rgba(255,255,255,0.1)"; 
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG, paddingBottom: 60 },
-  notificationContainer: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    zIndex: 10,
-  },
+  container: { flex: 1, backgroundColor: BG },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     paddingHorizontal: 16,
     paddingTop: Platform.select({ ios: 4, android: 8, default: 8 }),
-    paddingBottom: 8,
+    paddingBottom: 12,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -328,7 +316,7 @@ const styles = StyleSheet.create({
 
   searchRow: {
     paddingHorizontal: 16,
-    paddingBottom: 8,
+    paddingBottom: 12,
     flexDirection: "row",
     gap: 10,
   },
@@ -345,7 +333,7 @@ const styles = StyleSheet.create({
   input: { color: FG, flex: 1, paddingVertical: 6, fontSize: 14 },
   sortButton: {
     height: 40,
-    minWidth: 82,
+    minWidth: 80,
     backgroundColor: CARD,
     borderRadius: 10,
     paddingHorizontal: 10,
@@ -354,11 +342,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
   },
-  sortText: { color: FG, fontSize: 13 },
+  sortText: { color: 'black', fontSize: 13 },
 
   chips: {
     paddingHorizontal: 16,
-    paddingBottom: 6,
+    paddingBottom: 10,
     flexDirection: "row",
     gap: 8,
     flexWrap: "wrap",
@@ -375,38 +363,11 @@ const styles = StyleSheet.create({
   chipTextActive: { color: "#111" },
 
   sectionHeader: {
-    backgroundColor: BG,
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    paddingTop: 16,
+    paddingBottom: 8,
   },
-  sectionTitle: { color: FG, fontSize: 18, fontWeight: "800" },
-  seeAll: { padding: 6 },
-  seeAllText: { color: MUTED, fontSize: 13 },
-
-  addTile: {
-    marginHorizontal: 16,
-    marginTop: 6,
-    marginBottom: 8,
-    padding: 14,
-    backgroundColor: CARD,
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  addIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: FG,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  addText: { color: FG, fontWeight: "700" },
+  sectionTitle: { color: FG, fontSize: 20, fontWeight: "700" },
 
   row: {
     paddingHorizontal: 16,
@@ -427,6 +388,6 @@ const styles = StyleSheet.create({
   coverImg: { width: "100%", height: "100%" },
   coverImgCircle: { borderRadius: 28 },
   rowText: { flex: 1, marginHorizontal: 12 },
-  rowTitle: { color: FG, fontSize: 16, fontWeight: "700" },
-  rowSubtitle: { color: MUTED, marginTop: 2, fontSize: 12 },
+  rowTitle: { color: FG, fontSize: 16, fontWeight: "600" },
+  rowSubtitle: { color: MUTED, marginTop: 4, fontSize: 13 },
 });

@@ -9,10 +9,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="signin" options={{ headerShown: false }} />
-        <Stack.Screen name="signin_followup" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-
-        {/* Define the capture screen as a full-screen modal */}
         <Stack.Screen
           name="capture"
           options={{
@@ -20,6 +17,7 @@ export default function RootLayout() {
             presentation: 'fullScreenModal'
           }}
         />
+        <Stack.Screen name="notifications" options={{ headerShown: false }} />
       </Stack>
     </NotificationProvider>
   );

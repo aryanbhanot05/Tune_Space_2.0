@@ -25,8 +25,8 @@ export function VideoBackground() {
   // Determine the current source based on the theme
   const targetSource = useMemo(() => VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1, [themeKey]);
 
-  // FIX: Initialize the player with a static source (bg1) so the hook DOES NOT
-  // destroy/recreate the player on every render. We will handle updates manually.
+  // Initialize the player with a static source (bg1) so the hook DOES NOT
+  // destroy/recreate the player on every render.
   const player = useVideoPlayer(VIDEO_SOURCE_MAP.bg1, (player) => {
     player.loop = true;
     player.muted = true;
@@ -34,10 +34,12 @@ export function VideoBackground() {
   });
 
   // Manually swap the source when the theme changes.
-  // This keeps the 'player' object stable, preventing the "shared object released" crash.
   useEffect(() => {
     if (player) {
-      player.replace(targetSource);
+      // FIX: Use replaceAsync to prevent UI freezes on iOS
+      player.replaceAsync(targetSource).catch((error) => {
+        console.log("Failed to switch background video:", error);
+      });
     }
   }, [player, targetSource]);
 

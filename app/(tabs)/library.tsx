@@ -1,6 +1,6 @@
 import { NotificationBell } from "@/components/NotificationBell";
 import { VideoBackground } from "@/components/VideoBackground";
-import { getCharts } from "@/lib/deezer"; // Import the new function
+import { getCharts } from "@/lib/deezer";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
@@ -21,7 +21,7 @@ type LibraryItem = {
   id: string;
   title: string;
   subtitle?: string;
-  cover?: string; // uri
+  cover?: string;
   type: "playlist" | "album" | "artist" | "podcast";
 };
 
@@ -56,7 +56,6 @@ export default function LibraryScreen() {
       // Transform Deezer Data into our Section format
       const newSections: SectionT[] = [];
 
-      // 1. Playlists
       if (chartData.playlists && chartData.playlists.data) {
         newSections.push({
           title: "Trending Playlists",
@@ -70,7 +69,6 @@ export default function LibraryScreen() {
         });
       }
 
-      // 2. Albums
       if (chartData.albums && chartData.albums.data) {
         newSections.push({
           title: "Top Albums",
@@ -84,7 +82,6 @@ export default function LibraryScreen() {
         });
       }
 
-      // 3. Artists
       if (chartData.artists && chartData.artists.data) {
         newSections.push({
           title: "Popular Artists",
@@ -106,7 +103,6 @@ export default function LibraryScreen() {
     }
   };
 
-  // 2. Filter & Sort Logic
   const filteredSections = useMemo(() => {
     const match = (it: LibraryItem) => {
       // Filter by Type Chip
@@ -130,7 +126,7 @@ export default function LibraryScreen() {
     clone.forEach((s) => {
       s.data.sort((a, b) => {
         if (sort === "alpha") return a.title.localeCompare(b.title);
-        return 0; // Default order (Chart ranking) is usually best for "Recent"
+        return 0; 
       });
     });
 
@@ -171,7 +167,6 @@ export default function LibraryScreen() {
             <Row
               item={item}
               onPress={() => {
-                // FIX: Pass the specific ID and Type to the player
                 router.push({
                   pathname: '/(tabs)/main',
                   params: {
@@ -188,7 +183,6 @@ export default function LibraryScreen() {
   );
 }
 
-/* ------------------------ UI pieces ------------------------ */
 
 function Header() {
   return (
@@ -300,12 +294,11 @@ function Row({ item, onPress }: { item: LibraryItem; onPress: () => void }) {
   );
 }
 
-/* ------------------------ Styles ------------------------ */
 
 const BG = "transparent";
 const FG = "#eaeaea";
 const MUTED = "#9aa0a6";
-const CARD = "rgba(255,255,255,0.1)"; // Glassmorphism
+const CARD = "rgba(255,255,255,0.1)"; 
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },

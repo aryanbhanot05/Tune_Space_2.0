@@ -34,13 +34,12 @@ import { Audio } from 'expo-av';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// Define a simple track interface for our UI
 interface MusicTrack {
     id: string;
     name: string;
     artist: string;
     image: string;
-    previewUrl: string; // The 30s audio clip
+    previewUrl: string; 
 }
 
 export default function WelcomeScreen() {
@@ -92,7 +91,6 @@ export default function WelcomeScreen() {
         }
     }, [emotion, type, id]);
 
-    // --- LIBRARY CONTENT LOADER ---
     const handleLibrarySelection = async (contentType: string, contentId: string) => {
         setIsLoadingMusic(true);
         setCurrentEmotion(null);
@@ -124,7 +122,6 @@ export default function WelcomeScreen() {
                 const validTracks = mappedTracks.filter(t => t.previewUrl);
                 setTracks(validTracks);
 
-                // Use autoPlayPending to trigger playback cleanly via useEffect
                 if (validTracks.length > 0) {
                     setAutoPlayPending(true);
                 }
@@ -137,18 +134,14 @@ export default function WelcomeScreen() {
         }
     };
 
-    // --- AUTO-PLAY EFFECT ---
     useEffect(() => {
         if (autoPlayPending && tracks.length > 0) {
             console.log("Auto-playing music now that tracks are loaded...");
             setAutoPlayPending(false);
             playTrackAtIndex(0);
-            // Note: We deliberately do NOT call setShowPlayer(true) here.
-            // This keeps the player minimized (Mini Player) so the user can browse the list.
         }
     }, [tracks, autoPlayPending]);
 
-    // --- AUDIO HELPERS ---
     const unloadVoice = async () => {
         if (voiceSound.current) {
             try {
@@ -388,7 +381,7 @@ export default function WelcomeScreen() {
                 style={[styles.trackItem, isActive && styles.trackItemActive]}
                 onPress={() => {
                     playTrackAtIndex(index);
-                    setShowPlayer(true); // Open full player on manual tap
+                    setShowPlayer(true); 
                 }}
             >
                 <Image source={{ uri: item.image || 'https://placehold.co/64' }} style={styles.trackImage} />

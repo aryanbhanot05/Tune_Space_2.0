@@ -151,7 +151,7 @@ export default function NotificationsScreen() {
       <Text style={styles.emptySubtitle}>
         You're all caught up! New notifications will appear here.
       </Text>
-      
+
       {/* Optional: A large test button for empty state */}
       <TouchableOpacity style={styles.emptyStateButton} onPress={handleTestNotification}>
         <Text style={styles.emptyStateButtonText}>Trigger Test Notification</Text>
@@ -172,7 +172,7 @@ export default function NotificationsScreen() {
         <View style={styles.headerActions}>
           {/* Test Button (Always Visible) */}
           <TouchableOpacity onPress={handleTestNotification} style={styles.actionButton}>
-             <FontAwesome name="flask" size={18} color="#4ADE80" />
+            <FontAwesome name="flask" size={18} color="#4ADE80" />
           </TouchableOpacity>
 
           {notifications.length > 0 && (

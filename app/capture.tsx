@@ -6,13 +6,13 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Button,
-    Dimensions,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Button,
+  Dimensions,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { analyzeImageForEmotion } from '../lib/rekognition';
@@ -96,14 +96,14 @@ export default function CaptureScreen() {
       >
         {/* --- UI OVERLAY --- */}
         <View style={[styles.overlayContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-          
+
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
               <Ionicons name="close" size={28} color="white" />
             </TouchableOpacity>
             <Text style={styles.headerText}>Mood Scanner</Text>
-            <View style={{ width: 40 }} /> 
+            <View style={{ width: 40 }} />
           </View>
 
           {/* Face Frame Guide */}
@@ -135,7 +135,7 @@ export default function CaptureScreen() {
             </TouchableOpacity>
 
             {/* Spacer for layout symmetry */}
-            <View style={styles.secondaryButton} /> 
+            <View style={styles.secondaryButton} />
           </View>
         </View>
 

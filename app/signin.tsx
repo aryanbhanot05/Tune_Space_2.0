@@ -19,16 +19,16 @@ import { createUser } from "../lib/supabase_crud";
 
 export default function SignInScreen() {
   const router = useRouter();
-  
+
   // State for Form Mode (true = Sign In, false = Sign Up)
   const [isSignIn, setIsSignIn] = useState(true);
-  
+
   // Form States
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  
+
   // UI States
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +65,7 @@ export default function SignInScreen() {
       } else {
         // SIGN UP LOGIC
         const response = await signUp(email, password);
-        
+
         const user = response.user || (response.session && response.session.user);
         if (user && user.id) {
           await createUser({
@@ -95,8 +95,8 @@ export default function SignInScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1, width: '100%' }}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           {/* LOGO & TEXT */}
@@ -113,7 +113,7 @@ export default function SignInScreen() {
 
           {/* INPUTS CONTAINER */}
           <View style={styles.formContainer}>
-            
+
             {/* Name Inputs (Only for Sign Up) */}
             {!isSignIn && (
               <View style={styles.row}>
@@ -171,8 +171,8 @@ export default function SignInScreen() {
             {error && <Text style={styles.errorText}>{error}</Text>}
 
             {/* PRIMARY ACTION BUTTON */}
-            <TouchableOpacity 
-              style={styles.primaryButton} 
+            <TouchableOpacity
+              style={styles.primaryButton}
               onPress={handleAuth}
               disabled={loading}
             >
@@ -186,7 +186,7 @@ export default function SignInScreen() {
             </TouchableOpacity>
 
             {/* SECONDARY TOGGLE BUTTON */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => {
                 setIsSignIn(!isSignIn);

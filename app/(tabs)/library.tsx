@@ -38,7 +38,7 @@ export default function LibraryScreen() {
   const [q, setQ] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [sort, setSort] = useState<"recent" | "alpha">("recent");
-  
+
   // Real Data State
   const [rawSections, setRawSections] = useState<SectionT[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ export default function LibraryScreen() {
     try {
       setLoading(true);
       const chartData = await getCharts();
-      
+
       // Transform Deezer Data into our Section format
       const newSections: SectionT[] = [];
 
@@ -113,7 +113,7 @@ export default function LibraryScreen() {
       if (activeFilter === "Playlists" && it.type !== "playlist") return false;
       if (activeFilter === "Albums" && it.type !== "album") return false;
       if (activeFilter === "Artists" && it.type !== "artist") return false;
-      
+
       // Search Text
       if (!q.trim()) return true;
       const s = `${it.title} ${it.subtitle ?? ""}`.toLowerCase();
@@ -168,18 +168,18 @@ export default function LibraryScreen() {
             </View>
           )}
           renderItem={({ item }) => (
-            <Row 
-                item={item} 
-                onPress={() => {
-                    // FIX: Pass the specific ID and Type to the player
-                    router.push({
-                      pathname: '/(tabs)/main',
-                      params: { 
-                        type: item.type, 
-                        id: item.id 
-                      }
-                    });
-                }} 
+            <Row
+              item={item}
+              onPress={() => {
+                // FIX: Pass the specific ID and Type to the player
+                router.push({
+                  pathname: '/(tabs)/main',
+                  params: {
+                    type: item.type,
+                    id: item.id
+                  }
+                });
+              }}
             />
           )}
         />

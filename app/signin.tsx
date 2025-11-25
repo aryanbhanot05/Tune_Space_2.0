@@ -105,7 +105,7 @@ export default function SignInScreen() {
             source={require('../assets/images/Emotify.png')}
           />
           <Text style={styles.headerText}>
-            {isSignIn ? "Welcome Back!" : "Join the Rhythm"}
+            {isSignIn ? "Welcome to Emotify!" : "Join the Rhythm"}
           </Text>
           <Text style={styles.subText}>
             Millions of songs, free on <Text style={styles.brandText}>Emotify</Text>
@@ -118,21 +118,21 @@ export default function SignInScreen() {
             {!isSignIn && (
               <View style={styles.row}>
                 <View style={[styles.inputWrapper, { flex: 1, marginRight: 10 }]}>
-                  <FontAwesome name="user" size={20} color="#666" />
+                  <FontAwesome name="user" size={20} color="#000000ff" />
                   <TextInput
                     style={styles.textInput}
                     placeholder="First Name"
-                    placeholderTextColor="#888"
+                    placeholderTextColor="#000000ff"
                     value={firstName}
                     onChangeText={setFirstName}
                   />
                 </View>
                 <View style={[styles.inputWrapper, { flex: 1 }]}>
-                  <FontAwesome name="user" size={20} color="#666" />
+                  <FontAwesome name="user" size={20} color="#000000ff" />
                   <TextInput
                     style={styles.textInput}
                     placeholder="Last Name"
-                    placeholderTextColor="#888"
+                    placeholderTextColor="#000000ff"
                     value={lastName}
                     onChangeText={setLastName}
                   />
@@ -142,11 +142,11 @@ export default function SignInScreen() {
 
             {/* Email Input */}
             <View style={styles.inputWrapper}>
-              <FontAwesome name="envelope" size={20} color="#666" />
+              <FontAwesome name="envelope" size={20} color="#000000ff" />
               <TextInput
                 style={styles.textInput}
                 placeholder="Email Address"
-                placeholderTextColor="#888"
+                placeholderTextColor="#000000ff"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -156,11 +156,11 @@ export default function SignInScreen() {
 
             {/* Password Input */}
             <View style={styles.inputWrapper}>
-              <FontAwesome name="lock" size={24} color="#666" style={{ marginLeft: 2 }} />
+              <FontAwesome name="lock" size={24} color="#000000ff" style={{ marginLeft: 2 }} />
               <TextInput
                 style={styles.textInput}
                 placeholder="Password"
-                placeholderTextColor="#888"
+                placeholderTextColor="#000000ff"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -229,12 +229,12 @@ const styles = StyleSheet.create({
   },
   logo: {
     width: '100%',
-    height: 150,
+    height: 200,
     resizeMode: 'contain',
     marginBottom: 10,
   },
   headerText: {
-    fontSize: 42,
+    fontSize: 38,
     fontWeight: 'bold', // Replaced custom font
     color: 'white',
     marginBottom: 10,
@@ -255,6 +255,7 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: 15,
     marginBottom: 30,
+    alignItems: 'center'
   },
   row: {
     flexDirection: 'row',
@@ -264,22 +265,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    borderRadius: 12,
+    borderRadius: 30,
     paddingHorizontal: 15,
-    height: 55,
+    height: 45,
     marginBottom: 5,
   },
   textInput: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
+    marginLeft: 5,
+    fontSize: 13,
     color: '#000',
     fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
   },
   primaryButton: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    height: 55,
+    backgroundColor: '#ffffffff',
+    borderRadius: 10,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
@@ -288,9 +289,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    width: '70%'
+
   },
   primaryButtonText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold', // Replaced custom font
     color: '#11161a',
   },

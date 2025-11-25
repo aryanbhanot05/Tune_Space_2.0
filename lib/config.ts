@@ -1,5 +1,3 @@
-// lib/config.ts
-
 // Helper to ensure the key exists to prevent runtime crashes
 function getEnvVar(key: string, value: string | undefined): string {
   if (!value) {

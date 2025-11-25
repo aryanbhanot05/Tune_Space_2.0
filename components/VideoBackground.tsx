@@ -22,7 +22,7 @@ export function VideoBackground() {
   const { selectedTheme } = useTheme();
   const themeKey = selectedTheme || 'bg1';
 
-  // Determine the current source based on the theme
+  // Determine the current source based on the current theme
   const targetSource = useMemo(() => VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1, [themeKey]);
 
   // Initialize the player with a static source (bg1) so the hook DOES NOT
@@ -36,7 +36,6 @@ export function VideoBackground() {
   // Manually swap the source when the theme changes.
   useEffect(() => {
     if (player) {
-      // FIX: Use replaceAsync to prevent UI freezes on iOS
       player.replaceAsync(targetSource).catch((error) => {
         console.log("Failed to switch background video:", error);
       });

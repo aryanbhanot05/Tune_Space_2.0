@@ -60,10 +60,8 @@ export default function SignInScreen() {
     setLoading(true);
     try {
       if (isSignIn) {
-        // SIGN IN LOGIC
         await signIn(email, password);
       } else {
-        // SIGN UP LOGIC
         const response = await signUp(email, password);
 
         const user = response.user || (response.session && response.session.user);
@@ -76,7 +74,6 @@ export default function SignInScreen() {
           });
         }
       }
-      // Navigate on success
       router.replace("/(tabs)/main");
     } catch (err: any) {
       setError("Authentication failed (Invalid Credentials).");
@@ -235,14 +232,13 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontSize: 38,
-    fontWeight: 'bold', // Replaced custom font
+    fontWeight: 'bold', 
     color: 'white',
     marginBottom: 10,
     textAlign: 'center',
   },
   subText: {
     fontSize: 18,
-    // Removed custom font
     color: '#ccc',
     marginBottom: 40,
     textAlign: 'center',
@@ -294,7 +290,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontSize: 20,
-    fontWeight: 'bold', // Replaced custom font
+    fontWeight: 'bold',
     color: '#11161a',
   },
   secondaryButton: {
@@ -314,7 +310,7 @@ const styles = StyleSheet.create({
   guestText: {
     color: '#666',
     fontSize: 18,
-    fontWeight: 'bold', // Replaced custom font
+    fontWeight: 'bold', 
   },
   errorText: {
     color: '#ff4d4d',

@@ -53,28 +53,23 @@ export default function CaptureScreen() {
     if (!isCameraReady || isAnalyzing || !camera) return;
 
     try {
-      // 1. Capture
       const picture = await camera.takePictureAsync({
-        quality: 0.5, // Lower quality slightly for faster transfer
+        quality: 0.5,
         skipProcessing: false,
         shutterSound: false,
       });
 
       if (!picture || !picture.uri) throw new Error("Capture failed");
 
-      // 2. Set UI State
       setIsAnalyzing(true);
 
-      // 3. Read File
       const base64 = await FileSystem.readAsStringAsync(picture.uri, {
         encoding: 'base64',
       });
 
-      // 4. Analyze
       const emotion = (await analyzeImageForEmotion(base64)) || 'DEFAULT';
       console.log('Detected Emotion:', emotion);
 
-      // 5. Navigate
       router.replace({ pathname: '/(tabs)/main', params: { emotion } });
 
     } catch (error) {
@@ -94,7 +89,6 @@ export default function CaptureScreen() {
         onCameraReady={() => setIsCameraReady(true)}
         active={isFocused}
       >
-        {/* --- UI OVERLAY --- */}
         <View style={[styles.overlayContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
 
           {/* Header */}
@@ -134,12 +128,10 @@ export default function CaptureScreen() {
               <View style={styles.captureInner} />
             </TouchableOpacity>
 
-            {/* Spacer for layout symmetry */}
             <View style={styles.secondaryButton} />
           </View>
         </View>
 
-        {/* --- ANALYZING OVERLAY (BLUR) --- */}
         {isAnalyzing && (
           <BlurView intensity={80} tint="dark" style={styles.absoluteFill}>
             <View style={styles.analyzingContent}>
@@ -173,7 +165,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
   },
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -194,7 +185,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Center Guide
   guideContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -229,7 +219,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
-  // Bottom Controls
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -260,7 +249,6 @@ const styles = StyleSheet.create({
     borderRadius: (CAPTURE_SIZE - 16) / 2,
     backgroundColor: 'white',
   },
-  // Permissions
   grantPermission: {
     flex: 1,
     justifyContent: 'center',
@@ -274,7 +262,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  // Analyzing State
   analyzingContent: {
     alignItems: 'center',
     padding: 30,

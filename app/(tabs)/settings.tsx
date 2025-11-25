@@ -631,7 +631,6 @@ export default function SettingsPage() {
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

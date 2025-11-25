@@ -1,8 +1,10 @@
 // [CODE FOR: app/index.tsx]
 
 import { NotificationBell } from "@/components/NotificationBell";
+import { PointsDisplay } from "@/components/PointsDisplay";
 import { VideoBackground } from "@/components/VideoBackground";
 import { useNotifications } from "@/contexts/NotificationContext";
+import PointsService from "@/lib/pointsService";
 import { ensureSpotifySignedIn, getAvailableDevices, playTrack, SimpleTrack } from "@/lib/spotify";
 import { useLocalSearchParams, useRouter } from "expo-router";
 // MODIFIED: Added 'useRef' to manage the sound object
@@ -41,6 +43,20 @@ export default function WelcomeScreen() {
             handleEmotion(emotion);
         }
     }, [emotion]);
+
+    // Initialize points service and check daily login
+    useEffect(() => {
+        const initializePoints = async () => {
+            try {
+                const pointsService = PointsService.getInstance();
+                await pointsService.initialize();
+                await pointsService.checkDailyLogin();
+            } catch (error) {
+                console.error('Error initializing points:', error);
+            }
+        };
+        initializePoints();
+    }, []);
 
     // --- NEW: useEffect for Audio Setup & Cleanup ---
     // This runs once when the screen loads to set up the audio service
@@ -182,6 +198,14 @@ export default function WelcomeScreen() {
 
         // --- END OF MODIFICATION ---
 
+        // Award points for emotion detection
+        try {
+            const pointsService = PointsService.getInstance();
+            await pointsService.awardPoints('EMOTION_DETECTED', `Detected ${detectedEmotion.toLowerCase()} emotion`);
+        } catch (error) {
+            console.error('Error awarding points:', error);
+        }
+
 
         // **THE FIX**: Comment out the Spotify logic to be used later.
         // This is unchanged from your code.
@@ -217,6 +241,14 @@ export default function WelcomeScreen() {
 
             await playTrack(trackUri, deviceId);
             Alert.alert("Playback Started", "Check your Spotify device!");
+
+            // Award points for playing a track
+            try {
+                const pointsService = PointsService.getInstance();
+                await pointsService.awardPoints('SONG_PLAYED', 'Played a song');
+            } catch (error) {
+                console.error('Error awarding points:', error);
+            }
         } catch (error) {
             console.error("Playback error:", error);
             Alert.alert("Error", "Could not start playback. " + (error as Error).message);
@@ -276,6 +308,12 @@ export default function WelcomeScreen() {
             position: 'absolute',
             top: 50,
             right: 20,
+            zIndex: 10,
+        },
+        pointsContainer: {
+            position: 'absolute',
+            top: 50,
+            left: 20,
             zIndex: 10,
         },
         welcomeText: {
@@ -371,9 +409,12 @@ export default function WelcomeScreen() {
         <View style={styles.container}>
             <VideoBackground />
 
-            {/* Notification Bell */}
+            {/* Notification Bell and Points Display */}
             <View style={styles.notificationContainer}>
                 <NotificationBell size={28} color="#ffffff" />
+            </View>
+            <View style={styles.pointsContainer}>
+                <PointsDisplay size="small" />
             </View>
 
             {tracks.length === 0 ? (

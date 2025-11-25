@@ -1,4 +1,3 @@
-// Import necessary components, hooks, and libraries
 import AnimatedTabButton from '@/components/AnimatedTabButton';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useTheme } from '@/lib/themeContext';
@@ -57,7 +56,6 @@ const CustomDropdown = ({ selectedTheme, onSelect, isModalVisible, toggleModal }
   // Renders dropdown modal
   const renderDropdown = () => {
     return (
-      // Modal component: appears over everything else when visible
       <Modal
         visible={isModalVisible}
         transparent={true}
@@ -786,21 +784,20 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)', // Dark overlay background
+    backgroundColor: 'rgba(0, 0, 0, 0.4)', 
     justifyContent: 'center',
     alignItems: 'center',
   },
   dropdownContainer: {
-    zIndex: 1, // Ensure the dropdown button is layered correctly
+    zIndex: 1,
     width: '100%',
   },
   dropdownContent: {
-    width: '80%', // Adjust width as needed
-    maxHeight: 200, // Limit the height of the options list
+    width: '80%', 
+    maxHeight: 200, 
     backgroundColor: '#fff',
     borderRadius: 5,
     padding: 5,
-    // Add shadow/elevation for better visibility
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,

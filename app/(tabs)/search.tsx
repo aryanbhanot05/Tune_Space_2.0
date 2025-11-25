@@ -288,10 +288,8 @@ type SoundRef = { unloadAsync: () => Promise<void> } | null;
 let Audio: any = null;
 if (Platform.OS !== "web") {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     Audio = require("expo-av").Audio;
   } catch {
-    // expo-av not installed; previews on native will be disabled
     Audio = null;
   }
 }
@@ -527,7 +525,6 @@ export default function HomePage() {
         <Text style={{ color: "#ff6b6b", marginBottom: 8 }}>{error}</Text>
       ) : null}
 
-      {/* Show search results if there's a search query */}
       {searchText.trim() ? (
         <FlatList
           data={results}
@@ -857,7 +854,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     paddingVertical: 10,
     paddingLeft: 10,
-    paddingRight: 36, // extra space so text doesn't go under the X
+    paddingRight: 36, 
     borderRadius: 10,
     borderColor: "#444",
     borderWidth: 1,
@@ -902,14 +899,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  // Recommendation styles
   recommendationsContainer: {
     flex: 1,
     width: "90%",
     marginHorizontal: 16,
   },
   recommendationsContent: {
-    paddingBottom: 100, // Add bottom padding to prevent navigation bar overlap
+    paddingBottom: 100, 
   },
   sectionContainer: {
     marginBottom: 24,
@@ -930,7 +926,6 @@ const styles = StyleSheet.create({
   horizontalScroll: {
     marginHorizontal: -4,
   },
-  // Trending tracks styles
   trendingCard: {
     width: 140,
     marginRight: 12,
@@ -958,7 +953,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: "center",
   },
-  // Popular artists styles
   artistCard: {
     width: 100,
     marginRight: 12,
@@ -977,7 +971,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
   },
-  // Genre recommendations styles
   genreGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1004,7 +997,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: "center",
   },
-  // Quick search styles
   quickSearchContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -1022,7 +1014,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
-  // Player modal styles
   playerBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.7)",

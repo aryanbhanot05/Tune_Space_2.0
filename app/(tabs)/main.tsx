@@ -567,6 +567,12 @@ const styles = StyleSheet.create({
         right: 20,
         zIndex: 10,
     },
+    pointsContainer: {
+        position: 'absolute',
+        top: 60,
+        left: 20,
+        zIndex: 10,
+    },
     backButton: {
         position: 'absolute',
         top: 60,

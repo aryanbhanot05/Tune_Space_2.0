@@ -24,7 +24,6 @@ export const signIn = async (email: string, password: string) => {
   });
 
   if (error) {
-    console.error("Sign In Error:", error);
     throw error;
   }
 

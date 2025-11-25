@@ -1,6 +1,8 @@
 // Import necessary components, hooks, and libraries
 import AnimatedTabButton from '@/components/AnimatedTabButton';
+import { PointsDisplay } from '@/components/PointsDisplay';
 import { useNotifications } from '@/contexts/NotificationContext';
+import PointsService, { POINTS_VALUES } from '@/lib/pointsService';
 import { useTheme } from '@/lib/themeContext';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -241,6 +243,52 @@ const SectionContent = ({ activeSection, state, handlers }: {
         </View>
       );
 
+    // ================= REWARDS SECTION =================
+    case 'rewards':
+      return (
+        <View style={styles.sectionContent}>
+          {/* Points Display */}
+          <View style={styles.pointsSection}>
+            <Text style={styles.label}>Your Points</Text>
+            <View style={styles.pointsDisplayContainer}>
+              <PointsDisplay size="large" showLabel={true} />
+            </View>
+          </View>
+
+          {/* Points Breakdown */}
+          <View style={styles.field}>
+            <Text style={styles.label}>How to Earn Points</Text>
+            <View style={styles.pointsList}>
+              <View style={styles.pointsItem}>
+                <Ionicons name="camera-outline" size={20} color="#FFD700" />
+                <Text style={styles.pointsItemText}>Detect Emotion</Text>
+                <Text style={styles.pointsValue}>+{POINTS_VALUES.EMOTION_DETECTED} pts</Text>
+              </View>
+              <View style={styles.pointsItem}>
+                <Ionicons name="play-circle-outline" size={20} color="#FFD700" />
+                <Text style={styles.pointsItemText}>Play a Song</Text>
+                <Text style={styles.pointsValue}>+{POINTS_VALUES.SONG_PLAYED} pts</Text>
+              </View>
+              <View style={styles.pointsItem}>
+                <Ionicons name="add-circle-outline" size={20} color="#FFD700" />
+                <Text style={styles.pointsItemText}>Add to Playlist</Text>
+                <Text style={styles.pointsValue}>+{POINTS_VALUES.SONG_ADDED_TO_PLAYLIST} pts</Text>
+              </View>
+              <View style={styles.pointsItem}>
+                <Ionicons name="search-outline" size={20} color="#FFD700" />
+                <Text style={styles.pointsItemText}>Search Music</Text>
+                <Text style={styles.pointsValue}>+{POINTS_VALUES.SEARCH_PERFORMED} pts</Text>
+              </View>
+              <View style={styles.pointsItem}>
+                <Ionicons name="calendar-outline" size={20} color="#FFD700" />
+                <Text style={styles.pointsItemText}>Daily Login</Text>
+                <Text style={styles.pointsValue}>+{POINTS_VALUES.DAILY_LOGIN} pts</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+
 
     // ================= DEFAULT CASE (if no section selected) =================
     default:
@@ -295,6 +343,21 @@ export default function SettingsPage() {
           }
         });
       });
+    }
+  }, [activeSection]);
+
+  // LOAD POINTS ON REWARDS SECTION OPEN
+  useEffect(() => {
+    if (activeSection === 'rewards') {
+      const loadPoints = async () => {
+        try {
+          const pointsService = PointsService.getInstance();
+          await pointsService.refresh();
+        } catch (error) {
+          console.error('Error loading points:', error);
+        }
+      };
+      loadPoints();
     }
   }, [activeSection]);
 
@@ -578,6 +641,11 @@ export default function SettingsPage() {
             title="Feedback"
             iconName="chatbubble-outline"
             onPress={() => handleSectionOpen('feedback')}
+          />
+          <AnimatedTabButton
+            title="Rewards"
+            iconName="star-outline"
+            onPress={() => handleSectionOpen('rewards')}
           />
         </View>
       </Animated.View>
@@ -914,6 +982,37 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 13,
     fontStyle: 'italic',
+  },
+  pointsSection: {
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  pointsDisplayContainer: {
+    marginTop: 12,
+  },
+  pointsList: {
+    marginTop: 12,
+    gap: 12,
+  },
+  pointsItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 215, 0, 0.2)',
+  },
+  pointsItemText: {
+    flex: 1,
+    color: '#e3ffdd',
+    fontSize: 16,
+    marginLeft: 12,
+  },
+  pointsValue: {
+    color: '#FFD700',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

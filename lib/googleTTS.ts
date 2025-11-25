@@ -1,5 +1,3 @@
-// [CODE FOR: lib/googleTTS.ts]
-
 import { googleCloudConfig } from './config';
 
 const API_KEY = googleCloudConfig.apiKey;
@@ -21,10 +19,6 @@ export async function fetchAudioFromText(text: string): Promise<string | null> {
         input: {
           text: text,
         },
-        // --- THIS IS THE VOICE UPGRADE ---
-        // 'Journey' voices are Google's newest, most expressive models,
-        // built on the same Chirp/Gemini tech. They sound far
-        // more natural and cheerful than WaveNet or Standard.
         voice: {
           languageCode: 'en-US',
           name: 'en-us-Chirp3-HD-Leda', // A friendly, "cheerful" female voice

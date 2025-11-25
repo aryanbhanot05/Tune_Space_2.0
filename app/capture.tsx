@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { ActivityIndicator, Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 // We've removed all audio-related imports
+import PointsService from '../lib/pointsService';
 import { analyzeImageForEmotion } from '../lib/rekognition';
 
 export default function CaptureScreen() {
@@ -57,7 +58,7 @@ export default function CaptureScreen() {
                 throw new Error("Failed to save picture, URI is missing.");
             }
 
-            setIsAnalyzing(true); 
+            setIsAnalyzing(true);
 
             const base64 = await FileSystem.readAsStringAsync(picture.uri, {
                 encoding: 'base64',
@@ -70,6 +71,9 @@ export default function CaptureScreen() {
             emotion = (await analyzeImageForEmotion(base64)) || 'DEFAULT';
             console.log('Detected Emotion:', emotion);
 
+            // Award points for emotion detection (points will be awarded again on main screen, but that's okay for now)
+            // Actually, we'll let main screen handle it to avoid double awarding
+
             // --- THIS IS THE NEW FLOW ---
             // We no longer fetch audio here. We just navigate to the main
             // page and pass the emotion as a parameter.
@@ -81,7 +85,7 @@ export default function CaptureScreen() {
             router.replace({ pathname: '/(tabs)/main', params: { emotion: 'DEFAULT' } });
         } finally {
             // Ensure the spinner stops, though navigation will hide it anyway
-            setIsAnalyzing(false); 
+            setIsAnalyzing(false);
         }
     };
 

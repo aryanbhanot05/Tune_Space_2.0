@@ -1,6 +1,6 @@
 import { useTheme } from '@/lib/themeContext';
 import { VideoView, useVideoPlayer } from 'expo-video';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 export const VIDEO_SOURCE_MAP = {
@@ -22,16 +22,24 @@ export function VideoBackground() {
   const { selectedTheme } = useTheme();
   const themeKey = selectedTheme || 'bg1';
 
-  // Memoize the source to ensure stable references
-  const finalSource = useMemo(() => VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1, [themeKey]);
+  // Determine the current source based on the theme
+  const targetSource = useMemo(() => VIDEO_SOURCE_MAP[themeKey as VideoThemeKey] || VIDEO_SOURCE_MAP.bg1, [themeKey]);
 
-  // useVideoPlayer handles the source lifecycle automatically.
-  // We play the video immediately in the setup callback.
-  const player = useVideoPlayer(finalSource, (player) => {
+  // FIX: Initialize the player with a static source (bg1) so the hook DOES NOT
+  // destroy/recreate the player on every render. We will handle updates manually.
+  const player = useVideoPlayer(VIDEO_SOURCE_MAP.bg1, (player) => {
     player.loop = true;
     player.muted = true;
     player.play();
   });
+
+  // Manually swap the source when the theme changes.
+  // This keeps the 'player' object stable, preventing the "shared object released" crash.
+  useEffect(() => {
+    if (player) {
+      player.replace(targetSource);
+    }
+  }, [player, targetSource]);
 
   return (
     <View style={styles.container}>

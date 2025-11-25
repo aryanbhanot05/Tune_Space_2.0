@@ -255,7 +255,25 @@ export default function WelcomeScreen() {
     setCurrentEmotion(detectedEmotion);
     setAutoPlayPending(false);
     setTracks([]);
+
+    // 1. CHANGE THEME BASED ON EMOTION
+    const emotionToThemeMap: Record<string, string> = {
+      'HAPPY': 'bg3',     // Bright / Sunny
+      'SAD': 'bg8',       // Rain / Dark
+      'ANGRY': 'bg10',    // Intense / Stormy
+      'SURPRISED': 'bg7', // Colorful / Fast
+      'CALM': 'bg1',      // Nature / Peaceful (Default)
+      'FEAR': 'bg9',      // Dark / Foggy
+      'DISGUST': 'bg5',   // Abstract / Gritty
+    };
+
+    const newTheme = emotionToThemeMap[detectedEmotion.toUpperCase()] || 'bg1';
+    setTheme(newTheme);
+
+    // 2. Start Music Fetch
     fetchMusicForEmotion(detectedEmotion);
+
+    // 3. Start TTS
     try {
       const sentence = getRandomEmotionSentence(detectedEmotion);
       fetchAudioFromText(sentence).then(base64 => {

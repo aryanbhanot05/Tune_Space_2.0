@@ -2,16 +2,16 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getSession, signIn, signUp } from "../lib/supabase_auth"; // Ensure getSession is exported from supabase_auth
@@ -79,7 +79,7 @@ export default function SignInScreen() {
       // Navigate on success
       router.replace("/(tabs)/main");
     } catch (err: any) {
-      setError(err.message || "Authentication failed.");
+      setError("Authentication failed (Invalid Credentials).");
     } finally {
       setLoading(false);
     }

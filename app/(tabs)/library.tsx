@@ -224,7 +224,7 @@ function SearchRow({
           value={value}
           onChangeText={onChangeText}
           placeholder="Filter charts..."
-          placeholderTextColor="#9aa0a6"
+          placeholderTextColor="#1c1c1dff"
           style={styles.input}
           autoCapitalize="none"
         />
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
   },
-  sortText: { color: FG, fontSize: 13 },
+  sortText: { color: 'black', fontSize: 13 },
 
   chips: {
     paddingHorizontal: 16,

@@ -431,7 +431,7 @@ export default function WelcomeScreen() {
           <TouchableOpacity style={styles.logoContainer} onPress={HandleAnalyzeMood}>
             <Image style={styles.logo} source={require('../../assets/images/Emotify.png')} />
           </TouchableOpacity>
-          <Text style={styles.promptText}>Tap to analyze your mood</Text>
+          <Text style={styles.promptText}>Tap to Analyze Your Mood</Text>
         </View>
       ) : (
         <View style={styles.resultsContainer}>

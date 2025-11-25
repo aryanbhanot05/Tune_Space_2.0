@@ -66,3 +66,34 @@ export async function getPlaylistTracks(playlistId: string | number, limit = 25)
     return fetchJson(url);
   }
 }
+export async function getCharts() {
+  const path = "chart";
+  if (USE_PROXY) {
+    const url = buildUrl(`${FUNCTIONS_BASE}/deezer-proxy`, "", { path });
+    return fetchJson(url);
+  } else {
+    const url = buildUrl(DEEZER_BASE, path);
+    return fetchJson(url);
+  }
+}
+export async function getAlbumTracks(albumId: string | number) {
+  const path = `album/${albumId}/tracks`;
+  if (USE_PROXY) {
+    const url = buildUrl(`${FUNCTIONS_BASE}/deezer-proxy`, "", { path });
+    return fetchJson(url);
+  } else {
+    const url = buildUrl(DEEZER_BASE, path);
+    return fetchJson(url);
+  }
+}
+
+export async function getArtistTopTracks(artistId: string | number) {
+  const path = `artist/${artistId}/top`;
+  if (USE_PROXY) {
+    const url = buildUrl(`${FUNCTIONS_BASE}/deezer-proxy`, "", { path, limit: 50 });
+    return fetchJson(url);
+  } else {
+    const url = buildUrl(DEEZER_BASE, path, { limit: 50 });
+    return fetchJson(url);
+  }
+}

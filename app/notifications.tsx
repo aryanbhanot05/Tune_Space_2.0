@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNotifications } from '../contexts/NotificationContext';
-import { AppNotification } from '../lib/notificationService';
+import NotificationService, { AppNotification } from '../lib/notificationService';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -28,8 +28,20 @@ export default function NotificationsScreen() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    refreshNotifications();
+    await refreshNotifications();
     setRefreshing(false);
+  };
+
+  // --- NEW: Test Notification Logic ---
+  const handleTestNotification = async () => {
+    try {
+      await NotificationService.getInstance().sendTestNotification();
+      // Refresh immediately so the user sees it pop up in the list
+      await refreshNotifications();
+    } catch (error) {
+      console.error("Failed to send test notification:", error);
+      Alert.alert("Error", "Could not send test notification.");
+    }
   };
 
   const handleMarkAllAsRead = () => {
@@ -61,37 +73,27 @@ export default function NotificationsScreen() {
 
     // Handle navigation based on notification type and data
     if (notification.data?.type === 'now_playing') {
-      // Navigate to now playing screen
       router.push('/(tabs)/main');
     } else if (notification.data?.route) {
-      // Navigate to specific route
       router.push(notification.data.route);
     }
   };
 
   const getNotificationIcon = (type: AppNotification['type']) => {
     switch (type) {
-      case 'music':
-        return 'music';
-      case 'system':
-        return 'cog';
-      case 'now_playing':
-        return 'play-circle';
-      default:
-        return 'bell';
+      case 'music': return 'music';
+      case 'system': return 'cog';
+      case 'now_playing': return 'play-circle';
+      default: return 'bell';
     }
   };
 
   const getNotificationColor = (type: AppNotification['type']) => {
     switch (type) {
-      case 'music':
-        return '#1DB954';
-      case 'system':
-        return '#FF6B6B';
-      case 'now_playing':
-        return '#FFD700';
-      default:
-        return '#888';
+      case 'music': return '#1DB954';
+      case 'system': return '#FF6B6B';
+      case 'now_playing': return '#FFD700';
+      default: return '#888';
     }
   };
 
@@ -149,6 +151,11 @@ export default function NotificationsScreen() {
       <Text style={styles.emptySubtitle}>
         You're all caught up! New notifications will appear here.
       </Text>
+      
+      {/* Optional: A large test button for empty state */}
+      <TouchableOpacity style={styles.emptyStateButton} onPress={handleTestNotification}>
+        <Text style={styles.emptyStateButtonText}>Trigger Test Notification</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -163,6 +170,11 @@ export default function NotificationsScreen() {
         <Text style={styles.headerTitle}>Notifications</Text>
 
         <View style={styles.headerActions}>
+          {/* Test Button (Always Visible) */}
+          <TouchableOpacity onPress={handleTestNotification} style={styles.actionButton}>
+             <FontAwesome name="flask" size={18} color="#4ADE80" />
+          </TouchableOpacity>
+
           {notifications.length > 0 && (
             <>
               {unreadCount > 0 && (
@@ -309,5 +321,19 @@ const styles = StyleSheet.create({
     color: '#aaa',
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 20,
   },
+  emptyStateButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#222',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  emptyStateButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  }
 });

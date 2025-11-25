@@ -252,7 +252,6 @@ export default function SettingsPage() {
 
   // --- THEME CONTEXT ---
   const { selectedTheme, setTheme } = useTheme();
-  setTheme("Blue Theme")
 
   // --- NOTIFICATION CONTEXT ---
   const { sendNotification, getUserPreferences, updateUserPreferences, sendTestNotification } = useNotifications();

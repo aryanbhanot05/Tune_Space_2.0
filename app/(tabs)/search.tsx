@@ -238,7 +238,7 @@ const FALLBACK_GENRE_ARTISTS = [
 ];
 
 // Generic helper to fetch with fallback mock data
-async function fetchWithFallback<T>(url: string, fallback: T): Promise<T> {
+async function fetchWithFallback<T>(url: string, fallback: T): Promise<{ data: T }> {
   try {
     const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) {
@@ -252,7 +252,7 @@ async function fetchWithFallback<T>(url: string, fallback: T): Promise<T> {
   } catch (error) {
     console.warn(`[Deezer] Request failed (${url}):`, error);
     console.warn("[Deezer] Falling back to local mock data.");
-    return { data: fallback } as T;
+    return { data: fallback };
   }
 }
 

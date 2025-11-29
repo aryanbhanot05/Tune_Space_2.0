@@ -28,7 +28,7 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": ""
+      "package": "com.tunespace.app20"
     },
     "notification": {
       "icon": "./assets/images/Emotify.png"

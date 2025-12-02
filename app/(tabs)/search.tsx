@@ -899,6 +899,10 @@ export default function HomePage() {
     </View>
   );
 }
+const BG = "transparent";
+const FG = "#eaeaea";
+const MUTED = "#9aa0a6";
+const CARD = "rgba(0, 0, 0, 0.1)"; 
 
 const styles = StyleSheet.create({
   container: {
@@ -933,16 +937,14 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   searchInput: {
-    backgroundColor: "#191c24",
-    color: "#fff",
-    paddingVertical: 10,
-    paddingLeft: 10,
-    paddingRight: 36,
+    flex: 1,
+    backgroundColor: CARD,
     borderRadius: 10,
-    borderColor: "#444",
-    borderWidth: 1,
-    width: "100%",
-    paddingBottom: 12,
+    paddingHorizontal: 10,
+    height: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   resultsList: {
     maxHeight: 300,

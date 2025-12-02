@@ -1,18 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import PointsService from '../lib/pointsService';
 
 interface PointsDisplayProps {
   size?: 'small' | 'medium' | 'large';
   showLabel?: boolean;
   style?: any;
+  onPress?: () => void;
 }
 
 export function PointsDisplay({ 
   size = 'medium', 
   showLabel = true,
-  style 
+  style,
+  onPress
 }: PointsDisplayProps) {
   const [points, setPoints] = useState<number>(0);
   const pointsService = PointsService.getInstance();
@@ -39,7 +41,7 @@ export function PointsDisplay({
 
   const currentSize = sizeStyles[size];
 
-  return (
+  const content = (
     <View style={[styles.container, currentSize.container, style]}>
       <Ionicons 
         name="star" 
@@ -57,6 +59,16 @@ export function PointsDisplay({
       )}
     </View>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
 }
 
 const styles = StyleSheet.create({

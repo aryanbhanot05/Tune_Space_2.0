@@ -417,7 +417,15 @@ export default function WelcomeScreen() {
                 <NotificationBell size={28} color="#ffffff" />
             </View>
             <View style={styles.pointsContainer}>
-                <PointsDisplay size="small" />
+                <PointsDisplay 
+                    size="small" 
+                    onPress={() => {
+                        router.push({
+                            pathname: '/(tabs)/settings',
+                            params: { openSection: 'rewards' }
+                        });
+                    }}
+                />
             </View>
 
             {/* Back Button */}

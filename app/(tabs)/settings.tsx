@@ -4,7 +4,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import PointsService, { POINTS_VALUES } from '@/lib/pointsService';
 import { useTheme } from '@/lib/themeContext';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Animated, Easing, FlatList, Modal, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { VideoBackground } from '../../components/VideoBackground';
@@ -295,6 +295,8 @@ const SectionContent = ({ activeSection, state, handlers }: {
 };
 
 export default function SettingsPage() {
+  // --- ROUTER PARAMS ---
+  const { openSection } = useLocalSearchParams<{ openSection?: string }>();
 
   // --- THEME CONTEXT ---
   const { selectedTheme, setTheme } = useTheme();
@@ -463,6 +465,17 @@ export default function SettingsPage() {
       backButtonSlideAnim.setValue(-100);
     });
   };
+
+  // AUTO-OPEN SECTION WHEN NAVIGATED WITH PARAMETER
+  useEffect(() => {
+    if (openSection && !activeSection) {
+      // Small delay to ensure component is fully mounted
+      const timer = setTimeout(() => {
+        handleSectionOpen(openSection);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [openSection, activeSection]);
 
   // UPDATE ACCOUNT INFO
   const handleUpdate = async () => {

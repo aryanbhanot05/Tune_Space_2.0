@@ -4,6 +4,7 @@ import { VideoBackground } from "@/components/VideoBackground";
 import { useNotifications } from "@/contexts/NotificationContext";
 import PointsService from "@/lib/pointsService";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -523,7 +524,15 @@ export default function HomePage() {
         <NotificationBell size={28} color="#ffffff" />
       </View>
       <View style={[styles.pointsContainer, { top: insets.top + 10 }]}>
-        <PointsDisplay size="small" />
+        <PointsDisplay 
+          size="small" 
+          onPress={() => {
+            router.push({
+              pathname: '/(tabs)/settings',
+              params: { openSection: 'rewards' }
+            });
+          }}
+        />
       </View>
 
       <View style={styles.top}>

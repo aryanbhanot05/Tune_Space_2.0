@@ -548,30 +548,32 @@ export default function HomePage() {
         <Text style={styles.title}>Search</Text>
       </View>
 
-      <View style={styles.searchWrapper}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search by song, artist, or album…"
-          placeholderTextColor="#888"
-          value={searchText}
-          onChangeText={setSearchText}
-          autoCorrect={false}
-          autoCapitalize="none"
-        />
+<View style={styles.searchWrapper}>
+  <Ionicons name="search" size={18} color="#9aa0a6" style={styles.searchIcon} />
 
-        {searchText.length > 0 && (
-          <TouchableOpacity
-            onPress={() => {
-              setSearchText("");
-              setError(null);
-              setResults([]);
-            }}
-            style={styles.clearButton}
-          >
-            <Ionicons name="close-circle" size={20} color="#bbb" />
-          </TouchableOpacity>
-        )}
-      </View>
+  <TextInput
+    style={styles.searchInput}
+    placeholder="Search by song, artist, or album…"
+    placeholderTextColor="#888"
+    value={searchText}
+    onChangeText={setSearchText}
+    autoCorrect={false}
+    autoCapitalize="none"
+  />
+
+  {searchText.length > 0 && (
+    <TouchableOpacity
+      onPress={() => {
+        setSearchText("");
+        setError(null);
+        setResults([]);
+      }}
+      style={styles.clearButton}
+    >
+      <Ionicons name="close-circle" size={20} color="#bbb" />
+    </TouchableOpacity>
+  )}
+</View>
 
       {loading ? (
         <Text style={{ color: "#ccc", marginBottom: 8 }}>Searching…</Text>
@@ -936,16 +938,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     textAlign: "left",
   },
-  searchInput: {
-    flex: 1,
-    backgroundColor: CARD,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    height: 40,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
+searchInput: {
+  backgroundColor: "#191c24",
+  color: "#fff",
+  paddingVertical: 12,
+  paddingLeft: 38,         // room for search icon
+  paddingRight: 38,        // room for clear button
+  borderRadius: 10,
+  borderColor: "#444",
+  borderWidth: 1,
+  width: "100%",
+  fontSize: 15,
+},
   resultsList: {
     maxHeight: 300,
     backgroundColor: "#23272f",
@@ -1164,19 +1168,24 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginLeft: 6,
   },
-  searchWrapper: {
-    position: "relative",
-    width: "90%",
-    marginHorizontal: 16,
-    marginTop: 70,
-    marginBottom: 10,
-  },
-
-  clearButton: {
-    position: "absolute",
-    right: 12,
-    top: "40%",
-    transform: [{ translateY: -10 }],
-    padding: 4,
-  },
+searchWrapper: {
+  width: "90%",
+  marginHorizontal: 16,
+  marginTop: 60,           // move the bar lower
+  marginBottom: 10,
+  position: "relative",
+  justifyContent: "center",
+},
+searchIcon: {
+  position: "absolute",
+  left: 12,
+  zIndex: 10,
+},
+clearButton: {
+  position: "absolute",
+  right: 12,
+  zIndex: 10,
+  justifyContent: "center",
+  alignItems: "center",
+},
 });

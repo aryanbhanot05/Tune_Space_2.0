@@ -18,11 +18,17 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Dimensions } from 'react-native';
 
+const SCREEN_WIDTH = Dimensions.get('window').width;
 // ---- tiny Deezer search helper (uses proxy on web if provided) ----
 const FUNCTIONS_BASE = process.env.EXPO_PUBLIC_SUPABASE_FUNCTIONS_URL || "";
+
 
 async function searchDeezerTracks(q: string, limit = 15) {
   if (!q) return { data: [] };
@@ -317,9 +323,12 @@ export default function HomePage() {
 
   // native playback state
   const soundRef = useRef<SoundRef>(null);
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const [currentTrack, setCurrentTrack] = useState<any | null>(null);
-  const [isPlayerVisible, setIsPlayerVisible] = useState(false);
+const [playingId, setPlayingId] = useState<string | null>(null);
+const [currentTrack, setCurrentTrack] = useState<any | null>(null);
+const [showPlayer, setShowPlayer] = useState(false);
+const [isPlaying, setIsPlaying] = useState(false);
+const [isBuffering, setIsBuffering] = useState(false);
+const [isPlayerVisible, setIsPlayerVisible] = useState(false);
 
   // Notification context
   const {
@@ -330,6 +339,9 @@ export default function HomePage() {
 
   // Safe area insets for proper positioning on iPhone
   const insets = useSafeAreaInsets();
+
+
+
 
   // debounce the input slightly (protects Deezer 50 req / 5s quota)
   useEffect(() => {
@@ -423,48 +435,109 @@ export default function HomePage() {
   }, []);
 
   const togglePlayNative = async (
-    previewUrl: string,
-    id: string,
-    track?: any
-  ) => {
-    if (!Audio) return; // expo-av not installed
-    try {
-      // If tapping same item while playing → stop audio but keep card open
-      if (playingId === id && soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-        setPlayingId(null);
+  previewUrl: string,
+  id: string,
+  track?: any
+) => {
+  if (!Audio) return; // expo-av not installed
+
+  try {
+    // If tapping the same item while it's playing → pause/play toggle
+    if (playingId === id && soundRef.current) {
+      const status: any = await (soundRef.current as any).getStatusAsync();
+      if (status.isLoaded && status.isPlaying) {
+        await (soundRef.current as any).pauseAsync();
+        setIsPlaying(false);
+      } else if (status.isLoaded) {
+        await (soundRef.current as any).playAsync();
+        setIsPlaying(true);
+      }
+      return;
+    }
+
+    // Stop previous sound
+    if (soundRef.current) {
+      await soundRef.current.unloadAsync();
+      soundRef.current = null;
+    }
+
+    const { sound } = await Audio.Sound.createAsync({ uri: previewUrl });
+    soundRef.current = sound;
+    setPlayingId(id);
+    setIsPlaying(true);
+    setIsBuffering(false);
+
+    if (track) {
+      setCurrentTrack(track);
+      setShowPlayer(true);
+    }
+
+    sound.setOnPlaybackStatusUpdate((st: any) => {
+      if (!st.isLoaded) {
+        setIsPlaying(false);
+        setIsBuffering(false);
         return;
       }
+      setIsPlaying(st.isPlaying);
+      setIsBuffering(st.isBuffering ?? false);
 
-      // stop previous
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
+      if (st.didJustFinish) {
+        setIsPlaying(false);
+        setPlayingId(null);
+        sound.unloadAsync().catch(() => {});
         soundRef.current = null;
       }
+    });
 
-      // create & play new
-      const { sound } = await Audio.Sound.createAsync({ uri: previewUrl });
-      soundRef.current = sound;
-      setPlayingId(id);
+    await sound.playAsync();
+  } catch (e) {
+    console.log("togglePlayNative error", e);
+    setPlayingId(null);
+    setIsPlaying(false);
+    setIsBuffering(false);
+  }
+};
+const togglePlayPause = async () => {
+  if (!soundRef.current) return;
+  try {
+    const status: any = await (soundRef.current as any).getStatusAsync();
+    if (!status.isLoaded) return;
 
-      if (track) {
-        setCurrentTrack(track);
-        setIsPlayerVisible(true);
-      }
-
-      await sound.playAsync();
-      sound.setOnPlaybackStatusUpdate((st: any) => {
-        if (st.didJustFinish || st.isLoaded === false) {
-          setPlayingId(null);
-          sound.unloadAsync().catch(() => {});
-          soundRef.current = null;
-        }
-      });
-    } catch {
-      setPlayingId(null);
+    if (status.isPlaying) {
+      await (soundRef.current as any).pauseAsync();
+      setIsPlaying(false);
+    } else {
+      await (soundRef.current as any).playAsync();
+      setIsPlaying(true);
     }
-  };
+  } catch (e) {
+    console.log("togglePlayPause error", e);
+  }
+};
+
+const playFromList = async (direction: 1 | -1) => {
+  if (!currentTrack) return;
+
+  // use search results if a query is active, otherwise trending list
+  const list = searchText.trim() ? results : trendingTracks;
+  const idx = list.findIndex(
+    (t) => String(t.id) === String(currentTrack.id)
+  );
+  if (idx === -1) return;
+
+  const nextIndex = idx + direction;
+  if (nextIndex < 0 || nextIndex >= list.length) return;
+
+  const next = list[nextIndex];
+  if (!next?.preview) return;
+
+  await togglePlayNative(next.preview, String(next.id), next);
+};
+
+const playNext = () => playFromList(1);
+const playPrevious = () => playFromList(-1);
+
+
 
   const closePlayer = async () => {
     if (soundRef.current) {
@@ -597,14 +670,13 @@ export default function HomePage() {
                 activeOpacity={0.85}
                 onPress={() => {
                   if (preview) {
-                    // tap row → open card and start playing
                     togglePlayNative(preview, idStr, item);
                   } else {
-                    // no preview, just open info card
                     setCurrentTrack(item);
-                    setIsPlayerVisible(true);
+                    setShowPlayer(true);
                   }
                 }}
+
               >
                 {artUri ? (
                   <Image source={{ uri: artUri }} style={styles.songArt} />
@@ -825,79 +897,113 @@ export default function HomePage() {
 
       {/* Player card modal */}
       {currentTrack && (
-        <Modal
-          visible={isPlayerVisible}
-          transparent
-          animationType="slide"
-          onRequestClose={closePlayer}
-        >
-          <View style={styles.playerBackdrop}>
-            <View style={styles.playerCard}>
-              <TouchableOpacity
-                style={styles.playerClose}
-                onPress={closePlayer}
-              >
-                <Ionicons name="close" size={22} color="#ffffff" />
-              </TouchableOpacity>
-
-              <Image
-                source={{
-                  uri:
-                    currentTrack.album?.cover_medium ||
-                    currentTrack.album?.cover ||
-                    "https://via.placeholder.com/300",
-                }}
-                style={styles.playerArt}
-              />
-
-              <Text style={styles.playerTitle} numberOfLines={1}>
-                {currentTrack.title}
-              </Text>
-              <Text style={styles.playerArtist} numberOfLines={1}>
-                {currentTrack.artist?.name} • {currentTrack.album?.title}
-              </Text>
-
-              <View style={styles.playerActionsRow}>
-                {currentTrack.preview && Audio && (
-                  <TouchableOpacity
-                    style={styles.playerPlayBtn}
-                    onPress={() =>
-                      togglePlayNative(
-                        currentTrack.preview,
-                        String(currentTrack.id),
-                        currentTrack
-                      )
-                    }
-                  >
-                    <Ionicons
-                      name={
-                        playingId === String(currentTrack.id) ? "pause" : "play"
-                      }
-                      size={26}
-                      color="#ffffff"
-                    />
-                    <Text style={styles.playerPlayText}>
-                      {playingId === String(currentTrack.id) ? "Pause" : "Play"}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  style={styles.playerAddBtn}
-                  onPress={() => addToPlaylist(currentTrack)}
-                >
-                  <Ionicons
-                    name="add-circle-outline"
-                    size={24}
-                    color="#ffffff"
-                  />
-                  <Text style={styles.playerAddText}>Add to playlist</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+  <Modal
+    visible={showPlayer}
+    animationType="slide"
+    presentationStyle="pageSheet"
+    onRequestClose={() => setShowPlayer(false)}
+  >
+    <View style={styles.modalContainer}>
+      {currentTrack && (
+        <Image
+          source={{
+            uri:
+              currentTrack.album?.cover_medium ||
+              currentTrack.album?.cover ||
+              "https://placehold.co/600x600",
+          }}
+          style={StyleSheet.absoluteFillObject}
+          blurRadius={30}
+        />
       )}
+
+      <BlurView
+        intensity={90}
+        tint="dark"
+        style={StyleSheet.absoluteFillObject}
+      />
+      <LinearGradient
+        colors={["transparent", "rgba(0,0,0,0.8)"]}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      <View style={styles.modalContent}>
+        {/* Header */}
+        <View style={styles.modalHeader}>
+          <TouchableOpacity onPress={() => setShowPlayer(false)}>
+            <Ionicons name="chevron-down" size={32} color="white" />
+          </TouchableOpacity>
+          <Text style={styles.modalHeaderText}>Now Playing</Text>
+          <View style={{ width: 32 }} />
+        </View>
+
+        {/* Artwork */}
+        <View style={styles.artContainer}>
+          <Image
+            source={{
+              uri:
+                currentTrack.album?.cover_medium ||
+                currentTrack.album?.cover ||
+                "https://placehold.co/300",
+            }}
+            style={styles.bigArt}
+          />
+        </View>
+
+        {/* Song Meta */}
+        <View style={styles.songMeta}>
+          <Text style={styles.bigTitle} numberOfLines={1}>
+            {currentTrack.title || "Unknown Song"}
+          </Text>
+          <Text style={styles.bigArtist} numberOfLines={1}>
+            {currentTrack.artist?.name || "Unknown Artist"}
+          </Text>
+        </View>
+
+        {/* Progress Bar */}
+        <View style={styles.progressBar}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: isPlaying ? "50%" : "0%" },
+            ]}
+          />
+        </View>
+        <View style={styles.timeRow}>
+          <Text style={styles.timeText}>Preview</Text>
+          <Text style={styles.timeText}>0:30</Text>
+        </View>
+
+        {/* Controls */}
+        <View style={styles.controlsRow}>
+          <TouchableOpacity onPress={playPrevious}>
+            <Ionicons name="play-skip-back" size={40} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={togglePlayPause}
+            style={styles.playButtonBig}
+          >
+            {isBuffering ? (
+              <ActivityIndicator color="black" />
+            ) : (
+              <Ionicons
+                name={isPlaying ? "pause" : "play"}
+                size={40}
+                color="black"
+                style={{ marginLeft: isPlaying ? 0 : 4 }}
+              />
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={playNext}>
+            <Ionicons name="play-skip-forward" size={40} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  </Modal>
+)}
     </View>
   );
 }
@@ -1188,4 +1294,90 @@ clearButton: {
   justifyContent: "center",
   alignItems: "center",
 },
+modalContainer: {
+  flex: 1,
+  backgroundColor: "#121212",
+  justifyContent: "space-between",
+  paddingBottom: 40,
+},
+modalContent: {
+  flex: 1,
+  padding: 24,
+  justifyContent: "space-evenly",
+},
+modalHeader: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginTop: 20,
+},
+modalHeaderText: {
+  color: "white",
+  fontSize: 12,
+  textTransform: "uppercase",
+  letterSpacing: 1,
+  fontWeight: "600",
+},
+artContainer: {
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.5,
+  shadowRadius: 12,
+  elevation: 20,
+},
+bigArt: {
+  width: SCREEN_WIDTH - 60,
+  height: SCREEN_WIDTH - 60,
+  borderRadius: 12,
+},
+songMeta: {
+  marginTop: 20,
+},
+bigTitle: {
+  color: "white",
+  fontSize: 24,
+  fontWeight: "bold",
+  marginBottom: 6,
+},
+bigArtist: {
+  color: "rgba(255,255,255,0.7)",
+  fontSize: 18,
+},
+progressBar: {
+  height: 4,
+  backgroundColor: "rgba(255,255,255,0.2)",
+  borderRadius: 2,
+  marginTop: 20,
+  overflow: "hidden",
+},
+progressFill: {
+  height: "100%",
+  backgroundColor: "white",
+},
+timeRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  marginTop: 8,
+},
+timeText: {
+  color: "rgba(255,255,255,0.5)",
+  fontSize: 12,
+},
+controlsRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+  paddingHorizontal: 20,
+  marginTop: 20,
+},
+playButtonBig: {
+  width: 80,
+  height: 80,
+  borderRadius: 40,
+  backgroundColor: "white",
+  justifyContent: "center",
+  alignItems: "center",
+},
+
 });

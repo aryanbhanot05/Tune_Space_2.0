@@ -4,7 +4,7 @@ import { VideoBackground } from "@/components/VideoBackground";
 import { useNotifications } from "@/contexts/NotificationContext";
 import PointsService from "@/lib/pointsService";
 import { Ionicons } from "@expo/vector-icons";
-import { router, useRouter } from "expo-router";
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -241,7 +241,10 @@ const FALLBACK_GENRE_ARTISTS = [
 ];
 
 // Generic helper to fetch with fallback mock data
-async function fetchWithFallback<T>(url: string, fallback: T): Promise<{ data: T }> {
+async function fetchWithFallback<T>(
+  url: string,
+  fallback: T
+): Promise<{ data: T }> {
   try {
     const res = await fetch(url, { headers: { Accept: "application/json" } });
     if (!res.ok) {
@@ -342,14 +345,17 @@ export default function HomePage() {
       try {
         const data = await searchDeezerTracks(q, 15);
         setResults(data?.data ?? []);
-        
+
         // Award points for searching
         if (data?.data && data.data.length > 0) {
           try {
             const pointsService = PointsService.getInstance();
-            await pointsService.awardPoints('SEARCH_PERFORMED', `Searched for "${q}"`);
+            await pointsService.awardPoints(
+              "SEARCH_PERFORMED",
+              `Searched for "${q}"`
+            );
           } catch (error) {
-            console.error('Error awarding points:', error);
+            console.error("Error awarding points:", error);
           }
         }
       } catch (e: any) {
@@ -370,7 +376,7 @@ export default function HomePage() {
         await pointsService.initialize();
         await pointsService.checkDailyLogin();
       } catch (error) {
-        console.error('Error initializing points:', error);
+        console.error("Error initializing points:", error);
       }
     };
     initializePoints();
@@ -412,7 +418,7 @@ export default function HomePage() {
   // cleanup native sound on unmount
   useEffect(() => {
     return () => {
-      if (soundRef.current) soundRef.current.unloadAsync().catch(() => { });
+      if (soundRef.current) soundRef.current.unloadAsync().catch(() => {});
     };
   }, []);
 
@@ -451,7 +457,7 @@ export default function HomePage() {
       sound.setOnPlaybackStatusUpdate((st: any) => {
         if (st.didJustFinish || st.isLoaded === false) {
           setPlayingId(null);
-          sound.unloadAsync().catch(() => { });
+          sound.unloadAsync().catch(() => {});
           soundRef.current = null;
         }
       });
@@ -462,7 +468,7 @@ export default function HomePage() {
 
   const closePlayer = async () => {
     if (soundRef.current) {
-      await soundRef.current.unloadAsync().catch(() => { });
+      await soundRef.current.unloadAsync().catch(() => {});
       soundRef.current = null;
     }
     setPlayingId(null);
@@ -492,9 +498,12 @@ export default function HomePage() {
     // Award points for adding to playlist
     try {
       const pointsService = PointsService.getInstance();
-      await pointsService.awardPoints('SONG_ADDED_TO_PLAYLIST', `Added "${track?.title}" to playlist`);
+      await pointsService.awardPoints(
+        "SONG_ADDED_TO_PLAYLIST",
+        `Added "${track?.title}" to playlist`
+      );
     } catch (error) {
-      console.error('Error awarding points:', error);
+      console.error("Error awarding points:", error);
     }
 
     // Send Deezer notification for playlist addition
@@ -524,18 +533,18 @@ export default function HomePage() {
         <NotificationBell size={28} color="#ffffff" />
       </View>
       <View style={[styles.pointsContainer, { top: insets.top + 10 }]}>
-        <PointsDisplay 
-          size="small" 
+        <PointsDisplay
+          size="small"
           onPress={() => {
             router.push({
-              pathname: '/(tabs)/settings',
-              params: { openSection: 'rewards' }
+              pathname: "/(tabs)/settings",
+              params: { openSection: "rewards" },
             });
           }}
         />
       </View>
 
-      <View style={styles.top}>
+      <View style={[styles.top, { top: insets.top + 40 }]}>
         <Text style={styles.title}>Search</Text>
       </View>
 
@@ -676,9 +685,12 @@ export default function HomePage() {
                       // Award points (already handled in addToPlaylist, but also for playing)
                       try {
                         const pointsService = PointsService.getInstance();
-                        await pointsService.awardPoints('SONG_PLAYED', `Played trending track: ${track.title}`);
+                        await pointsService.awardPoints(
+                          "SONG_PLAYED",
+                          `Played trending track: ${track.title}`
+                        );
                       } catch (error) {
-                        console.error('Error awarding points:', error);
+                        console.error("Error awarding points:", error);
                       }
                       // Send trending notification
                       try {
@@ -696,7 +708,8 @@ export default function HomePage() {
                           "trending_track",
                           trackData,
                           `🔥 #${index + 1} Trending: ${track.title}`,
-                          `${track.artist?.name} • ${track.album?.title || "Single"
+                          `${track.artist?.name} • ${
+                            track.album?.title || "Single"
                           }`
                         );
                       } catch (error) {
@@ -846,7 +859,6 @@ export default function HomePage() {
                 {currentTrack.preview && Audio && (
                   <TouchableOpacity
                     style={styles.playerPlayBtn}
-
                     onPress={() =>
                       togglePlayNative(
                         currentTrack.preview,
@@ -907,19 +919,30 @@ const styles = StyleSheet.create({
     left: 20,
     zIndex: 10,
   },
+  top: {
+    position: "absolute",
+    left: 20,
+    zIndex: 5,
+    width: "100%",
+    paddingTop: 10,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "left",
+  },
   searchInput: {
     backgroundColor: "#191c24",
     color: "#fff",
     paddingVertical: 10,
     paddingLeft: 10,
-
-
-    paddingRight: 36, 
-
+    paddingRight: 36,
     borderRadius: 10,
     borderColor: "#444",
     borderWidth: 1,
     width: "100%",
+    paddingBottom: 12,
   },
   resultsList: {
     maxHeight: 300,
@@ -928,19 +951,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     width: "90%",
   },
-  top: {
-    width: "100%",
-    paddingTop: 30,
-    height: 140,
-    alignItems: "center",
-  },
-  title: {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: 32,
-    textAlign: "center",
-    width: "90%",
-  },
+
   songArt: {
     width: 68,
     height: 68,
@@ -966,7 +977,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   recommendationsContent: {
-    paddingBottom: 100, 
+    paddingBottom: 100,
   },
   sectionContainer: {
     marginBottom: 24,
@@ -1076,7 +1087,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
- 
   playerBackdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.7)",
@@ -1156,7 +1166,7 @@ const styles = StyleSheet.create({
     position: "relative",
     width: "90%",
     marginHorizontal: 16,
-    marginTop: 20,
+    marginTop: 70,
     marginBottom: 10,
   },
 

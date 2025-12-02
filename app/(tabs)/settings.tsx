@@ -117,6 +117,69 @@ const SectionContent = ({ activeSection, state, handlers }: {
   const { firstName, lastName, msg, notificationsEnabled, feedbackText, selectedThemeLabel, isThemeDropdownVisible } = state;
   const { setFirstName, setLastName, handleUpdate, handleDelete, handleLogout, setNotificationsEnabled, setFeedbackText, handleSendFeedback, setSelectedTheme, toggleThemeDropdown, handleNotificationToggle, sendTestNotification } = handlers;
 
+  // Rewards-specific state (safe for all sections; only used when activeSection === 'rewards')
+  const [currentPoints, setCurrentPoints] = useState<number>(0);
+  const [weeklyTotals, setWeeklyTotals] = useState<number[]>([]);
+  const [weeklyLabels, setWeeklyLabels] = useState<string[]>([]);
+
+  useEffect(() => {
+    const pointsService = PointsService.getInstance();
+    // Initialize with current cached points
+    setCurrentPoints(pointsService.getCurrentPoints());
+
+    // Subscribe to live changes
+    const unsubscribe = pointsService.subscribe((points: number) => {
+      setCurrentPoints(points);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Load last 7 days of points history when Rewards is opened
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const pointsService = PointsService.getInstance();
+        const history = await pointsService.getPointsHistory(100);
+
+        // Prepare last 7 days (oldest -> newest)
+        const dayTotals: number[] = [];
+        const dayLabels: string[] = [];
+        const now = new Date();
+
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(now.getDate() - i);
+          const key = d.toDateString();
+          const label = d.toLocaleDateString(undefined, { weekday: 'short' }); // Mon, Tue, ...
+
+          const totalForDay = history
+            .filter(tx => new Date(tx.timestamp).toDateString() === key)
+            .reduce((sum, tx) => sum + tx.points, 0);
+
+          dayTotals.push(totalForDay);
+          dayLabels.push(label);
+        }
+
+        setWeeklyTotals(dayTotals);
+        setWeeklyLabels(dayLabels);
+      } catch (error) {
+        console.error('Error loading points history:', error);
+      }
+    };
+
+    if (activeSection === 'rewards') {
+      loadHistory();
+    }
+  }, [activeSection]);
+
+  const milestoneSize = 1000;
+  const progressWithinMilestone = Math.min(currentPoints % milestoneSize, milestoneSize);
+  const progressRatio = milestoneSize === 0 ? 0 : progressWithinMilestone / milestoneSize;
+  const nextMilestone = Math.max(milestoneSize, Math.ceil((currentPoints + 1) / milestoneSize) * milestoneSize);
+
   // Handle which section is active and render appropriate content
   switch (activeSection) {
     // ================= ACCOUNT SECTION =================
@@ -248,8 +311,52 @@ const SectionContent = ({ activeSection, state, handlers }: {
           {/* Points Display */}
           <View style={styles.pointsSection}>
             <Text style={styles.label}>Your Points</Text>
+            <Text style={styles.pointsSubtitle}>
+              Keep listening to unlock more rewards!
+            </Text>
             <View style={styles.pointsDisplayContainer}>
               <PointsDisplay size="large" showLabel={true} />
+            </View>
+
+            {/* Progress toward next milestone */}
+            <View style={styles.pointsProgressWrapper}>
+              <View style={styles.pointsProgressTrack}>
+                <View
+                  style={[
+                    styles.pointsProgressFill,
+                    { width: `${Math.max(5, progressRatio * 100)}%` }, // ensure a minimal visible bar
+                  ]}
+                />
+              </View>
+              <Text style={styles.pointsProgressLabel}>
+                Next reward at {nextMilestone.toLocaleString()} pts
+              </Text>
+            </View>
+          </View>
+
+          {/* Weekly Points History */}
+          <View style={styles.historySection}>
+            <Text style={styles.label}>Last 7 Days</Text>
+            <View style={styles.historyChart}>
+              {weeklyTotals.map((total, index) => {
+                const max = Math.max(...weeklyTotals, 1);
+                const heightPercent = max === 0 ? 0 : (total / max) * 100;
+                return (
+                  <View key={index} style={styles.historyBarWrapper}>
+                    <View style={styles.historyBarTrack}>
+                      <View
+                        style={[
+                          styles.historyBarFill,
+                          { height: `${Math.max(8, heightPercent)}%` }, // keep a small visible bar
+                        ]}
+                      />
+                    </View>
+                    <Text style={styles.historyBarLabel}>
+                      {weeklyLabels[index] || ''}
+                    </Text>
+                  </View>
+                );
+              })}
             </View>
           </View>
 
@@ -1023,6 +1130,66 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  pointsSubtitle: {
+    marginTop: 4,
+    color: '#e3ffdd',
+    fontSize: 13,
+    opacity: 0.8,
+  },
+  pointsProgressWrapper: {
+    width: '100%',
+    marginTop: 18,
+    paddingHorizontal: 4,
+  },
+  pointsProgressTrack: {
+    width: '100%',
+    height: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+  },
+  pointsProgressFill: {
+    height: '100%',
+    borderRadius: 999,
+    backgroundColor: '#FFD700',
+  },
+  pointsProgressLabel: {
+    marginTop: 6,
+    color: '#b4b4b4',
+    fontSize: 13,
+  },
+  historySection: {
+    marginTop: 28,
+  },
+  historyChart: {
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  historyBarWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    marginHorizontal: 2,
+  },
+  historyBarTrack: {
+    width: 10,
+    height: 60,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  historyBarFill: {
+    width: '100%',
+    borderRadius: 999,
+    backgroundColor: '#1DB954',
+  },
+  historyBarLabel: {
+    marginTop: 4,
+    fontSize: 11,
+    color: '#b4b4b4',
   },
 });
 

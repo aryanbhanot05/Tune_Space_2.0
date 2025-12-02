@@ -4,7 +4,7 @@ import { VideoBackground } from "@/components/VideoBackground";
 import { useNotifications } from "@/contexts/NotificationContext";
 import PointsService from "@/lib/pointsService";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -536,7 +536,6 @@ export default function HomePage() {
       </View>
 
       <View style={styles.top}>
-        <Text style={styles.title}>Hi, User</Text>
         <Text style={styles.title}>Search</Text>
       </View>
 

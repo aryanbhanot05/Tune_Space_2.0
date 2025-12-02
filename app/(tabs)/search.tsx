@@ -894,6 +894,40 @@ const playPrevious = () => playFromList(-1);
           </View>
         </ScrollView>
       )}
+      {currentTrack && !showPlayer && (
+        <TouchableOpacity
+          style={styles.miniPlayer}
+          activeOpacity={0.9}
+          onPress={() => setShowPlayer(true)}
+        >
+          <Image
+            source={{
+              uri:
+                currentTrack.album?.cover_medium ||
+                currentTrack.album?.cover ||
+                "https://placehold.co/100",
+            }}
+            style={styles.miniImage}
+          />
+
+          <View style={{ flex: 1 }}>
+            <Text style={styles.miniTitle} numberOfLines={1}>
+              {currentTrack.title || "Unknown Song"}
+            </Text>
+            <Text style={styles.miniArtist} numberOfLines={1}>
+              {currentTrack.artist?.name || "Unknown Artist"}
+            </Text>
+          </View>
+
+          <TouchableOpacity onPress={togglePlayPause} style={{ padding: 8 }}>
+            <Ionicons
+              name={isPlaying ? "pause" : "play"}
+              size={28}
+              color="white"
+            />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      )}
 
       {/* Player card modal */}
       {currentTrack && (
@@ -1379,5 +1413,41 @@ playButtonBig: {
   justifyContent: "center",
   alignItems: "center",
 },
+miniPlayer: {
+  position: "absolute",
+  bottom: 20,                // a bit above bottom
+  left: 10,
+  right: 10,
+  backgroundColor: "#1a1a1a",
+  borderRadius: 12,
+  paddingHorizontal: 10,
+  paddingVertical: 8,
+  flexDirection: "row",
+  alignItems: "center",
+  borderTopWidth: 1,
+  borderColor: "rgba(255,255,255,0.1)",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: -2 },
+  shadowOpacity: 0.5,
+  shadowRadius: 10,
+  elevation: 20,
+  zIndex: 100,
+},
+miniImage: {
+  width: 40,
+  height: 40,
+  borderRadius: 4,
+  marginRight: 12,
+},
+miniTitle: {
+  color: "white",
+  fontWeight: "bold",
+  fontSize: 14,
+},
+miniArtist: {
+  color: "#aaa",
+  fontSize: 12,
+},
+
 
 });

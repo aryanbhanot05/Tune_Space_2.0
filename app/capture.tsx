@@ -52,6 +52,7 @@ export default function CaptureScreen() {
       </View>
     );
   }
+  
 
   const takePictureAndAnalyze = async () => {
     const camera = cameraRef.current;

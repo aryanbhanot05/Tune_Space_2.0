@@ -17,7 +17,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getSession, signIn, signUp } from "../lib/supabase_auth"; // Ensure getSession is exported from supabase_auth
 import { createUser } from "../lib/supabase_crud";
 
-
 export default function SignInScreen() {
   const router = useRouter();
 

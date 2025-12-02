@@ -1082,8 +1082,8 @@ searchInput: {
   backgroundColor: "#191c24",
   color: "#fff",
   paddingVertical: 12,
-  paddingLeft: 38,         // room for search icon
-  paddingRight: 38,        // room for clear button
+  paddingLeft: 38,  
+  paddingRight: 38,  
   borderRadius: 10,
   borderColor: "#444",
   borderWidth: 1,
@@ -1134,6 +1134,7 @@ searchInput: {
     fontWeight: "bold",
     marginBottom: 12,
     marginLeft: 4,
+    
   },
   loadingText: {
     color: "#aaa",

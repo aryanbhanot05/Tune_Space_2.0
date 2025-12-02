@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     tabBarBackgroundOverlay: {
-        height: 100,
+        height: 80,
         position: 'absolute',
         bottom: 0,
         left: 0,

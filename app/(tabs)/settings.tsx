@@ -683,6 +683,7 @@ export default function SettingsPage() {
     }
   };
 
+  
   // THEME DROPDOWN HANDLER
   const toggleThemeDropdown = () => setThemeDropdownVisible(prev => !prev);
 
